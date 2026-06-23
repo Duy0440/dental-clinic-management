@@ -1,0 +1,24 @@
+﻿const express = require("express");
+const {
+  getAppointmentHistory,
+  getAppointmentsForAdmin,
+  addAppointment,
+  cancelAppointment,
+  manageAppointment,
+} = require("../controllers/appointmentController");
+const {
+  verifyToken,
+  optionalVerifyToken,
+  authorizeRoles,
+} = require("../middlewares/authMiddleware");
+
+const router = express.Router();
+
+router.get("/", verifyToken, authorizeRoles("admin"), getAppointmentsForAdmin);
+router.get("/history/:patientId", verifyToken, getAppointmentHistory);
+router.post("/", optionalVerifyToken, addAppointment);
+router.patch("/:appointmentId/cancel", verifyToken, cancelAppointment);
+router.patch("/:appointmentId/admin",verifyToken,authorizeRoles("admin"),manageAppointment,);
+
+
+module.exports = router;
