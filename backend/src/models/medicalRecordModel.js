@@ -22,6 +22,23 @@ const getAllMedicalRecords = async () => {
       mr.attachment_url,
       mr.entered_by_user_id,
       mr.created_at,
+
+      COALESCE(
+        (
+          SELECT json_agg(
+            json_build_object(
+              'id', mra.id,
+              'file_name', mra.file_name,
+              'file_url', mra.file_url,
+              'file_type', mra.file_type,
+              'created_at', mra.created_at
+            )
+          )
+          FROM medical_record_attachments mra
+          WHERE mra.medical_record_id = mr.id
+        ),
+        '[]'::json
+      ) AS attachments,
       p.full_name AS patient_name,
       d.full_name AS dentist_name,
       u.username AS entered_by_username
@@ -58,6 +75,23 @@ const getMedicalRecordsByPatientId = async (patientId) => {
       mr.attachment_url,
       mr.entered_by_user_id,
       mr.created_at,
+
+      COALESCE(
+        (
+          SELECT json_agg(
+            json_build_object(
+              'id', mra.id,
+              'file_name', mra.file_name,
+              'file_url', mra.file_url,
+              'file_type', mra.file_type,
+              'created_at', mra.created_at
+            )
+          )
+          FROM medical_record_attachments mra
+          WHERE mra.medical_record_id = mr.id
+        ),
+        '[]'::json
+      ) AS attachments,
       d.full_name AS dentist_name,
       u.username AS entered_by_username
     FROM medical_records mr
@@ -183,9 +217,52 @@ const checkMedicalRecordReferences = async (
   };
 };
 
+const findMedicalRecordByAppointmentId = async (appointmentId) => {
+  if (!appointmentId) {
+    return null;
+  }
+
+  const query = `
+    SELECT id
+    FROM medical_records
+    WHERE appointment_id = $1
+  `;
+
+  const result = await pool.query(query, [appointmentId]);
+  return result.rows[0];
+};
+
+const checkReExaminationConflict = async (
+  dentistId,
+  reExaminationDate,
+  reExaminationTime,
+) => {
+  if (!dentistId || !reExaminationDate || !reExaminationTime) {
+    return false;
+  }
+
+  const query = `
+    SELECT id
+    FROM medical_records
+    WHERE dentist_id = $1
+      AND re_examination_date = $2
+      AND re_examination_time = $3
+  `;
+
+  const result = await pool.query(query, [
+    dentistId,
+    reExaminationDate,
+    reExaminationTime,
+  ]);
+
+  return result.rows.length > 0;
+};
+
 module.exports = {
   getAllMedicalRecords,
   getMedicalRecordsByPatientId,
   createMedicalRecord,
   checkMedicalRecordReferences,
+  findMedicalRecordByAppointmentId,
+  checkReExaminationConflict,
 };

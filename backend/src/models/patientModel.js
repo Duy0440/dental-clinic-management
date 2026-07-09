@@ -99,9 +99,31 @@ const findPatientById = async (patientId) => {
   return result.rows[0];
 };
 
+const updatePatientUserId = async (patientId, userId) => {
+  const query = `
+    UPDATE patients
+    SET user_id = $2
+    WHERE id = $1
+    RETURNING
+      id,
+      user_id,
+      full_name,
+      phone,
+      gender,
+      TO_CHAR(birth_date, 'YYYY-MM-DD') AS birth_date,
+      TO_CHAR(birth_date, 'DD/MM/YYYY') AS birth_date_display,
+      address,
+      created_at
+  `;
+
+  const result = await pool.query(query, [patientId, userId]);
+  return result.rows[0];
+};
+
 module.exports = {
   getAllPatients,
   createPatient,
   findPatientByUserId,
   findPatientById,
+  updatePatientUserId,
 };

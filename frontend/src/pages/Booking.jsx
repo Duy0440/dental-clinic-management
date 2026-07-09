@@ -43,7 +43,7 @@ function Booking() {
     const fetchBookingData = async () => {
       try {
         const [dentistResponse, serviceResponse] = await Promise.all([
-          axiosClient.get("/dentists"),
+          axiosClient.get("/dentists/active"),
           axiosClient.get("/services"),
         ]);
 

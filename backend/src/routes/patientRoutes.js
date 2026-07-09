@@ -3,6 +3,7 @@ const {
   listPatients,
   addPatient,
   getPatientDetail,
+  createAccountForPatient,
 } = require("../controllers/patientController");
 const {
   verifyToken,
@@ -21,5 +22,5 @@ router.get(
 );
 
 router.post("/", verifyToken, authorizeRoles("admin"), addPatient);
-
+router.post("/:patientId/create-account", verifyToken, authorizeRoles("admin"), createAccountForPatient,);
 module.exports = router;

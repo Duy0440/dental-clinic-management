@@ -22,6 +22,7 @@ function MedicalRecordForm({
     re_examination_time: "",
   });
 
+  const [attachmentFile, setAttachmentFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -32,13 +33,36 @@ function MedicalRecordForm({
     });
   };
 
+  const handleFileChange = (event) => {
+    setAttachmentFile(event.target.files[0] || null);
+  };
+
+  const uploadAttachment = async (recordId) => {
+    if (!attachmentFile) {
+      return;
+    }
+
+    const uploadData = new FormData();
+    uploadData.append("file", attachmentFile);
+
+    await axiosClient.post(
+      `/medical-records/${recordId}/attachments`,
+      uploadData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);
     setErrorMessage("");
 
     try {
-      await axiosClient.post("/medical-records", {
+      const response = await axiosClient.post("/medical-records", {
         patient_id: Number(customerId),
         appointment_id: formData.appointment_id
           ? Number(formData.appointment_id)
@@ -52,10 +76,14 @@ function MedicalRecordForm({
         attachment_url: null,
       });
 
+      const newRecord = response.data.data;
+
+      await uploadAttachment(newRecord.id);
       await onCreated();
     } catch (error) {
       setErrorMessage(
-        error.response?.data?.message || "Không thể lưu kết quả điều trị.",
+        error.response?.data?.message ||
+          "Không thể lưu kết quả điều trị.",
       );
     } finally {
       setSaving(false);
@@ -68,7 +96,7 @@ function MedicalRecordForm({
         <div className="admin-modal-header">
           <div>
             <h3>Thêm kết quả điều trị</h3>
-            <p>Lưu nội dung do nha sĩ phụ trách cung cấp.</p>
+            <p>Lưu chẩn đoán, hướng điều trị và file hình ảnh nếu có.</p>
           </div>
 
           <button type="button" onClick={onClose}>
@@ -120,6 +148,7 @@ function MedicalRecordForm({
               name="diagnosis"
               value={formData.diagnosis}
               onChange={handleChange}
+              placeholder="Ví dụ: sâu răng hàm dưới, viêm nướu nhẹ..."
             />
           </label>
 
@@ -131,6 +160,7 @@ function MedicalRecordForm({
               name="treatment"
               value={formData.treatment}
               onChange={handleChange}
+              placeholder="Ví dụ: vệ sinh răng, trám răng, kê thuốc..."
             />
           </label>
 
@@ -141,6 +171,7 @@ function MedicalRecordForm({
               name="note"
               value={formData.note}
               onChange={handleChange}
+              placeholder="Ghi chú thêm cho lần tái khám hoặc theo dõi."
             />
           </label>
 
@@ -165,6 +196,19 @@ function MedicalRecordForm({
               />
             </label>
           </div>
+
+          <label>
+            Hình ảnh hoặc file đính kèm
+            <input
+              type="file"
+              accept="image/png,image/jpeg,application/pdf"
+              onChange={handleFileChange}
+            />
+          </label>
+
+          <p className="admin-form-hint">
+            Có thể đính kèm ảnh răng, phim chụp hoặc file PDF kết quả.
+          </p>
 
           {errorMessage && (
             <p className="admin-error-message">{errorMessage}</p>

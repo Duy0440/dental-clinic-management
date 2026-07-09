@@ -1,9 +1,12 @@
-﻿const {
+﻿const bcrypt = require("bcryptjs");
+const {
   getAllPatients,
   createPatient,
   findPatientByUserId,
   findPatientById,
+  updatePatientUserId,
 } = require("../models/patientModel");
+const { findUserByUsername, createUser } = require("../models/userModel");
 
 const listPatients = async (req, res) => {
   try {
@@ -86,8 +89,69 @@ const getPatientDetail = async (req, res) => {
   }
 };
 
+const createAccountForPatient = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const { username, password, email } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({
+        message: "Username and password are required",
+      });
+    }
+
+    const patient = await findPatientById(patientId);
+
+    if (!patient) {
+      return res.status(404).json({
+        message: "Customer not found",
+      });
+    }
+
+    if (patient.user_id) {
+      return res.status(409).json({
+        message: "Customer already has an account",
+      });
+    }
+
+    const existingUser = await findUserByUsername(username);
+
+    if (existingUser) {
+      return res.status(409).json({
+        message: "Username already exists",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await createUser({
+      username,
+      password: hashedPassword,
+      role: "customer",
+      phone: patient.phone,
+      email,
+    });
+
+    const updatedPatient = await updatePatientUserId(patient.id, newUser.id);
+
+    res.status(201).json({
+      message: "Customer account created successfully",
+      data: {
+        user: newUser,
+        patient: updatedPatient,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   listPatients,
   addPatient,
   getPatientDetail,
+  createAccountForPatient,
 };

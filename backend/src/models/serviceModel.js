@@ -1,13 +1,27 @@
 ﻿const pool = require("../config/db");
 
-const getAllServices = async () => {
+const getActiveServices = async () => {
   const query = `
     SELECT
       id,
       service_name,
-      price,
       description,
-      duration_minutes,
+      is_active
+    FROM services
+    WHERE is_active = TRUE
+    ORDER BY id DESC
+  `;
+
+  const result = await pool.query(query);
+  return result.rows;
+};
+
+const getAllServicesForAdmin = async () => {
+  const query = `
+    SELECT
+      id,
+      service_name,
+      description,
       is_active
     FROM services
     ORDER BY id DESC
@@ -18,8 +32,7 @@ const getAllServices = async () => {
 };
 
 const createService = async (serviceData) => {
-  const { service_name, price, description, duration_minutes, is_active } =
-    serviceData;
+  const { service_name, description, is_active } = serviceData;
 
   const query = `
     INSERT INTO services (
@@ -29,29 +42,68 @@ const createService = async (serviceData) => {
       duration_minutes,
       is_active
     )
-    VALUES ($1, $2, $3, $4, $5)
+    VALUES ($1, NULL, $2, NULL, $3)
     RETURNING
       id,
       service_name,
-      price,
       description,
-      duration_minutes,
+      is_active
+  `;
+
+  const values = [service_name, description || null, is_active ?? true];
+
+  const result = await pool.query(query, values);
+  return result.rows[0];
+};
+
+const updateServiceById = async (serviceId, serviceData) => {
+  const { service_name, description, is_active } = serviceData;
+
+  const query = `
+    UPDATE services
+    SET
+      service_name = $1,
+      description = $2,
+      is_active = $3
+    WHERE id = $4
+    RETURNING
+      id,
+      service_name,
+      description,
       is_active
   `;
 
   const values = [
     service_name,
-    price,
     description || null,
-    duration_minutes || null,
     is_active ?? true,
+    serviceId,
   ];
 
   const result = await pool.query(query, values);
   return result.rows[0];
 };
 
+const deactivateServiceById = async (serviceId) => {
+  const query = `
+    UPDATE services
+    SET is_active = FALSE
+    WHERE id = $1
+    RETURNING
+      id,
+      service_name,
+      description,
+      is_active
+  `;
+
+  const result = await pool.query(query, [serviceId]);
+  return result.rows[0];
+};
+
 module.exports = {
-  getAllServices,
+  getActiveServices,
+  getAllServicesForAdmin,
   createService,
+  updateServiceById,
+  deactivateServiceById,
 };

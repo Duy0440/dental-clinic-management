@@ -1,10 +1,15 @@
 ﻿const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { findUserByUsername, createUser } = require("../models/userModel");
+const {
+  findUserByUsername,
+  createUser,
+  updateUserPasswordById,
+} = require("../models/userModel");
 const {
   createPatient,
   findPatientByUserId,
 } = require("../models/patientModel");
+const { findDentistByUserId } = require("../models/dentistModel");
 
 const register = async (req, res) => {
   try {
@@ -98,6 +103,12 @@ const login = async (req, res) => {
       });
     }
 
+    if (!user.is_active) {
+      return res.status(403).json({
+        message: "This account has been disabled",
+      });
+    }
+    
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
@@ -107,6 +118,8 @@ const login = async (req, res) => {
     }
 
     const patientProfile = await findPatientByUserId(user.id);
+    const dentistProfile =
+      user.role === "dentist" ? await findDentistByUserId(user.id) : null;
 
     const token = jwt.sign(
       {
@@ -128,7 +141,55 @@ const login = async (req, res) => {
         phone: user.phone,
         email: user.email,
         patient_id: patientProfile ? patientProfile.id : null,
+        dentist_id: dentistProfile ? dentistProfile.id : null,
+        dentist_name: dentistProfile ? dentistProfile.full_name : null,
       },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+const normalizePhone = (phone) => String(phone || "").replace(/\D/g, "");
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { username, phone, new_password } = req.body;
+
+    if (!username || !phone || !new_password) {
+      return res.status(400).json({
+        message: "Username, phone and new password are required",
+      });
+    }
+
+    if (String(new_password).length < 6) {
+      return res.status(400).json({
+        message: "New password must be at least 6 characters",
+      });
+    }
+
+    const user = await findUserByUsername(username);
+
+    if (!user || !user.is_active) {
+      return res.status(404).json({
+        message: "Account not found or has been disabled",
+      });
+    }
+
+    if (normalizePhone(user.phone) !== normalizePhone(phone)) {
+      return res.status(400).json({
+        message: "Phone number does not match this account",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+    await updateUserPasswordById(user.id, hashedPassword);
+
+    res.status(200).json({
+      message: "Password reset successful",
     });
   } catch (error) {
     res.status(500).json({
@@ -141,4 +202,5 @@ const login = async (req, res) => {
 module.exports = {
   register,
   login,
+  forgotPassword,
 };

@@ -1,11 +1,12 @@
-const {
+﻿const {
   getAllInvoices,
-  createInvoice,
-  checkInvoiceReferences,
   findInvoiceByCode,
+  checkInvoiceReferences,
+  createInvoiceWithDetails,
+  deleteInvoiceById,
 } = require("../models/invoiceModel");
 
-const VALID_PAYMENT_STATUSES = ["Unpaid", "Paid"];
+const VALID_PAYMENT_METHODS = ["Tiền mặt", "Chuyển khoản"];
 
 const listInvoices = async (req, res) => {
   try {
@@ -29,27 +30,60 @@ const addInvoice = async (req, res) => {
       patient_id,
       appointment_id,
       invoice_code,
-      total_amount,
-      payment_status,
       payment_method,
-      issued_by,
+      details,
     } = req.body;
 
-    if (!patient_id || !invoice_code || total_amount === undefined) {
+    if (!patient_id) {
       return res.status(400).json({
-        message: "Patient ID, invoice code and total amount are required",
+        message: "Customer is required",
       });
     }
 
-    const normalizedStatus = payment_status || "Unpaid";
-
-    if (!VALID_PAYMENT_STATUSES.includes(normalizedStatus)) {
+    if (!VALID_PAYMENT_METHODS.includes(payment_method)) {
       return res.status(400).json({
-        message: "Invalid payment status",
+        message: "Payment method is invalid",
       });
     }
 
-    const existingInvoice = await findInvoiceByCode(invoice_code);
+    if (!Array.isArray(details) || details.length === 0) {
+      return res.status(400).json({
+        message: "Invoice must have at least one detail",
+      });
+    }
+
+    let totalAmount = 0;
+
+    for (const detail of details) {
+      const hasService = Boolean(detail.service_id);
+      const hasDescription = Boolean(detail.custom_description?.trim());
+      const quantity = Number(detail.quantity || 0);
+      const unitPrice = Number(detail.unit_price || 0);
+      const discountAmount = Number(detail.discount_amount || 0);
+
+      if (!hasService && !hasDescription) {
+        return res.status(400).json({
+          message: "Each invoice detail must have service or description",
+        });
+      }
+
+      if (quantity <= 0 || unitPrice <= 0 || discountAmount < 0) {
+        return res.status(400).json({
+          message: "Invalid quantity, price or discount",
+        });
+      }
+
+      totalAmount += Math.max(quantity * unitPrice - discountAmount, 0);
+    }
+
+    if (totalAmount <= 0) {
+      return res.status(400).json({
+        message: "Invoice total must be greater than 0",
+      });
+    }
+
+    const finalInvoiceCode = invoice_code || `HD${Date.now()}`;
+    const existingInvoice = await findInvoiceByCode(finalInvoiceCode);
 
     if (existingInvoice) {
       return res.status(409).json({
@@ -62,7 +96,7 @@ const addInvoice = async (req, res) => {
 
     if (!patientExists) {
       return res.status(404).json({
-        message: "Patient not found",
+        message: "Customer not found",
       });
     }
 
@@ -72,14 +106,13 @@ const addInvoice = async (req, res) => {
       });
     }
 
-    const newInvoice = await createInvoice({
+    const newInvoice = await createInvoiceWithDetails({
       patient_id,
       appointment_id,
-      invoice_code,
-      total_amount,
-      payment_status: normalizedStatus,
+      invoice_code: finalInvoiceCode,
       payment_method,
-      issued_by,
+      issued_by: req.user.id,
+      details,
     });
 
     res.status(201).json({
@@ -94,7 +127,30 @@ const addInvoice = async (req, res) => {
   }
 };
 
+const removeInvoice = async (req, res) => {
+  try {
+    const { invoiceId } = req.params;
+    const deletedInvoice = await deleteInvoiceById(invoiceId);
+
+    if (!deletedInvoice) {
+      return res.status(404).json({
+        message: "Invoice not found",
+      });
+    }
+
+    res.status(200).json({
+      message: "Invoice deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   listInvoices,
   addInvoice,
+  removeInvoice,
 };

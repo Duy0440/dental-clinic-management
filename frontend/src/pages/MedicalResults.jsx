@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from "react";
 import axiosClient from "../api/axiosClient";
+import { getAssetUrl } from "../api/urlHelpers";
 
 function MedicalResults() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -7,6 +8,7 @@ function MedicalResults() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [previewImage, setPreviewImage] = useState(null);
 
   useEffect(() => {
     const fetchMedicalResults = async () => {
@@ -36,6 +38,14 @@ function MedicalResults() {
 
   const formatTime = (time) => {
     return time ? time.slice(0, 5) : "";
+  };
+
+  const getFileUrl = (fileUrl) => {
+    return getAssetUrl(fileUrl);
+  };
+
+  const isImageFile = (fileType) => {
+    return fileType?.startsWith("image/");
   };
 
   return (
@@ -76,9 +86,7 @@ function MedicalResults() {
                       <h4 className="mb-0">{record.dentist_name}</h4>
                     </div>
 
-                    <span className="result-status-badge">
-                        Đã cập nhật
-                    </span>
+                    <span className="result-status-badge">Đã cập nhật</span>
                   </div>
 
                   <div className="mb-3">
@@ -112,6 +120,47 @@ function MedicalResults() {
                       {record.re_examination_time &&
                         ` lúc ${formatTime(record.re_examination_time)}`}
                     </p>
+
+                    {record.attachments?.length > 0 && (
+                      <div className="mt-3">
+                        <strong>Hình ảnh / tài liệu đính kèm</strong>
+
+                        <div className="record-attachment-list mt-2">
+                          {record.attachments.map((file) => (
+                            <div
+                              className="record-attachment-item"
+                              key={file.id}
+                            >
+                              {isImageFile(file.file_type) ? (
+                                <button
+                                  type="button"
+                                  className="record-image-button"
+                                  onClick={() =>
+                                    setPreviewImage(getFileUrl(file.file_url))
+                                  }
+                                >
+                                  <img
+                                    src={getFileUrl(file.file_url)}
+                                    alt={file.file_name}
+                                  />
+                                </button>
+                              ) : (
+                                <a
+                                  href={getFileUrl(file.file_url)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="btn btn-outline-secondary btn-sm"
+                                >
+                                  Xem file PDF
+                                </a>
+                              )}
+
+                              <span>{file.file_name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {record.attachment_url && (
@@ -128,6 +177,22 @@ function MedicalResults() {
               </article>
             </div>
           ))}
+        </div>
+      )}
+      {previewImage && (
+        <div
+          className="image-preview-overlay"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            type="button"
+            className="image-preview-close"
+            onClick={() => setPreviewImage(null)}
+          >
+            ×
+          </button>
+
+          <img src={previewImage} alt="Hình ảnh điều trị" />
         </div>
       )}
     </div>

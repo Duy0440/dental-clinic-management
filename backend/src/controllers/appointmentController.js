@@ -8,7 +8,17 @@
   findAppointmentById,
   checkAppointmentConflictForUpdate,
   updateAppointmentByAdmin,
+  getAppointmentsByDentistId,
 } = require("../models/appointmentModel");
+
+const {
+  findDentistById,
+  findDentistByUserId,
+} = require("../models/dentistModel");
+
+const {
+  checkDentistUnavailableConflict,
+} = require("../models/dentistUnavailableModel");
 
 const {
   findPatientByUserId,
@@ -130,6 +140,16 @@ const addAppointment = async (req, res) => {
       });
     }
 
+    if (normalizedDentistId) {
+      const dentist = await findDentistById(normalizedDentistId);
+
+      if (!dentist?.is_active || !dentist?.user_is_active) {
+        return res.status(409).json({
+          message: "Dentist is inactive and cannot receive appointments",
+        });
+      }
+    }
+
     if (!serviceExists) {
       return res.status(404).json({
         message: "Service not found",
@@ -144,7 +164,21 @@ const addAppointment = async (req, res) => {
 
     if (hasConflict) {
       return res.status(409).json({
-        message: "This dentist already has an appointment at that time",
+        message:
+          "Nha sĩ này đã có lịch hẹn vào khung giờ bạn chọn. Vui lòng chọn giờ khác hoặc để phòng khám sắp xếp nha sĩ phù hợp.",
+      });
+    }
+
+    const isDentistUnavailable = await checkDentistUnavailableConflict(
+      normalizedDentistId,
+      appointment_date,
+      appointment_time,
+    );
+
+    if (isDentistUnavailable) {
+      return res.status(409).json({
+        message:
+          "Nha sĩ này đã báo bận vào thời gian bạn chọn. Vui lòng chọn nha sĩ khác hoặc để phòng khám sắp xếp.",
       });
     }
 
@@ -232,7 +266,7 @@ const getAppointmentsForAdmin = async (req, res) => {
 const manageAppointment = async (req, res) => {
   try {
     const { appointmentId } = req.params;
-    const { dentist_id, status, clinic_note } = req.body;
+    const { dentist_id, status, clinic_note, force_assign } = req.body;
 
     const allowedStatuses = ["Pending", "Confirmed", "Cancelled"];
 
@@ -270,6 +304,16 @@ const manageAppointment = async (req, res) => {
       });
     }
 
+    if (normalizedDentistId) {
+      const dentist = await findDentistById(normalizedDentistId);
+
+      if (!dentist?.is_active || !dentist?.user_is_active) {
+        return res.status(409).json({
+          message: "Dentist is inactive and cannot receive appointments",
+        });
+      }
+    }
+
     const hasConflict =
       status !== "Cancelled" &&
       (await checkAppointmentConflictForUpdate(
@@ -279,9 +323,27 @@ const manageAppointment = async (req, res) => {
         appointmentId,
       ));
 
-    if (hasConflict) {
+    if (hasConflict && !force_assign) {
       return res.status(409).json({
-        message: "Dentist already has an appointment at this time",
+        code: "DENTIST_HAS_APPOINTMENT",
+        message:
+          "Dentist already has an appointment at this time. Do you still want to assign?",
+      });
+    }
+
+    const isDentistUnavailable =
+      status !== "Cancelled" &&
+      (await checkDentistUnavailableConflict(
+        normalizedDentistId,
+        appointment.appointment_date,
+        appointment.appointment_time,
+      ));
+
+    if (isDentistUnavailable && !force_assign) {
+      return res.status(409).json({
+        code: "DENTIST_UNAVAILABLE",
+        message:
+          "Dentist is marked unavailable at this time. Do you still want to assign?",
       });
     }
 
@@ -295,6 +357,34 @@ const manageAppointment = async (req, res) => {
     res.status(200).json({
       message: "Appointment updated successfully",
       data: updatedAppointment,
+      warning:
+        hasConflict || isDentistUnavailable
+          ? "Appointment assigned with admin override"
+          : null,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+const getAppointmentsForDentist = async (req, res) => {
+  try {
+    const dentistProfile = await findDentistByUserId(req.user.id);
+
+    if (!dentistProfile) {
+      return res.status(404).json({
+        message: "Dentist profile not found",
+      });
+    }
+
+    const appointments = await getAppointmentsByDentistId(dentistProfile.id);
+
+    res.status(200).json({
+      message: "Dentist appointments fetched successfully",
+      data: appointments,
     });
   } catch (error) {
     res.status(500).json({
@@ -310,4 +400,5 @@ module.exports = {
   getAppointmentsForAdmin,
   cancelAppointment,
   manageAppointment,
+  getAppointmentsForDentist,
 };

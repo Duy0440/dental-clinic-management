@@ -249,6 +249,50 @@ const updateAppointmentByAdmin = async (
   return result.rows[0];
 };
 
+const getAppointmentsByDentistId = async (dentistId) => {
+  const query = `
+    SELECT
+      a.id,
+      a.patient_id,
+      a.dentist_id,
+      a.service_id,
+      TO_CHAR(a.appointment_date, 'YYYY-MM-DD') AS appointment_date,
+      a.appointment_time,
+      a.status,
+      a.note,
+      a.clinic_note,
+      p.full_name AS patient_name,
+      p.phone AS patient_phone,
+      s.service_name,
+      CASE
+        WHEN mr.id IS NULL THEN FALSE
+        ELSE TRUE
+      END AS has_medical_record
+    FROM appointments a
+    JOIN patients p ON a.patient_id = p.id
+    JOIN services s ON a.service_id = s.id
+    LEFT JOIN medical_records mr ON mr.appointment_id = a.id
+    WHERE a.dentist_id = $1
+      AND a.status IN ('Pending', 'Confirmed')
+    ORDER BY a.appointment_date ASC, a.appointment_time ASC
+  `;
+
+  const result = await pool.query(query, [dentistId]);
+  return result.rows;
+};
+
+const markAppointmentCompletedById = async (appointmentId) => {
+  const query = `
+    UPDATE appointments
+    SET status = 'Completed'
+    WHERE id = $1
+    RETURNING *
+  `;
+
+  const result = await pool.query(query, [appointmentId]);
+  return result.rows[0];
+};
+
 module.exports = {
   getAppointmentHistoryByPatientId,
   createAppointment,
@@ -259,4 +303,6 @@ module.exports = {
   findAppointmentById,
   checkAppointmentConflictForUpdate,
   updateAppointmentByAdmin,
+  getAppointmentsByDentistId,
+  markAppointmentCompletedById,
 };

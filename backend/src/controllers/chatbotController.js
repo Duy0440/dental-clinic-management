@@ -1,33 +1,53 @@
-﻿const getChatbotReply = async (req, res) => {
+﻿const {
+  createChatbotLog,
+  checkChatbotUserExists,
+} = require("../models/chatbotLogModel");
+const { generateDentalReply } = require("../services/chatbotService");
+
+const getChatbotReply = async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, user_id, history = [] } = req.body;
 
-    if (!message) {
-      return res.status(400).json({ message: "Message is required" });
+    if (!message || !String(message).trim()) {
+      return res.status(400).json({
+        message: "Vui lòng nhập câu hỏi trước khi gửi.",
+      });
     }
 
-    const lowerMessage = message.toLowerCase();
-    let reply = "Xin chao. Toi la chatbot nha khoa. Ban vui long dat cau hoi cu the hon.";
+    if (user_id) {
+      const userExists = await checkChatbotUserExists(user_id);
 
-    if (lowerMessage.includes("nho rang")) {
-      reply = "Nho rang la dich vu kham va lay cao rang dinh ky de giu suc khoe rang mieng tot hon.";
-    } else if (lowerMessage.includes("sau rang")) {
-      reply = "Sau rang can duoc tham kham som de tranh anh huong den tuy rang va gay dau nhuc.";
-    } else if (lowerMessage.includes("dat lich")) {
-      reply = "Ban co the dat lich bang cach chon dich vu, nha si, ngay kham va gio kham tren trang Booking.";
-    } else if (lowerMessage.includes("gia")) {
-      reply = "Ban vui long xem bang gia dich vu trong muc Services de biet chi tiet muc phi.";
+      if (!userExists) {
+        return res.status(404).json({
+          message: "Không tìm thấy tài khoản người dùng.",
+        });
+      }
     }
 
-    res.json({
-      reply,
-      note: "Day la chatbot mau don gian. Ban co the nang cap bang OpenAI API hoac Gemini API."
+    const chatbotResult = await generateDentalReply(message, history);
+
+    await createChatbotLog({
+      user_id: user_id || null,
+      question: message,
+      answer: chatbotResult.answer,
+    });
+
+    res.status(200).json({
+      message: "Chatbot đã phản hồi thành công.",
+      data: {
+        reply: chatbotResult.answer,
+        source: chatbotResult.source,
+        suggestions: chatbotResult.suggestions,
+      },
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({
+      message: "Lỗi máy chủ",
+      error: error.message,
+    });
   }
 };
 
 module.exports = {
-  getChatbotReply
+  getChatbotReply,
 };

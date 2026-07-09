@@ -87,6 +87,10 @@ function Login() {
                 </p>
               )}
 
+              <p className="text-center mt-3 mb-0">
+                <Link to="/forgot-password">Quên mật khẩu?</Link>
+              </p>
+
               <p className="text-center mt-4 mb-0">
                 Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
               </p>
