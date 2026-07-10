@@ -126,6 +126,51 @@ const checkDentistAppointmentConflict = async (
   return result.rows.length > 0;
 };
 
+const getBookedAppointmentSlotsByDate = async (appointmentDate, dentistId) => {
+  const values = [appointmentDate];
+  const dentistFilter = dentistId ? "AND dentist_id = $2" : "";
+
+  if (dentistId) {
+    values.push(dentistId);
+  }
+
+  const query = `
+    SELECT
+      dentist_id,
+      TO_CHAR(appointment_time, 'HH24:MI') AS appointment_time
+    FROM appointments
+    WHERE appointment_date = $1
+      AND dentist_id IS NOT NULL
+      AND status IN ('Pending', 'Confirmed')
+      ${dentistFilter}
+  `;
+
+  const result = await pool.query(query, values);
+  return result.rows;
+};
+
+const getUnavailableBlocksByDate = async (appointmentDate, dentistId) => {
+  const values = [appointmentDate];
+  const dentistFilter = dentistId ? "AND dentist_id = $2" : "";
+
+  if (dentistId) {
+    values.push(dentistId);
+  }
+
+  const query = `
+    SELECT
+      dentist_id,
+      TO_CHAR(start_time, 'HH24:MI') AS start_time,
+      TO_CHAR(end_time, 'HH24:MI') AS end_time
+    FROM dentist_unavailable_times
+    WHERE unavailable_date = $1
+      ${dentistFilter}
+  `;
+
+  const result = await pool.query(query, values);
+  return result.rows;
+};
+
 const cancelAppointmentById = async (appointmentId, patientId) => {
   const query = `
     UPDATE appointments
@@ -298,6 +343,8 @@ module.exports = {
   createAppointment,
   checkAppointmentReferences,
   checkDentistAppointmentConflict,
+  getBookedAppointmentSlotsByDate,
+  getUnavailableBlocksByDate,
   cancelAppointmentById,
   getAllAppointments,
   findAppointmentById,

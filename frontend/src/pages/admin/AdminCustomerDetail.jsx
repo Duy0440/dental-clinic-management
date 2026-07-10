@@ -4,24 +4,13 @@ import axiosClient from "../../api/axiosClient";
 import { getAssetUrl } from "../../api/urlHelpers";
 import MedicalRecordForm from "../../components/admin/MedicalRecordForm";
 
-const TIME_OPTIONS = [
-  "08:00",
-  "08:30",
-  "09:00",
-  "09:30",
-  "10:00",
-  "10:30",
-  "11:00",
-  "11:30",
-  "13:00",
-  "13:30",
-  "14:00",
-  "14:30",
-  "15:00",
-  "15:30",
-  "16:00",
-  "16:30",
-];
+const getTodayText = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 const initialAppointmentForm = {
   dentist_id: "",
@@ -51,9 +40,15 @@ function AdminCustomerDetail() {
   const [appointmentForm, setAppointmentForm] = useState(initialAppointmentForm);
   const [loading, setLoading] = useState(true);
   const [savingAppointment, setSavingAppointment] = useState(false);
+  const [availableAppointmentTimes, setAvailableAppointmentTimes] = useState([]);
+  const [loadingAppointmentTimes, setLoadingAppointmentTimes] = useState(false);
+  const [appointmentTimeMessage, setAppointmentTimeMessage] = useState(
+    "Chọn ngày hẹn để hệ thống kiểm tra giờ còn trống.",
+  );
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
+  const todayText = getTodayText();
 
 
   useEffect(() => {
@@ -106,15 +101,87 @@ function AdminCustomerDetail() {
 
   const closeAppointmentForm = () => {
     setAppointmentForm(initialAppointmentForm);
+    setAvailableAppointmentTimes([]);
+    setAppointmentTimeMessage("Chọn ngày hẹn để hệ thống kiểm tra giờ còn trống.");
     setShowAppointmentForm(false);
   };
 
   const handleAppointmentChange = (event) => {
-    setAppointmentForm({
-      ...appointmentForm,
-      [event.target.name]: event.target.value,
+    const { name, value } = event.target;
+
+    setAppointmentForm((current) => {
+      if (name === "appointment_date" || name === "dentist_id") {
+        return {
+          ...current,
+          [name]: value,
+          appointment_time: "",
+        };
+      }
+
+      return {
+        ...current,
+        [name]: value,
+      };
     });
   };
+
+  useEffect(() => {
+    const fetchAvailableAppointmentTimes = async () => {
+      if (!showAppointmentForm) {
+        return;
+      }
+
+      if (!appointmentForm.appointment_date) {
+        setAvailableAppointmentTimes([]);
+        setAppointmentTimeMessage("Chọn ngày hẹn để hệ thống kiểm tra giờ còn trống.");
+        return;
+      }
+
+      setLoadingAppointmentTimes(true);
+
+      try {
+        const params = new URLSearchParams({
+          date: appointmentForm.appointment_date,
+        });
+
+        if (appointmentForm.dentist_id) {
+          params.append("dentist_id", appointmentForm.dentist_id);
+        }
+
+        const response = await axiosClient.get(
+          `/appointments/available-times?${params.toString()}`,
+        );
+        const times = response.data.data?.available_times || [];
+        const apiMessage = response.data.data?.message;
+
+        setAvailableAppointmentTimes(times);
+        setAppointmentTimeMessage(
+          apiMessage ||
+            (times.length
+              ? `Còn ${times.length} khung giờ có thể tạo lịch.`
+              : "Ngày này đã hết giờ nhận lịch online, vui lòng chọn ngày khác."),
+        );
+        setAppointmentForm((current) =>
+          current.appointment_time && !times.includes(current.appointment_time)
+            ? { ...current, appointment_time: "" }
+            : current,
+        );
+      } catch (error) {
+        setAvailableAppointmentTimes([]);
+        setAppointmentTimeMessage(
+          error.response?.data?.message ||
+            "Không thể kiểm tra giờ trống, vui lòng thử lại.",
+        );
+        setAppointmentForm((current) =>
+          current.appointment_time ? { ...current, appointment_time: "" } : current,
+        );
+      } finally {
+        setLoadingAppointmentTimes(false);
+      }
+    };
+
+    fetchAvailableAppointmentTimes();
+  }, [showAppointmentForm, appointmentForm.appointment_date, appointmentForm.dentist_id]);
 
   const handleCreateAppointment = async (event) => {
     event.preventDefault();
@@ -123,6 +190,16 @@ function AdminCustomerDetail() {
     setSuccessMessage("");
 
     try {
+      if (!availableAppointmentTimes.includes(appointmentForm.appointment_time)) {
+        setErrorMessage(
+          availableAppointmentTimes.length
+            ? "Khung giờ này không còn trống. Vui lòng chọn một giờ còn trống."
+            : "Ngày này đã hết giờ phù hợp. Vui lòng chọn ngày khác.",
+        );
+        setSavingAppointment(false);
+        return;
+      }
+
       await axiosClient.post("/appointments", {
         patient_id: Number(customerId),
         dentist_id: appointmentForm.dentist_id
@@ -402,6 +479,45 @@ function AdminCustomerDetail() {
               </button>
             </div>
 
+            <div className="booking-time-panel admin-booking-time-panel">
+              <div className="booking-time-panel-header">
+                <strong>Khung giờ còn trống</strong>
+                <span>
+                  {appointmentForm.dentist_id
+                    ? "Theo nha sĩ đã chọn"
+                    : "Theo toàn bộ nha sĩ đang nhận lịch"}
+                </span>
+              </div>
+              <p
+                className={`booking-time-message ${
+                  availableAppointmentTimes.length ? "is-ok" : "is-warning"
+                }`}
+              >
+                {appointmentTimeMessage}
+              </p>
+              {availableAppointmentTimes.length > 0 && (
+                <div className="booking-time-grid">
+                  {availableAppointmentTimes.map((time) => (
+                    <button
+                      key={time}
+                      type="button"
+                      className={`booking-time-chip ${
+                        appointmentForm.appointment_time === time ? "active" : ""
+                      }`}
+                      onClick={() =>
+                        setAppointmentForm((current) => ({
+                          ...current,
+                          appointment_time: time,
+                        }))
+                      }
+                    >
+                      {time}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <label>
               Dịch vụ
               <select
@@ -443,6 +559,7 @@ function AdminCustomerDetail() {
                   type="date"
                   name="appointment_date"
                   value={appointmentForm.appointment_date}
+                  min={todayText}
                   onChange={handleAppointmentChange}
                 />
               </label>
@@ -454,9 +571,14 @@ function AdminCustomerDetail() {
                   name="appointment_time"
                   value={appointmentForm.appointment_time}
                   onChange={handleAppointmentChange}
+                  disabled={
+                    !appointmentForm.appointment_date ||
+                    loadingAppointmentTimes ||
+                    availableAppointmentTimes.length === 0
+                  }
                 >
                   <option value="">Chọn giờ</option>
-                  {TIME_OPTIONS.map((time) => (
+                  {availableAppointmentTimes.map((time) => (
                     <option key={time} value={time}>
                       {time}
                     </option>

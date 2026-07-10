@@ -6,6 +6,7 @@ const {
   cancelAppointment,
   manageAppointment,
   getAppointmentsForDentist,
+  getAvailableAppointmentTimes,
 } = require("../controllers/appointmentController");
 const {
   verifyToken,
@@ -16,6 +17,7 @@ const {
 const router = express.Router();
 
 router.get("/", verifyToken, authorizeRoles("admin"), getAppointmentsForAdmin);
+router.get("/available-times", getAvailableAppointmentTimes);
 router.get("/dentist/my-schedule", verifyToken, authorizeRoles("dentist"), getAppointmentsForDentist);
 router.get("/history/:patientId", verifyToken, getAppointmentHistory);
 router.post("/", optionalVerifyToken, addAppointment);

@@ -2262,3 +2262,133 @@
     height: 62px;
   }
 }
+
+@media (max-width: 768px) {
+  .clinic-home-v2,
+  .clinic-home-v2 section,
+  .clinic-section-v2,
+  .clinic-promise-strip,
+  .clinic-team-v2,
+  .clinic-facilities-v2 {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .clinic-hero-v2 {
+    min-height: 620px;
+    align-items: flex-end;
+  }
+
+  .clinic-hero-v2-image {
+    object-position: 64% center;
+  }
+
+  .clinic-hero-v2-overlay {
+    background:
+      linear-gradient(90deg, rgba(18, 27, 38, 0.94) 0%, rgba(18, 27, 38, 0.78) 58%, rgba(18, 27, 38, 0.28) 100%),
+      linear-gradient(0deg, rgba(18, 27, 38, 0.36), transparent 42%);
+  }
+
+  .clinic-hero-v2-inner {
+    padding: 54px 0 76px;
+  }
+
+  .clinic-hero-v2-copy {
+    max-width: min(100%, 360px);
+  }
+
+  .clinic-hero-v2-copy h1 {
+    max-width: 340px;
+    margin: 16px 0;
+    font-size: clamp(2.45rem, 13vw, 3.25rem);
+    line-height: 1.02;
+  }
+
+  .clinic-hero-v2-copy p {
+    max-width: 330px;
+    font-size: 0.98rem;
+    line-height: 1.7;
+  }
+
+  .clinic-hero-v2-actions {
+    gap: 10px;
+    margin-top: 26px;
+  }
+
+  .clinic-hero-v2-actions .clinic-primary-btn,
+  .clinic-hero-v2-actions .clinic-secondary-btn {
+    width: 100%;
+    max-width: 270px;
+  }
+
+  .clinic-promise-strip-inner,
+  .clinic-service-v2-grid,
+  .clinic-facilities-v2-grid,
+  .clinic-doctor-v2-showcase,
+  .clinic-doctor-v2-frame,
+  .clinic-doctor-v2-track,
+  .clinic-doctor-v2-slide {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .clinic-heading-v2 h2,
+  .clinic-facilities-v2-copy h2,
+  .clinic-team-v2 .clinic-heading-v2 h2 {
+    font-size: clamp(2rem, 10vw, 2.8rem);
+    line-height: 1.08;
+    letter-spacing: -0.05em;
+  }
+
+  .clinic-service-v2-grid,
+  .clinic-facilities-v2-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .clinic-doctor-v2-showcase {
+    padding: 0 0 52px;
+  }
+
+  .clinic-doctor-v2-slide {
+    grid-template-columns: 1fr;
+  }
+
+  .clinic-doctor-v2-portrait,
+  .clinic-doctor-v2-content {
+    min-height: auto;
+  }
+
+  .clinic-doctor-v2-portrait {
+    height: 380px;
+  }
+
+  .clinic-doctor-v2-content {
+    padding: 28px 20px 34px;
+  }
+
+  .clinic-doctor-v2-content h3 {
+    font-size: 2.1rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .clinic-hero-v2 {
+    min-height: 650px;
+  }
+
+  .clinic-hero-v2-copy {
+    max-width: 315px;
+  }
+
+  .clinic-hero-v2-copy h1,
+  .clinic-hero-v2-copy p {
+    max-width: 305px;
+  }
+
+  .clinic-hero-v2-actions .clinic-primary-btn,
+  .clinic-hero-v2-actions .clinic-secondary-btn {
+    max-width: 245px;
+  }
+}

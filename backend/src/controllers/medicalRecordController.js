@@ -13,11 +13,21 @@ const {
 } = require("../models/appointmentModel");
 
 const {
+  checkDentistUnavailableConflict,
+} = require("../models/dentistUnavailableModel");
+
+const {
   createMedicalRecordAttachment,
 } = require("../models/medicalRecordAttachmentModel");
 
 const { findPatientByUserId } = require("../models/patientModel");
 const { findDentistByUserId } = require("../models/dentistModel");
+const {
+  getClinicDayInfo,
+  isClinicBookingTime,
+  isPastClinicDate,
+  normalizeTime,
+} = require("../utils/clinicSchedule");
 
 const listMedicalRecords = async (req, res) => {
   try {
@@ -154,28 +164,69 @@ const addMedicalRecord = async (req, res) => {
       }
     }
 
-    const hasReExaminationConflict = await checkReExaminationConflict(
-      finalDentistId,
-      re_examination_date,
-      re_examination_time,
-    );
+    const normalizedReExaminationTime = normalizeTime(re_examination_time);
 
-    if (hasReExaminationConflict) {
-      return res.status(409).json({
-        message: "This re-examination time is already used",
+    if (
+      (re_examination_date && !normalizedReExaminationTime) ||
+      (!re_examination_date && normalizedReExaminationTime)
+    ) {
+      return res.status(400).json({
+        message: "Vui lòng chọn đủ ngày và giờ tái khám, hoặc bỏ trống cả hai.",
       });
     }
 
-    const hasAppointmentConflict = await checkDentistAppointmentConflict(
-      finalDentistId,
-      re_examination_date,
-      re_examination_time,
-    );
+    if (re_examination_date && normalizedReExaminationTime) {
+      if (isPastClinicDate(re_examination_date)) {
+        return res.status(400).json({
+          message: "Không thể đề xuất tái khám vào ngày đã qua.",
+        });
+      }
 
-    if (hasAppointmentConflict) {
-      return res.status(409).json({
-        message: "This re-examination time already has another appointment",
-      });
+      if (!isClinicBookingTime(re_examination_date, normalizedReExaminationTime)) {
+        const dayInfo = getClinicDayInfo(re_examination_date);
+
+        return res.status(400).json({
+          message: dayInfo.isClosed
+            ? dayInfo.message
+            : "Giờ tái khám đề xuất phải nằm trong khung nhận lịch online 08:00-12:00 hoặc 13:30-18:00.",
+        });
+      }
+
+      const hasReExaminationConflict = await checkReExaminationConflict(
+        finalDentistId,
+        re_examination_date,
+        normalizedReExaminationTime,
+      );
+
+      if (hasReExaminationConflict) {
+        return res.status(409).json({
+          message: "Khung giờ tái khám này đã được dùng cho hồ sơ khác.",
+        });
+      }
+
+      const hasAppointmentConflict = await checkDentistAppointmentConflict(
+        finalDentistId,
+        re_examination_date,
+        normalizedReExaminationTime,
+      );
+
+      if (hasAppointmentConflict) {
+        return res.status(409).json({
+          message: "Khung giờ tái khám này đã trùng với lịch hẹn khác của nha sĩ.",
+        });
+      }
+
+      const hasUnavailableConflict = await checkDentistUnavailableConflict(
+        finalDentistId,
+        re_examination_date,
+        normalizedReExaminationTime,
+      );
+
+      if (hasUnavailableConflict) {
+        return res.status(409).json({
+          message: "Nha sĩ đã báo bận vào khung giờ tái khám này.",
+        });
+      }
     }
 
     const newRecord = await createMedicalRecord({
@@ -186,7 +237,7 @@ const addMedicalRecord = async (req, res) => {
       treatment,
       note,
       re_examination_date,
-      re_examination_time,
+      re_examination_time: normalizedReExaminationTime,
       attachment_url,
       entered_by_user_id: req.user.id,
     });

@@ -2,24 +2,13 @@
 import { Link } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 
-const TIME_OPTIONS = [
-  "08:00",
-  "08:30",
-  "09:00",
-  "09:30",
-  "10:00",
-  "10:30",
-  "11:00",
-  "11:30",
-  "13:00",
-  "13:30",
-  "14:00",
-  "14:30",
-  "15:00",
-  "15:30",
-  "16:00",
-  "16:30",
-];
+const getTodayText = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 function Booking() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -38,6 +27,10 @@ function Booking() {
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [availableTimes, setAvailableTimes] = useState([]);
+  const [loadingTimes, setLoadingTimes] = useState(false);
+  const [timeMessage, setTimeMessage] = useState("");
+  const todayText = getTodayText();
 
   useEffect(() => {
     const fetchBookingData = async () => {
@@ -59,10 +52,81 @@ function Booking() {
     fetchBookingData();
   }, []);
 
+  useEffect(() => {
+    const fetchAvailableTimes = async () => {
+      if (!formData.appointment_date) {
+        setAvailableTimes([]);
+        setTimeMessage("Chọn ngày khám để hệ thống kiểm tra giờ còn trống.");
+        return;
+      }
+
+      setLoadingTimes(true);
+      setTimeMessage("");
+
+      try {
+        const params = new URLSearchParams({
+          date: formData.appointment_date,
+        });
+
+        if (formData.dentist_id) {
+          params.append("dentist_id", formData.dentist_id);
+        }
+
+        const response = await axiosClient.get(
+          `/appointments/available-times?${params.toString()}`,
+        );
+        const times = response.data.data?.available_times || [];
+        const apiMessage = response.data.data?.message;
+
+        setAvailableTimes(times);
+
+        if (!times.length) {
+          setTimeMessage(
+            apiMessage ||
+              "Ngày này hiện đã hết khung giờ phù hợp. Bạn vui lòng chọn ngày khác nhé.",
+          );
+        } else {
+          setTimeMessage(apiMessage || `Còn ${times.length} khung giờ có thể đặt trong ngày này.`);
+        }
+
+        setFormData((current) =>
+          current.appointment_time && !times.includes(current.appointment_time)
+            ? { ...current, appointment_time: "" }
+            : current,
+        );
+      } catch (error) {
+        setAvailableTimes([]);
+        setTimeMessage(
+          error.response?.data?.message ||
+            "Không thể kiểm tra giờ trống, vui lòng thử lại.",
+        );
+        setFormData((current) =>
+          current.appointment_time ? { ...current, appointment_time: "" } : current,
+        );
+      } finally {
+        setLoadingTimes(false);
+      }
+    };
+
+    fetchAvailableTimes();
+  }, [formData.appointment_date, formData.dentist_id]);
+
   const handleChange = (event) => {
-    setFormData({
-      ...formData,
-      [event.target.name]: event.target.value,
+    const { name, value } = event.target;
+
+    setFormData((current) => {
+      if (name === "appointment_date" || name === "dentist_id") {
+        return {
+          ...current,
+          [name]: value,
+          appointment_time: "",
+        };
+      }
+
+      return {
+        ...current,
+        [name]: value,
+      };
     });
   };
 
@@ -72,6 +136,15 @@ function Booking() {
     setIsSuccess(false);
 
     try {
+      if (!availableTimes.includes(formData.appointment_time)) {
+        setMessage(
+          availableTimes.length
+            ? "Khung giờ này không còn trống. Bạn vui lòng chọn một giờ còn trống bên dưới."
+            : "Ngày này đã hết giờ phù hợp. Bạn vui lòng chọn ngày khác.",
+        );
+        return;
+      }
+
       const payload = {
         service_id: Number(formData.service_id),
         appointment_date: formData.appointment_date,
@@ -90,7 +163,7 @@ function Booking() {
         payload.guest_phone = formData.guest_phone;
       }
 
-      const response = await axiosClient.post("/appointments", payload);
+      await axiosClient.post("/appointments", payload);
 
       setIsSuccess(true);
       setMessage("Cuộc hẹn đã được tạo thành công");
@@ -104,8 +177,13 @@ function Booking() {
         appointment_time: "",
         note: "",
       });
+      setAvailableTimes([]);
+      setTimeMessage("");
     } catch (error) {
       setMessage(error.response?.data?.message || "Lỗi máy chủ");
+      if (Array.isArray(error.response?.data?.available_times)) {
+        setAvailableTimes(error.response.data.available_times);
+      }
     }
   };
 
@@ -220,6 +298,7 @@ function Booking() {
                         name="appointment_date"
                         className="form-control"
                         value={formData.appointment_date}
+                        min={todayText}
                         onChange={handleChange}
                       />
                     </div>
@@ -231,15 +310,69 @@ function Booking() {
                         className="form-select"
                         value={formData.appointment_time}
                         onChange={handleChange}
+                        disabled={
+                          !formData.appointment_date ||
+                          loadingTimes ||
+                          availableTimes.length === 0
+                        }
                       >
-                        <option value="">Chọn giờ khám</option>
-                        {TIME_OPTIONS.map((time) => (
+                        <option value="">
+                          {loadingTimes
+                            ? "Đang kiểm tra giờ trống..."
+                            : "Chọn giờ khám"}
+                        </option>
+                        {availableTimes.map((time) => (
                           <option key={time} value={time}>
                             {time}
                           </option>
                         ))}
                       </select>
                     </div>
+                  </div>
+
+                  <div className="booking-time-panel mb-3">
+                    <div className="booking-time-panel-header">
+                      <strong>Giờ còn trống</strong>
+                      <span>
+                        {formData.appointment_date
+                          ? formData.dentist_id
+                            ? "Theo nha sĩ đã chọn"
+                            : "Theo toàn bộ nha sĩ đang nhận lịch"
+                          : "Chưa chọn ngày"}
+                      </span>
+                    </div>
+
+                    <p
+                      className={`booking-time-message ${
+                        availableTimes.length ? "is-ok" : "is-warning"
+                      }`}
+                    >
+                      {timeMessage}
+                    </p>
+
+                    {formData.appointment_date && availableTimes.length > 0 && (
+                      <div className="booking-time-grid">
+                        {availableTimes.map((time) => (
+                          <button
+                            key={time}
+                            type="button"
+                            className={`booking-time-chip ${
+                              formData.appointment_time === time
+                                ? "active"
+                                : ""
+                            }`}
+                            onClick={() =>
+                              setFormData((current) => ({
+                                ...current,
+                                appointment_time: time,
+                              }))
+                            }
+                          >
+                            {time}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="mb-3">

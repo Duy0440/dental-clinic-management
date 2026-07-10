@@ -15,24 +15,13 @@ const STATUS_CLASSES = {
   Cancelled: "cancelled",
 };
 
-const TIME_OPTIONS = [
-  "07:00",
-  "07:30",
-  "08:00",
-  "08:30",
-  "09:00",
-  "09:30",
-  "10:00",
-  "10:30",
-  "13:30",
-  "14:00",
-  "14:30",
-  "15:00",
-  "15:30",
-  "16:00",
-  "16:30",
-  "17:00",
-];
+const getTodayText = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 function DentistAppointments() {
   const [appointments, setAppointments] = useState([]);
@@ -47,6 +36,11 @@ function DentistAppointments() {
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [availableReExamTimes, setAvailableReExamTimes] = useState([]);
+  const [loadingReExamTimes, setLoadingReExamTimes] = useState(false);
+  const [reExamTimeMessage, setReExamTimeMessage] = useState(
+    "Chọn ngày tái khám để kiểm tra giờ còn trống.",
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -70,7 +64,7 @@ function DentistAppointments() {
     fetchAppointments();
   }, []);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getTodayText();
   const todayAppointments = appointments.filter(
     (appointment) => appointment.appointment_date === today,
   );
@@ -137,16 +131,88 @@ function DentistAppointments() {
   const closeMedicalRecordForm = () => {
     setSelectedAppointment(null);
     setAttachmentFile(null);
+    setAvailableReExamTimes([]);
+    setReExamTimeMessage("Chọn ngày tái khám để kiểm tra giờ còn trống.");
   };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
 
-    setFormData({
-      ...formData,
-      [name]: value,
+    setFormData((current) => {
+      if (name === "re_examination_date") {
+        return {
+          ...current,
+          [name]: value,
+          re_examination_time: "",
+        };
+      }
+
+      return {
+        ...current,
+        [name]: value,
+      };
     });
   };
+
+  useEffect(() => {
+    const fetchReExaminationTimes = async () => {
+      if (!selectedAppointment) {
+        return;
+      }
+
+      if (!formData.re_examination_date) {
+        setAvailableReExamTimes([]);
+        setReExamTimeMessage("Chọn ngày tái khám để kiểm tra giờ còn trống.");
+        return;
+      }
+
+      setLoadingReExamTimes(true);
+
+      try {
+        const params = new URLSearchParams({
+          date: formData.re_examination_date,
+        });
+
+        if (selectedAppointment.dentist_id) {
+          params.append("dentist_id", selectedAppointment.dentist_id);
+        }
+
+        const response = await axiosClient.get(
+          `/appointments/available-times?${params.toString()}`,
+        );
+        const times = response.data.data?.available_times || [];
+        const apiMessage = response.data.data?.message;
+
+        setAvailableReExamTimes(times);
+        setReExamTimeMessage(
+          apiMessage ||
+            (times.length
+              ? `Còn ${times.length} khung giờ có thể đề xuất tái khám.`
+              : "Ngày này đã hết giờ phù hợp, vui lòng chọn ngày khác."),
+        );
+        setFormData((current) =>
+          current.re_examination_time && !times.includes(current.re_examination_time)
+            ? { ...current, re_examination_time: "" }
+            : current,
+        );
+      } catch (error) {
+        setAvailableReExamTimes([]);
+        setReExamTimeMessage(
+          error.response?.data?.message ||
+            "Không thể kiểm tra giờ tái khám, vui lòng thử lại.",
+        );
+        setFormData((current) =>
+          current.re_examination_time
+            ? { ...current, re_examination_time: "" }
+            : current,
+        );
+      } finally {
+        setLoadingReExamTimes(false);
+      }
+    };
+
+    fetchReExaminationTimes();
+  }, [selectedAppointment, formData.re_examination_date]);
 
   const handleCreateMedicalRecord = async (event) => {
     event.preventDefault();
@@ -155,6 +221,18 @@ function DentistAppointments() {
 
     if (!formData.diagnosis || !formData.treatment) {
       setErrorMessage("Vui lòng nhập chẩn đoán và nội dung điều trị.");
+      return;
+    }
+
+    if (
+      formData.re_examination_date &&
+      !availableReExamTimes.includes(formData.re_examination_time)
+    ) {
+      setErrorMessage(
+        availableReExamTimes.length
+          ? "Giờ tái khám này không còn trống. Vui lòng chọn một giờ còn trống."
+          : "Ngày tái khám này đã hết giờ phù hợp. Vui lòng chọn ngày khác.",
+      );
       return;
     }
 
@@ -397,6 +475,7 @@ function DentistAppointments() {
                   type="date"
                   name="re_examination_date"
                   value={formData.re_examination_date}
+                  min={today}
                   onChange={handleChange}
                 />
               </div>
@@ -407,15 +486,59 @@ function DentistAppointments() {
                   name="re_examination_time"
                   value={formData.re_examination_time}
                   onChange={handleChange}
+                  disabled={
+                    !formData.re_examination_date ||
+                    loadingReExamTimes ||
+                    availableReExamTimes.length === 0
+                  }
                 >
-                  <option value="">Không hẹn giờ cụ thể</option>
-                  {TIME_OPTIONS.map((time) => (
+                  <option value="">
+                    {loadingReExamTimes
+                      ? "Đang kiểm tra giờ trống..."
+                      : "Chọn giờ tái khám"}
+                  </option>
+                  {availableReExamTimes.map((time) => (
                     <option key={time} value={time}>
                       {time}
                     </option>
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div className="booking-time-panel dentist-reexam-time-panel">
+              <div className="booking-time-panel-header">
+                <strong>Giờ tái khám còn trống</strong>
+                <span>Theo lịch của bác sĩ phụ trách</span>
+              </div>
+              <p
+                className={`booking-time-message ${
+                  availableReExamTimes.length ? "is-ok" : "is-warning"
+                }`}
+              >
+                {reExamTimeMessage}
+              </p>
+              {availableReExamTimes.length > 0 && (
+                <div className="booking-time-grid">
+                  {availableReExamTimes.map((time) => (
+                    <button
+                      key={time}
+                      type="button"
+                      className={`booking-time-chip ${
+                        formData.re_examination_time === time ? "active" : ""
+                      }`}
+                      onClick={() =>
+                        setFormData((current) => ({
+                          ...current,
+                          re_examination_time: time,
+                        }))
+                      }
+                    >
+                      {time}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <label>Hình ảnh hoặc file đính kèm</label>

@@ -4,6 +4,8 @@
   createAppointment,
   checkAppointmentReferences,
   checkDentistAppointmentConflict,
+  getBookedAppointmentSlotsByDate,
+  getUnavailableBlocksByDate,
   cancelAppointmentById,
   findAppointmentById,
   checkAppointmentConflictForUpdate,
@@ -14,6 +16,7 @@
 const {
   findDentistById,
   findDentistByUserId,
+  getActiveDentists,
 } = require("../models/dentistModel");
 
 const {
@@ -25,12 +28,150 @@ const {
   createPatient,
 } = require("../models/patientModel");
 
+const {
+  getClinicBookingTimeOptions,
+  getClinicDayInfo,
+  isClinicBookingTime,
+  isPastClinicDate,
+  normalizeTime,
+} = require("../utils/clinicSchedule");
+
 const VALID_APPOINTMENT_STATUSES = [
   "Pending",
   "Confirmed",
   "Completed",
   "Cancelled",
 ];
+
+const isTimeInsideBlock = (time, block) => {
+  const startTime = normalizeTime(block.start_time);
+  const endTime = normalizeTime(block.end_time);
+
+  if (!startTime && !endTime) {
+    return true;
+  }
+
+  return time >= startTime && time < endTime;
+};
+
+const buildAvailableTimes = async (appointmentDate, dentistId = null) => {
+  const dayInfo = getClinicDayInfo(appointmentDate);
+  const timeOptions = getClinicBookingTimeOptions(appointmentDate);
+
+  if (!dayInfo.isValid || dayInfo.isClosed || isPastClinicDate(appointmentDate)) {
+    return {
+      activeDentistCount: 0,
+      availableTimes: [],
+      blockedTimes: [],
+      dayInfo,
+      message: isPastClinicDate(appointmentDate)
+        ? "Không thể đặt lịch cho ngày đã qua."
+        : dayInfo.message,
+    };
+  }
+
+  const activeDentists = await getActiveDentists();
+  const normalizedDentistId = dentistId ? Number(dentistId) : null;
+
+  const targetDentists = normalizedDentistId
+    ? activeDentists.filter((dentist) => dentist.id === normalizedDentistId)
+    : activeDentists;
+
+  if (!targetDentists.length) {
+    return {
+      activeDentistCount: activeDentists.length,
+      availableTimes: [],
+      blockedTimes: timeOptions,
+      dayInfo,
+      message: "Hiện chưa có nha sĩ phù hợp để nhận lịch ngày này.",
+    };
+  }
+
+  const targetDentistIds = targetDentists.map((dentist) => dentist.id);
+  const bookedSlots = await getBookedAppointmentSlotsByDate(
+    appointmentDate,
+    normalizedDentistId,
+  );
+  const unavailableBlocks = await getUnavailableBlocksByDate(
+    appointmentDate,
+    normalizedDentistId,
+  );
+
+  const bookedKeys = new Set(
+    bookedSlots.map(
+      (slot) => `${slot.dentist_id}-${normalizeTime(slot.appointment_time)}`,
+    ),
+  );
+
+  const isDentistFreeAtTime = (dentistIdToCheck, time) => {
+    const hasAppointment = bookedKeys.has(`${dentistIdToCheck}-${time}`);
+    const isUnavailable = unavailableBlocks.some(
+      (block) =>
+        block.dentist_id === dentistIdToCheck && isTimeInsideBlock(time, block),
+    );
+
+    return !hasAppointment && !isUnavailable;
+  };
+
+  const availableTimes = timeOptions.filter((time) =>
+    targetDentistIds.some((dentistIdToCheck) =>
+      isDentistFreeAtTime(dentistIdToCheck, time),
+    ),
+  );
+
+  return {
+    activeDentistCount: activeDentists.length,
+    availableTimes,
+    blockedTimes: timeOptions.filter((time) => !availableTimes.includes(time)),
+    dayInfo,
+    message: availableTimes.length
+      ? `Còn ${availableTimes.length} khung giờ có thể đặt trong ngày này.`
+      : "Ngày này đã hết khung giờ nhận lịch online, bạn vui lòng chọn ngày khác.",
+  };
+};
+
+const getAvailableAppointmentTimes = async (req, res) => {
+  try {
+    const { date, dentist_id } = req.query;
+
+    if (!date) {
+      return res.status(400).json({
+        message: "Appointment date is required",
+      });
+    }
+
+    if (dentist_id) {
+      const dentist = await findDentistById(Number(dentist_id));
+
+      if (!dentist || !dentist.is_active || !dentist.user_is_active) {
+        return res.status(404).json({
+          message: "Dentist not found or inactive",
+        });
+      }
+    }
+
+    const availability = await buildAvailableTimes(date, dentist_id || null);
+
+    res.status(200).json({
+      message: "Available appointment times fetched successfully",
+      data: {
+        date,
+        dentist_id: dentist_id ? Number(dentist_id) : null,
+        available_times: availability.availableTimes,
+        blocked_times: availability.blockedTimes,
+        is_fully_booked: availability.availableTimes.length === 0,
+        is_closed: availability.dayInfo?.isClosed || false,
+        day_label: availability.dayInfo?.dayLabel || "",
+        message: availability.message,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
 
 const getAppointmentHistory = async (req, res) => {
   try {
@@ -114,10 +255,26 @@ const addAppointment = async (req, res) => {
     }
 
     const normalizedStatus = status || "Pending";
+    const normalizedAppointmentTime = normalizeTime(appointment_time);
 
     if (!VALID_APPOINTMENT_STATUSES.includes(normalizedStatus)) {
       return res.status(400).json({
         message: "Invalid appointment status",
+      });
+    }
+
+    if (isPastClinicDate(appointment_date)) {
+      return res.status(400).json({
+        message: "Không thể đặt lịch cho ngày đã qua.",
+      });
+    }
+
+    if (!isClinicBookingTime(appointment_date, normalizedAppointmentTime)) {
+      const dayInfo = getClinicDayInfo(appointment_date);
+      return res.status(400).json({
+        message: dayInfo.isClosed
+          ? dayInfo.message
+          : "Phòng khám chỉ nhận lịch online từ 08:00-12:00 và 13:30-18:00. Bạn vui lòng chọn khung giờ khác.",
       });
     }
 
@@ -156,10 +313,25 @@ const addAppointment = async (req, res) => {
       });
     }
 
+    const availability = await buildAvailableTimes(
+      appointment_date,
+      normalizedDentistId,
+    );
+
+    if (!availability.availableTimes.includes(normalizedAppointmentTime)) {
+      return res.status(409).json({
+        message:
+          availability.availableTimes.length > 0
+            ? `Khung giờ ${normalizedAppointmentTime} đã có lịch hoặc nha sĩ bận. Các giờ còn trống: ${availability.availableTimes.join(", ")}.`
+            : availability.message || "Ngày này đã hết khung giờ phù hợp. Vui lòng chọn ngày khác để đặt lịch.",
+        available_times: availability.availableTimes,
+      });
+    }
+
     const hasConflict = await checkDentistAppointmentConflict(
       normalizedDentistId,
       appointment_date,
-      appointment_time,
+      normalizedAppointmentTime,
     );
 
     if (hasConflict) {
@@ -172,7 +344,7 @@ const addAppointment = async (req, res) => {
     const isDentistUnavailable = await checkDentistUnavailableConflict(
       normalizedDentistId,
       appointment_date,
-      appointment_time,
+      normalizedAppointmentTime,
     );
 
     if (isDentistUnavailable) {
@@ -187,7 +359,7 @@ const addAppointment = async (req, res) => {
       dentist_id: normalizedDentistId,
       service_id,
       appointment_date,
-      appointment_time,
+      appointment_time: normalizedAppointmentTime,
       status: normalizedStatus,
       note,
     });
@@ -397,6 +569,7 @@ const getAppointmentsForDentist = async (req, res) => {
 module.exports = {
   getAppointmentHistory,
   addAppointment,
+  getAvailableAppointmentTimes,
   getAppointmentsForAdmin,
   cancelAppointment,
   manageAppointment,

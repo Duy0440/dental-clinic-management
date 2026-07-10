@@ -75,11 +75,12 @@ const supportItems = [
   },
   {
     kind: "link",
-    href: "/#clinic-facilities",
+    href: "https://www.google.com/maps/search/?api=1&query=Nha%20Khoa%20V%20Can%20Tho",
     tone: "clinic",
     icon: <LocationIcon />,
     title: "Tìm phòng khám",
-    description: "Xem cơ sở vật chất",
+    description: "Mở Google Maps",
+    external: true,
   },
   {
     kind: "route",

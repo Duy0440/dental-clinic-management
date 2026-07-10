@@ -21,10 +21,13 @@ html,
 body,
 #root {
   min-height: 100%;
+  width: 100%;
+  max-width: 100%;
 }
 
 body {
   margin: 0;
+  overflow-x: hidden;
   font-family: "Be Vietnam Pro", sans-serif;
   background:
     radial-gradient(circle at top left, rgba(245, 138, 31, 0.08), transparent 24%),
@@ -47,6 +50,72 @@ a {
 img {
   max-width: 100%;
   display: block;
+}
+
+/* Booking availability */
+.booking-time-panel {
+  padding: 18px;
+  border: 1px solid #f0d5b7;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fffdf9 0%, #fff6ed 100%);
+}
+
+.booking-time-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.booking-time-panel-header strong {
+  color: #7c3f13;
+  font-size: 1rem;
+}
+
+.booking-time-panel-header span {
+  color: #8a6f5b;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.booking-time-message {
+  margin: 0 0 12px;
+  line-height: 1.6;
+  font-size: 0.94rem;
+}
+
+.booking-time-message.is-ok {
+  color: #2f6c44;
+}
+
+.booking-time-message.is-warning {
+  color: #b45309;
+}
+
+.booking-time-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+  gap: 10px;
+}
+
+.booking-time-chip {
+  min-height: 42px;
+  border: 1px solid #edc99f;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #8a4b16;
+  font-weight: 800;
+  transition: all 0.2s ease;
+}
+
+.booking-time-chip:hover,
+.booking-time-chip.active {
+  border-color: #c98c33;
+  background: #c98c33;
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(201, 140, 51, 0.2);
+  transform: translateY(-1px);
 }
 
 .min-vh-75 {
@@ -4268,5 +4337,126 @@ img {
 @media (max-width: 720px) {
   .ai-chat-page.ai-chat-v3-page .ai-chat-v3-card {
     min-height: 680px;
+  }
+}
+
+/* Public mobile hardening */
+@media (max-width: 768px) {
+  .site-header,
+  .clinic-clean-header,
+  .header-main,
+  .custom-navbar,
+  .clinic-home-v2,
+  .clinic-footer,
+  main {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .header-main-inner {
+    min-height: 76px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .custom-brand {
+    min-width: 0;
+    gap: 10px;
+  }
+
+  .brand-mark,
+  .brand-logo-mark {
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    flex: 0 0 auto;
+  }
+
+  .brand-text-group {
+    min-width: 0;
+  }
+
+  .brand-title {
+    max-width: 230px;
+    font-size: 1.08rem;
+    line-height: 1.2;
+    white-space: normal;
+  }
+
+  .header-search-form,
+  .header-hotline-button {
+    display: none;
+  }
+
+  .header-actions {
+    flex: 0 0 auto;
+  }
+
+  .header-actions .custom-login-btn {
+    width: auto;
+    min-height: 42px;
+    padding: 10px 14px;
+    font-size: 0.84rem;
+  }
+
+  .custom-navbar .container {
+    max-width: 100%;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .custom-toggler {
+    width: 54px;
+    height: 46px;
+    margin: 9px 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.48);
+  }
+
+  .custom-nav-list {
+    align-items: stretch !important;
+    margin-top: 8px;
+    padding: 8px 0 14px;
+  }
+
+  .custom-nav-link,
+  .custom-menu-button {
+    width: 100%;
+    padding: 12px 10px !important;
+    border-radius: 12px;
+    text-align: left;
+  }
+
+  .custom-dropdown-menu {
+    width: 100%;
+    min-width: 0;
+    border-radius: 14px;
+  }
+
+  .clinic-footer {
+    padding: 44px 0 22px;
+  }
+
+  .clinic-footer-clean .clinic-footer-grid,
+  .clinic-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .clinic-footer-contact p {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+
+  .clinic-footer-clean .clinic-footer-bottom,
+  .clinic-footer-bottom {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
   }
 }
