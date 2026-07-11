@@ -140,7 +140,6 @@ const getBookedAppointmentSlotsByDate = async (appointmentDate, dentistId) => {
       TO_CHAR(appointment_time, 'HH24:MI') AS appointment_time
     FROM appointments
     WHERE appointment_date = $1
-      AND dentist_id IS NOT NULL
       AND status IN ('Pending', 'Confirmed')
       ${dentistFilter}
   `;

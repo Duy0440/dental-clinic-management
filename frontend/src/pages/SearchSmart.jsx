@@ -112,6 +112,102 @@ const navigationResults = [
   },
 ];
 
+const knowledgeResults = [
+  {
+    id: "knowledge-caries",
+    type: "Kiáº¿n thá»©c nha khoa",
+    title: "SÃ¢u rÄƒng, viÃªm tá»§y vÃ  trÃ¡m rÄƒng",
+    description: "TÃ¬m hiá»ƒu sÃ¢u rÄƒng, Ä‘au rÄƒng, khi nÃ o cáº§n trÃ¡m hoáº·c chá»¯a tá»§y.",
+    link: "/chatbot",
+    action: "Há»i chatbot",
+    keywords: ["sau rang", "dau rang", "viem tuy", "chua tuy", "tram rang", "lo sau"],
+  },
+  {
+    id: "knowledge-gum",
+    type: "Kiáº¿n thá»©c nha khoa",
+    title: "ViÃªm nÆ°á»›u, nha chu vÃ  cháº£y mÃ¡u chÃ¢n rÄƒng",
+    description: "Tra cá»©u nguyÃªn nhÃ¢n sÆ°ng nÆ°á»›u, cháº£y mÃ¡u chÃ¢n rÄƒng, hÃ´i miá»‡ng vÃ  cáº¡o vÃ´i.",
+    link: "/chatbot",
+    action: "Há»i chatbot",
+    keywords: ["viem nuou", "nha chu", "sung nuou", "chay mau chan rang", "hoi mieng", "cao voi"],
+  },
+  {
+    id: "knowledge-restoration",
+    type: "Kiáº¿n thá»©c nha khoa",
+    title: "Phá»¥c hÃ¬nh rÄƒng: trÃ¡m, inlay/onlay, rÄƒng sá»©, implant",
+    description: "So sÃ¡nh cÃ¡c cÃ¡ch phá»¥c há»“i rÄƒng vá»¡, rÄƒng máº¥t hoáº·c rÄƒng yáº¿u sau chá»¯a tá»§y.",
+    link: "/chatbot",
+    action: "Há»i chatbot",
+    keywords: ["phuc hinh", "inlay", "onlay", "veneer", "rang su", "cau rang", "ham thao lap", "implant"],
+  },
+  {
+    id: "knowledge-equipment",
+    type: "Thiáº¿t bá»‹",
+    title: "CBCT X5, scan Shinning 3D, MELAG 323",
+    description: "Xem thiáº¿t bá»‹ há»— trá»£ cháº©n Ä‘oÃ¡n, láº¥y dáº¥u ká»¹ thuáº­t sá»‘ vÃ  kiá»ƒm soÃ¡t vÃ´ trÃ¹ng.",
+    link: "/about#about-facilities",
+    action: "Xem thiáº¿t bá»‹",
+    keywords: ["cbct x5", "hyperion", "scan shinning", "melag", "vacuclave", "class b", "en13060", "runyess"],
+  },
+  {
+    id: "knowledge-facilities",
+    type: "CÆ¡ sá»Ÿ váº­t cháº¥t",
+    title: "Thiáº¿t bá»‹ vÃ  khÃ´ng gian Ä‘iá»u trá»‹",
+    description: "Xem gháº¿ Runyess, CBCT Hyperion X5, scan Shinning 3D vÃ  ná»“i háº¥p MELAG 323 táº¡i Nha khoa V.",
+    link: "/about#about-facilities",
+    action: "Xem thiáº¿t bá»‹",
+    keywords: ["thiet bi nha khoa", "co so vat chat", "cbct", "hyperion x5", "scan shinning", "noi hap melag", "class b", "runyess", "ghe nha khoa", "vo trung"],
+  },
+];
+
+const cleanKnowledgeResults = [
+  {
+    id: "knowledge-caries-clean",
+    type: "Kiến thức nha khoa",
+    title: "Sâu răng, viêm tủy và trám răng",
+    description: "Tìm hiểu sâu răng, đau răng, khi nào cần trám hoặc chữa tủy.",
+    link: "/chatbot",
+    action: "Hỏi chatbot",
+    keywords: ["sau rang", "dau rang", "viem tuy", "chua tuy", "tram rang", "lo sau"],
+  },
+  {
+    id: "knowledge-gum-clean",
+    type: "Kiến thức nha khoa",
+    title: "Viêm nướu, nha chu và chảy máu chân răng",
+    description: "Tra cứu nguyên nhân sưng nướu, chảy máu chân răng, hôi miệng và cạo vôi.",
+    link: "/chatbot",
+    action: "Hỏi chatbot",
+    keywords: ["viem nuou", "nha chu", "sung nuou", "chay mau chan rang", "hoi mieng", "cao voi"],
+  },
+  {
+    id: "knowledge-restoration-clean",
+    type: "Kiến thức nha khoa",
+    title: "Phục hình răng: trám, inlay/onlay, răng sứ, implant",
+    description: "So sánh các cách phục hồi răng vỡ, răng mất hoặc răng yếu sau chữa tủy.",
+    link: "/chatbot",
+    action: "Hỏi chatbot",
+    keywords: ["phuc hinh", "inlay", "onlay", "veneer", "rang su", "cau rang", "ham thao lap", "implant"],
+  },
+  {
+    id: "knowledge-equipment-clean",
+    type: "Thiết bị",
+    title: "CBCT X5, scan Shinning 3D, MELAG 323",
+    description: "Xem thiết bị hỗ trợ chẩn đoán, lấy dấu kỹ thuật số và kiểm soát vô trùng.",
+    link: "/about#about-facilities",
+    action: "Xem thiết bị",
+    keywords: ["cbct x5", "hyperion", "scan shinning", "melag", "vacuclave", "class b", "en13060", "runyess"],
+  },
+  {
+    id: "knowledge-facilities-clean",
+    type: "Cơ sở vật chất",
+    title: "Thiết bị và không gian điều trị",
+    description: "Xem ghế Runyess, CBCT Hyperion X5, scan Shinning 3D và nồi hấp MELAG 323 tại Nha khoa V.",
+    link: "/about#about-facilities",
+    action: "Xem thiết bị",
+    keywords: ["thiet bi nha khoa", "co so vat chat", "cbct", "hyperion x5", "scan shinning", "noi hap melag", "class b", "runyess", "ghe nha khoa", "vo trung"],
+  },
+];
+
 const synonymMap = {
   "bang gia": ["gia", "chi phi", "bao nhieu tien"],
   "chat bot": ["chatbot", "ai", "tu van"],
@@ -120,9 +216,16 @@ const synonymMap = {
   "cao voi": ["lay cao rang", "ve sinh rang", "chay mau chan rang"],
   "dau rang": ["nhuc rang", "e buot", "sung nuou", "viem tuy"],
   "dat lich": ["hen lich", "kham", "tu van"],
-  implant: ["trong rang", "cay ghep", "dentium", "osstem", "straumann", "nobel"],
+  implant: ["trong rang", "cay ghep", "dio", "sic", "tru implant"],
   "nho rang": ["rang khon", "tieu phau", "nho rang khon"],
   "rang su": ["boc su", "dan su", "veneer", "phuc hinh"],
+  "thiet bi": ["co so vat chat", "may moc nha khoa", "cbct", "hyperion x5", "scan shinning", "melag", "runyess"],
+  cbct: ["hyperion x5", "chup phim 3d", "phim 3d", "ceph"],
+  scan: ["shinning", "shining", "lay dau ky thuat so", "lay dau so"],
+  "noi hap": ["melag", "vacuclave", "class b", "en13060", "vo trung", "tiet trung"],
+  "ghe nha khoa": ["runyess", "ghe dieu tri"],
+  "viem nuou": ["sung nuou", "chay mau chan rang", "nha chu", "viem loi"],
+  "phuc hinh": ["cau rang", "ham thao lap", "inlay", "onlay", "veneer", "implant"],
   "uu dai": ["khuyen mai", "giam gia", "chuong trinh"],
 };
 
@@ -312,6 +415,7 @@ function SearchSmart() {
 
     return [
       ...navigationResults.map((item) => ({ ...item, priority: 2 })),
+      ...cleanKnowledgeResults.map((item) => ({ ...item, priority: 2 })),
       ...promotionResults,
       ...serviceResults,
       ...createPriceResults(),

@@ -88,19 +88,16 @@ const buildAvailableTimes = async (appointmentDate, dentistId = null) => {
   }
 
   const targetDentistIds = targetDentists.map((dentist) => dentist.id);
-  const bookedSlots = await getBookedAppointmentSlotsByDate(
-    appointmentDate,
-    normalizedDentistId,
-  );
-  const unavailableBlocks = await getUnavailableBlocksByDate(
-    appointmentDate,
-    normalizedDentistId,
-  );
+  const activeDentistIds = activeDentists.map((dentist) => dentist.id);
+  const bookedSlots = await getBookedAppointmentSlotsByDate(appointmentDate, null);
+  const unavailableBlocks = await getUnavailableBlocksByDate(appointmentDate, null);
 
   const bookedKeys = new Set(
-    bookedSlots.map(
-      (slot) => `${slot.dentist_id}-${normalizeTime(slot.appointment_time)}`,
-    ),
+    bookedSlots
+      .filter((slot) => slot.dentist_id)
+      .map(
+        (slot) => `${slot.dentist_id}-${normalizeTime(slot.appointment_time)}`,
+      ),
   );
 
   const isDentistFreeAtTime = (dentistIdToCheck, time) => {
@@ -113,11 +110,30 @@ const buildAvailableTimes = async (appointmentDate, dentistId = null) => {
     return !hasAppointment && !isUnavailable;
   };
 
-  const availableTimes = timeOptions.filter((time) =>
-    targetDentistIds.some((dentistIdToCheck) =>
+  const countUnassignedAppointmentsAtTime = (time) =>
+    bookedSlots.filter(
+      (slot) => !slot.dentist_id && normalizeTime(slot.appointment_time) === time,
+    ).length;
+
+  const countFreeDentistsAtTime = (time) =>
+    activeDentistIds.filter((dentistIdToCheck) =>
       isDentistFreeAtTime(dentistIdToCheck, time),
-    ),
-  );
+    ).length;
+
+  const availableTimes = timeOptions.filter((time) => {
+    const unassignedAppointmentCount = countUnassignedAppointmentsAtTime(time);
+    const freeDentistCount = countFreeDentistsAtTime(time);
+
+    if (normalizedDentistId) {
+      return (
+        targetDentistIds.some((dentistIdToCheck) =>
+          isDentistFreeAtTime(dentistIdToCheck, time),
+        ) && unassignedAppointmentCount < freeDentistCount
+      );
+    }
+
+    return unassignedAppointmentCount < freeDentistCount;
+  });
 
   return {
     activeDentistCount: activeDentists.length,
@@ -341,11 +357,13 @@ const addAppointment = async (req, res) => {
       });
     }
 
-    const isDentistUnavailable = await checkDentistUnavailableConflict(
-      normalizedDentistId,
-      appointment_date,
-      normalizedAppointmentTime,
-    );
+    const isDentistUnavailable =
+      normalizedDentistId &&
+      (await checkDentistUnavailableConflict(
+        normalizedDentistId,
+        appointment_date,
+        normalizedAppointmentTime,
+      ));
 
     if (isDentistUnavailable) {
       return res.status(409).json({

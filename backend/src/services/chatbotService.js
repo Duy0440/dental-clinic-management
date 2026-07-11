@@ -6,7 +6,7 @@ const SHORT_SAFETY_MESSAGE =
 
 const defaultSuggestions = [
   "Tôi bị đau răng thì nên làm gì?",
-  "Implant Dentium tốt không?",
+  "Implant DIO/SIC khác gì nhau?",
   "Bọc răng sứ có hại không?",
   "Tẩy trắng răng có ê buốt không?",
   "Giá điều trị phụ thuộc vào gì?",
@@ -15,7 +15,7 @@ const defaultSuggestions = [
 const suggestionGroups = {
   implant: [
     "Implant có đau không?",
-    "Implant Dentium tốt không?",
+    "Implant DIO/SIC khác gì nhau?",
     "Mất răng lâu có làm implant được không?",
     "Giá implant phụ thuộc vào gì?",
   ],
@@ -199,17 +199,64 @@ const suggestionGroups = {
     "Răng sứ dùng để làm gì?",
     "Tôi muốn đặt lịch tư vấn",
   ],
+  equipment: [
+    "CBCT Hyperion X5 dùng để làm gì?",
+    "Máy scan Shinning 3D có lợi gì?",
+    "Nồi hấp MELAG 323 quan trọng thế nào?",
+    "Ghế nha khoa Runyess hỗ trợ gì?",
+  ],
+};
+
+const normalizeDentalInput = (text) => {
+  const replacements = [
+    [/\b(ko|kh|k)\b/g, "khong"],
+    [/\b(dc|duocj)\b/g, "duoc"],
+    [/\b(bs|bsi|bacsy|bsy)\b/g, "bac si"],
+    [/\b(nk|nhakhoa)\b/g, "nha khoa"],
+    [/\b(j|z)\b/g, "gi"],
+    [/\b(loi|nuu)\b/g, "nuou"],
+    [/\b(lazer|laze)\b/g, "laser"],
+    [/daurang/g, "dau rang"],
+    [/saurang/g, "sau rang"],
+    [/rangkhon/g, "rang khon"],
+    [/niengrang/g, "nieng rang"],
+    [/chinhnha/g, "chinh nha"],
+    [/trongrang/g, "trong rang"],
+    [/cayghep/g, "cay ghep"],
+    [/rangsu/g, "rang su"],
+    [/bocrang/g, "boc rang"],
+    [/bocsu/g, "boc su"],
+    [/tramrang/g, "tram rang"],
+    [/chuatuy/g, "chua tuy"],
+    [/laytuy/g, "lay tuy"],
+    [/nhorang/g, "nho rang"],
+    [/caovoi/g, "cao voi"],
+    [/laycaorang/g, "lay cao rang"],
+    [/hoimieng/g, "hoi mieng"],
+    [/chaymau/g, "chay mau"],
+    [/chanrang/g, "chan rang"],
+    [/sungnuou/g, "sung nuou"],
+    [/viemnuou/g, "viem nuou"],
+    [/tutnuou/g, "tut nuou"],
+    [/taytrang/g, "tay trang"],
+    [/hamrang/g, "ham rang"],
+    [/matrang/g, "mat rang"],
+    [/merang/g, "me rang"],
+    [/gayrang/g, "gay rang"],
+  ];
+
+  return replacements.reduce((current, [pattern, replacement]) => current.replace(pattern, replacement), text);
 };
 
 const normalizeText = (text) =>
-  String(text || "")
+  normalizeDentalInput(String(text || "")
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/đ/g, "d")
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim());
 
 const hasAny = (text, keywords) => keywords.some((keyword) => text.includes(keyword));
 
@@ -293,12 +340,48 @@ Kiến thức nha khoa cơ bản:
 - Phòng ngừa cơ bản: chải răng đúng cách 2 lần/ngày, làm sạch kẽ răng, hạn chế ăn ngọt nhiều lần trong ngày, thay bàn chải khoảng 3 tháng/lần và khám định kỳ khoảng 6 tháng/lần.
 - Với trẻ em, cần phân biệt mất răng sữa đúng tuổi hay mất răng do sâu/chấn thương; không nên tự nhổ hoặc bỏ qua đau/sưng.
 - Thắng môi/thắng lưỡi ở trẻ cần đánh giá mức độ ảnh hưởng bú, phát âm, vệ sinh, khe thưa răng cửa hoặc kéo tụt nướu; không phải trường hợp nào cũng cần cắt ngay.
-- Implant Dentium/Osstem thường thuộc nhóm implant Hàn Quốc, phổ biến và chi phí dễ tiếp cận hơn một số dòng cao cấp.
-- Implant Straumann/Nobel thường thuộc nhóm cao cấp hơn, nhưng lựa chọn loại implant phải dựa vào xương hàm, vị trí mất răng, sức khỏe và kế hoạch phục hình.
+- Implant DIO và Implant SIC là các dòng trụ implant có thể được tư vấn tùy vị trí mất răng, xương hàm, nướu, kế hoạch phục hình và ngân sách; không nên chọn chỉ vì tên hãng.
+- Các dòng implant khác nhau ở thiết kế ren, bề mặt xử lý, hệ phục hình, bảo hành và chi phí; lựa chọn đúng phải dựa trên phim chụp và khám trực tiếp.
+- Thiết bị tại Nha khoa V gồm ghế nha khoa Runyess, máy CBCT 3 in 1 Hyperion X5, máy scan Shinning 3D và nồi hấp Vacuclave MELAG 323.
+- CBCT 3 in 1 Hyperion X5 hỗ trợ khảo sát 3D/2D/Ceph, xem răng, xương hàm, xoang hàm, răng khôn, vùng implant và chỉnh nha trước khi lập kế hoạch.
+- Máy scan Shinning 3D ghi nhận dấu răng kỹ thuật số, giảm khó chịu so với lấy dấu truyền thống và hỗ trợ phục hình, răng sứ/veneer, implant và chỉnh nha.
+- Nồi hấp Vacuclave MELAG 323 hỗ trợ kiểm soát tiệt trùng dụng cụ; chuẩn Class B theo EN13060 phù hợp quy trình chuẩn bị dụng cụ nha khoa trước khi sử dụng.
+- Ghế nha khoa Runyess hỗ trợ tư thế điều trị thoải mái, tích hợp đèn, khay dụng cụ và các bộ phận thao tác để bác sĩ làm việc thuận tiện hơn.
 - Nguyên tắc tư vấn: ưu tiên bảo tồn răng thật khi còn khả năng giữ; giải thích rõ lợi ích, rủi ro và lựa chọn ít xâm lấn trước khi nói đến phương án tốn kém.
 `;
 
 const getTopicFromText = (text) => {
+  if (
+    hasAny(text, [
+      "thiet bi",
+      "may moc",
+      "co so vat chat",
+      "ghe nha khoa",
+      "runyess",
+      "cbct",
+      "hyperion",
+      "x5",
+      "chup phim 3d",
+      "phim 3d",
+      "ceph",
+      "scan",
+      "shining",
+      "shinning",
+      "lay dau ky thuat so",
+      "lay dau so",
+      "noi hap",
+      "melag",
+      "vacuclave",
+      "class b",
+      "en13060",
+      "vo trung",
+      "tiet trung",
+      "khu vo trung",
+    ])
+  ) {
+    return "equipment";
+  }
+
   const mentionedServiceCount = [
     ["implant", "cay ghep", "trong rang"],
     ["nieng rang", "chinh nha", "rang ho", "rang mom", "rang lech"],
@@ -578,7 +661,7 @@ const getTopicFromText = (text) => {
     return "price";
   }
 
-  if (hasAny(text, ["implant", "cay ghep", "trong rang", "dentium", "osstem", "straumann", "nobel"])) {
+  if (hasAny(text, ["implant", "cay ghep", "trong rang", "dio", "sic", "tru implant", "dong implant"])) {
     return "implant";
   }
 
@@ -853,6 +936,41 @@ const findRuleBasedReply = (message, history = []) => {
     );
   }
 
+  if (topic === "equipment") {
+    if (hasAny(text, ["cbct", "hyperion", "x5", "chup phim 3d", "phim 3d", "ceph"])) {
+      return createResult(
+        "CBCT 3 in 1 Hyperion X5 là thiết bị chụp phim hỗ trợ bác sĩ quan sát răng, xương hàm, xoang hàm và cấu trúc quanh chân răng theo không gian 3 chiều. Thiết bị này đặc biệt hữu ích khi tư vấn implant, răng khôn, chỉnh nha hoặc các ca cần đánh giá xương trước khi điều trị.\n\nNói dễ hiểu: phim CBCT giúp khách không chỉ nghe bác sĩ nói, mà có hình ảnh để hiểu tình trạng của mình rõ hơn. Tuy vậy, phim chỉ là dữ liệu hỗ trợ; kết luận điều trị vẫn cần nha sĩ khám trực tiếp và đọc phim.",
+        suggestionGroups.equipment,
+      );
+    }
+
+    if (hasAny(text, ["scan", "shining", "shinning", "lay dau ky thuat so", "lay dau so"])) {
+      return createResult(
+        "Máy scan Shinning 3D dùng để lấy dấu răng kỹ thuật số bằng camera trong miệng, thay cho cách lấy dấu cao su truyền thống trong nhiều trường hợp. Dữ liệu scan giúp bác sĩ và khách hàng xem hình dạng răng trực quan hơn, hỗ trợ tư vấn răng sứ, veneer, chỉnh nha, implant và phục hình.\n\nĐiểm lợi cho khách là giảm cảm giác khó chịu khi lấy dấu, dễ theo dõi hình ảnh trên màn hình và thuận tiện khi trao đổi phương án điều trị. Tuy nhiên, scan vẫn cần đi cùng khám lâm sàng và chỉ định của nha sĩ.",
+        suggestionGroups.equipment,
+      );
+    }
+
+    if (hasAny(text, ["noi hap", "melag", "vacuclave", "class b", "en13060", "vo trung", "tiet trung", "khu vo trung"])) {
+      return createResult(
+        "Vacuclave MELAG 323 là nồi hấp hỗ trợ tiệt trùng dụng cụ nha khoa trước khi sử dụng. Thiết bị thuộc dòng nồi hấp của MELAG, hỗ trợ quy trình chuẩn Class B theo EN13060 để phòng khám kiểm soát dụng cụ sau mỗi lượt điều trị.\n\nKhách hàng không nhất thiết phải nhớ tên máy, nhưng nên quan tâm phòng khám có quy trình làm sạch, đóng gói, hấp tiệt trùng và lưu trữ dụng cụ riêng hay không. Đây là một phần quan trọng để giảm rủi ro lây nhiễm chéo.",
+        suggestionGroups.equipment,
+      );
+    }
+
+    if (hasAny(text, ["ghe", "runyess", "ghe nha khoa", "ghe dieu tri"])) {
+      return createResult(
+        "Ghế nha khoa Runyess là ghế điều trị tích hợp đèn, khay dụng cụ, tay khoan và các bộ phận hỗ trợ thao tác nha khoa. Một ghế điều trị tốt giúp bác sĩ làm việc ổn định hơn, đồng thời giúp khách nằm đúng tư thế và thoải mái hơn trong quá trình khám hoặc điều trị.\n\nGhế không quyết định toàn bộ chất lượng điều trị, nhưng là một phần của trải nghiệm phòng khám: không gian sạch, tư thế điều trị ổn định, thao tác thuận tiện và khách dễ phối hợp với bác sĩ hơn.",
+        suggestionGroups.equipment,
+      );
+    }
+
+    return createResult(
+      "Nha khoa V giới thiệu rõ thiết bị để khách hiểu mình được kiểm tra bằng gì, chứ không chỉ nghe tư vấn bằng lời nói.\n\nCBCT 3 in 1 Hyperion X5 hỗ trợ chụp 3D/2D/Ceph để xem răng, xương hàm, xoang hàm, răng khôn, vùng cần đặt implant hoặc chỉnh nha. Máy scan Shinning 3D ghi nhận dấu răng kỹ thuật số, giúp khách xem mô phỏng dễ hơn và giảm khó chịu so với lấy dấu cao su truyền thống. Nồi hấp Vacuclave MELAG 323 hỗ trợ quy trình tiệt trùng dụng cụ trước khi sử dụng. Ghế Runyess giúp tư thế điều trị ổn định, bác sĩ thao tác thuận tiện và khách nằm thoải mái hơn.\n\nThiết bị không thay thế nha sĩ, nhưng giúp quá trình tư vấn minh bạch hơn vì khách có hình ảnh và dữ liệu để hiểu tình trạng trước khi quyết định điều trị.",
+      suggestionGroups.equipment,
+    );
+  }
+
   if (topic === "toothCount") {
     return createResult(
       "Người lớn thường có 28 răng nếu không tính răng khôn. Nếu mọc đủ 4 răng khôn thì tổng cộng có thể là 32 răng. Mỗi hàm thường có 14 răng không tính răng khôn, hoặc 16 răng nếu tính đủ 2 răng khôn của hàm đó.\n\nTrẻ em thường có 20 răng sữa, mỗi hàm 10 răng. Nếu bạn hỏi vì đang bị thiếu răng, mất răng hoặc răng mọc lệch, nên khám để biết đó là răng sữa, răng vĩnh viễn hay răng khôn.",
@@ -868,6 +986,13 @@ const findRuleBasedReply = (message, history = []) => {
   }
 
   if (topic === "pediatric") {
+    if (hasAny(text, ["sau rang", "rang sua sau", "tram", "tram rang", "lo sau"])) {
+      return createResult(
+        "Răng sữa bị sâu vẫn nên được kiểm tra, vì răng sữa không chỉ để ăn nhai mà còn giữ khoảng cho răng vĩnh viễn mọc đúng vị trí. Nếu sâu nhẹ, nha sĩ có thể trám để giữ răng. Nếu sâu lớn, đau, sưng nướu hoặc ảnh hưởng tủy răng thì cần khám kỹ hơn để chọn hướng xử lý phù hợp.\n\nPhụ huynh không nên nghĩ “răng sữa rồi cũng thay” nên bỏ qua. Sâu răng sữa để lâu có thể làm bé đau, ăn kém, hôi miệng, nhiễm trùng hoặc ảnh hưởng mầm răng vĩnh viễn bên dưới.",
+        suggestionGroups.pediatric,
+      );
+    }
+
     if (hasAny(text, ["khi nao", "bao lau", "may tuoi", "nen di kham"])) {
       return createResult(
         "Trẻ nên được kiểm tra răng định kỳ từ sớm, đặc biệt khi bắt đầu mọc răng sữa, có sâu răng, đau răng, hôi miệng, chảy máu nướu, răng mọc lệch, thói quen mút tay/thở miệng hoặc răng sữa lung lay bất thường. Mục tiêu không chỉ là chữa sâu răng mà còn theo dõi mọc răng, hướng dẫn vệ sinh và phát hiện lệch khớp cắn sớm.\n\nNếu bé sợ nha khoa, phụ huynh nên cho bé đi khám khi chưa đau nặng để bé quen môi trường trước. Khi đã đau, sưng hoặc sốt thì việc điều trị thường khó chịu hơn và bé dễ sợ hơn.",
@@ -896,21 +1021,25 @@ const findRuleBasedReply = (message, history = []) => {
   }
 
   if (
-    hasAny(text, ["dentium", "osstem", "straumann", "nobel", "hang nao", "loai nao"]) ||
+    hasAny(text, ["dio", "sic", "hang nao", "loai nao", "tru nao", "dong nao"]) ||
     (topic === "implant" && hasAny(text, ["tot khong", "co tot khong", "co ben khong", "nen chon"]))
   ) {
-    const brandName = hasAny(combinedText, ["dentium"])
-      ? "Dentium"
-      : hasAny(combinedText, ["osstem"])
-        ? "Osstem"
-        : hasAny(combinedText, ["straumann"])
-          ? "Straumann"
-          : hasAny(combinedText, ["nobel"])
-            ? "Nobel"
-            : "dòng implant";
+    const mentionsDio = hasAny(combinedText, ["dio"]);
+    const mentionsSic = hasAny(combinedText, ["sic"]);
+    const brandName = mentionsDio && mentionsSic
+      ? "Implant DIO và Implant SIC"
+      : mentionsDio
+        ? "Implant DIO"
+        : mentionsSic
+          ? "Implant SIC"
+          : "dòng implant";
+
+    const compareIntro = mentionsDio && mentionsSic
+      ? "DIO và SIC đều là các dòng trụ implant có thể được cân nhắc tùy tình trạng xương hàm, vị trí mất răng, kế hoạch phục hình và ngân sách. Khác biệt thực tế không nên chỉ nhìn ở tên hãng, mà cần xem hệ thống trụ có phù hợp ca đó không, mão sứ phía trên ra sao và bác sĩ kiểm soát phẫu thuật - phục hình thế nào."
+      : `${brandName} có thể là lựa chọn tốt nếu phù hợp với tình trạng xương hàm và kế hoạch phục hình của bạn. Nhưng implant không nên chọn chỉ vì tên hãng.`;
 
     return createResult(
-      `${brandName} có thể là lựa chọn tốt nếu phù hợp với tình trạng xương hàm và kế hoạch phục hình của bạn. Nhưng implant không nên chọn chỉ vì tên hãng. Một ca implant bền hay không còn phụ thuộc vào mật độ xương, vị trí mất răng, nướu, bệnh nền, tay nghề bác sĩ, mão sứ phía trên và cách vệ sinh sau khi làm.\n\nNếu bạn hỏi theo hướng “nên chọn loại nào”, câu trả lời đúng là: nên khám, chụp phim trước rồi mới chọn trụ. Với người mất răng lâu hoặc tiêu xương, bác sĩ có thể cần tư vấn thêm về ghép xương/nâng xoang trước khi quyết định loại implant.`,
+      `${compareIntro} Một ca implant bền hay không còn phụ thuộc vào mật độ xương, vị trí mất răng, nướu, bệnh nền, tay nghề bác sĩ, mão sứ phía trên và cách vệ sinh sau khi làm.\n\nNếu bạn hỏi theo hướng “nên chọn DIO hay SIC”, câu trả lời đúng là: nên khám và chụp phim CBCT trước rồi mới chọn trụ. Với người mất răng lâu, tiêu xương, viêm nướu hoặc có bệnh nền, bác sĩ có thể cần tư vấn thêm về ghép xương/nâng xoang hoặc xử lý nền trước khi quyết định loại implant.`,
       suggestionGroups.implant,
     );
   }
@@ -996,6 +1125,13 @@ const findRuleBasedReply = (message, history = []) => {
     return createResult(
       "Bọc răng sứ có thể phù hợp khi răng vỡ lớn, răng sau chữa tủy, răng đổi màu nặng, răng mòn nhiều hoặc cần phục hồi thẩm mỹ. Nhưng không nên xem bọc sứ là giải pháp làm đẹp cho mọi trường hợp.\n\nNếu làm đúng chỉ định, răng sứ giúp phục hồi ăn nhai và thẩm mỹ. Nếu lạm dụng, mài răng quá nhiều hoặc chăm sóc không tốt, có thể gây ê buốt, viêm nướu, hôi miệng hoặc ảnh hưởng răng thật. Vì vậy nên khám trước để xem răng còn khỏe không và có phương án ít xâm lấn hơn không.",
       suggestionGroups.porcelain,
+    );
+  }
+
+  if (topic === "orthodontic" && hasAny(text, ["bao lau", "mat bao lau", "may thang", "may nam"])) {
+    return createResult(
+      "Thời gian niềng răng thường tính bằng nhiều tháng đến vài năm, tùy mức độ lệch răng, sai khớp cắn, tuổi, loại khí cụ và mức độ hợp tác khi tái khám. Trường hợp nhẹ có thể nhanh hơn, còn hô/móm, chen chúc nhiều hoặc cần nhổ răng/kéo khoảng thường lâu hơn.\n\nĐiều quan trọng là không nên chỉ hỏi “bao lâu tháo niềng” mà cần xem kế hoạch điều trị có rõ không: chụp phim, phân tích khớp cắn, dự kiến giai đoạn kéo răng, lịch tái khám và cách giữ kết quả sau khi tháo niềng.",
+      suggestionGroups.orthodontic,
     );
   }
 

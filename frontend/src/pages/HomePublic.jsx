@@ -45,6 +45,11 @@ const doctorShowcaseAssets = [
     metric: "1.200+ ca tư vấn",
     education: "Định hướng phục hồi răng mất và lập kế hoạch phục hình trên phim chụp.",
     certificates: ["Cấy ghép Implant cơ bản - nâng cao", "Phục hình răng sứ trên Implant", "Kiểm soát vô khuẩn trong phẫu thuật"],
+    clinicalFocus:
+      "Thường tiếp nhận khách mất răng lâu năm, tiêu xương, cần phục hồi răng hàm hoặc cần đánh giá xương trước khi đặt trụ.",
+    consultation:
+      "Bác sĩ sẽ xem phim, kiểm tra nướu, giải thích số lượng trụ cần thiết, phương án phục hình và các chi phí có thể phát sinh trước khi điều trị.",
+    carePoints: ["Đọc phim CBCT trước khi tư vấn", "Đánh giá mật độ xương và nướu", "Theo dõi lành thương sau phục hình"],
     philosophy: "Ưu tiên giải thích rõ tình trạng xương hàm, chi phí và lộ trình để khách hàng quyết định an tâm.",
   },
   {
@@ -54,6 +59,11 @@ const doctorShowcaseAssets = [
     metric: "Theo dõi khớp cắn",
     education: "Tập trung phân tích khớp cắn, đường cười và theo dõi tiến độ chỉnh nha định kỳ.",
     certificates: ["Chỉnh nha mắc cài", "Chỉnh nha thẩm mỹ bằng khay trong", "Phân tích phim sọ nghiêng"],
+    clinicalFocus:
+      "Phù hợp với khách răng chen chúc, hô, móm, lệch khớp cắn hoặc muốn cải thiện nụ cười theo lộ trình rõ ràng.",
+    consultation:
+      "Bác sĩ kiểm tra khớp cắn, tư vấn khí cụ phù hợp, thời gian dự kiến và các mốc tái khám để khách hiểu từng giai đoạn.",
+    carePoints: ["Phân tích khớp cắn", "Theo dõi tiến độ định kỳ", "Giải thích rõ lộ trình niềng"],
     philosophy: "Mỗi ca chỉnh nha cần được theo dõi đều, minh bạch từng giai đoạn để khách không bị mơ hồ.",
   },
   {
@@ -63,6 +73,11 @@ const doctorShowcaseAssets = [
     metric: "Điều trị nhẹ nhàng",
     education: "Phụ trách khám tổng quát, trám răng, cạo vôi, điều trị đau răng và chăm sóc định kỳ.",
     certificates: ["Điều trị nha khoa tổng quát", "Chẩn đoán bệnh lý răng miệng", "Tư vấn chăm sóc răng tại nhà"],
+    clinicalFocus:
+      "Tiếp nhận khách đau răng, sâu răng, viêm nướu, ê buốt, cần vệ sinh răng miệng định kỳ hoặc chưa biết nên bắt đầu điều trị từ đâu.",
+    consultation:
+      "Bác sĩ ưu tiên kiểm tra nguyên nhân, giải thích mức độ bệnh lý và hướng xử lý phù hợp trước khi chuyển sang điều trị chuyên sâu nếu cần.",
+    carePoints: ["Khám tổng quát ban đầu", "Tư vấn phòng ngừa tại nhà", "Theo dõi tái khám định kỳ"],
     philosophy: "Khám kỹ từ triệu chứng nhỏ để phát hiện sớm vấn đề, tránh để khách chỉ đến khi đau nặng.",
   },
   {
@@ -72,6 +87,11 @@ const doctorShowcaseAssets = [
     metric: "Tâm lý trẻ nhỏ",
     education: "Theo dõi răng sữa, mọc răng vĩnh viễn, phòng ngừa sâu răng và hướng dẫn phụ huynh chăm sóc trẻ.",
     certificates: ["Nha khoa trẻ em", "Dự phòng sâu răng bằng Fluor", "Giao tiếp và trấn an trẻ khi khám"],
+    clinicalFocus:
+      "Phù hợp với trẻ sâu răng sữa, mọc răng lệch, đau răng, cần bôi Fluor, trám răng sữa hoặc phụ huynh muốn theo dõi thay răng.",
+    consultation:
+      "Bác sĩ trao đổi nhẹ nhàng với trẻ, giải thích cho phụ huynh tình trạng răng sữa, mầm răng vĩnh viễn và cách chăm sóc sau buổi khám.",
+    carePoints: ["Trấn an trẻ trước khi khám", "Theo dõi thay răng", "Hướng dẫn phụ huynh chăm sóc"],
     philosophy: "Trẻ cần cảm giác an toàn trước, rồi mới điều trị. Một buổi khám tốt là buổi trẻ không còn sợ nha khoa.",
   },
   {
@@ -81,6 +101,11 @@ const doctorShowcaseAssets = [
     metric: "Nụ cười tự nhiên",
     education: "Tập trung phục hình răng sứ, veneer, phục hồi hình thể răng và tư vấn thẩm mỹ nụ cười.",
     certificates: ["Phục hình răng sứ thẩm mỹ", "Lựa chọn màu răng và dáng răng", "Bảo tồn mô răng trong phục hình"],
+    clinicalFocus:
+      "Tư vấn cho khách răng sứ cũ, răng thưa, răng sậm màu, mẻ răng, muốn veneer hoặc phục hình thẩm mỹ nhưng vẫn giữ vẻ tự nhiên.",
+    consultation:
+      "Bác sĩ đánh giá men răng, khớp cắn, màu răng và mong muốn thẩm mỹ để chọn phương án bảo tồn mô răng tối đa.",
+    carePoints: ["Chọn dáng răng theo gương mặt", "Bảo tồn mô răng thật", "Tư vấn màu răng tự nhiên"],
     philosophy: "Thẩm mỹ đẹp là phải tự nhiên, phù hợp gương mặt và vẫn ưu tiên sức khỏe răng thật.",
   },
 ];
@@ -150,6 +175,9 @@ const getDoctorShowcaseAsset = (dentist, index) => {
       metric: "Tư vấn tổng quát",
       education: doctorShowcaseAssets[2].education,
       certificates: doctorShowcaseAssets[2].certificates,
+      clinicalFocus: doctorShowcaseAssets[2].clinicalFocus,
+      consultation: doctorShowcaseAssets[2].consultation,
+      carePoints: doctorShowcaseAssets[2].carePoints,
       philosophy: doctorShowcaseAssets[2].philosophy,
     };
   }
@@ -198,7 +226,7 @@ const facilitySlides = [
   },
   {
     label: "Khu vô trùng",
-    title: "Vacuclave MELAG Class B",
+    title: "Vacuclave MELAG 323",
     text: "Nồi hấp MELAG của Đức, chuẩn Class B theo EN13060, hỗ trợ tiệt trùng dụng cụ trước khi sử dụng cho khách hàng.",
     image: "/images/equipment-melag-vacuclave-real.png",
     specs: ["Chuẩn Class B", "Đạt EN13060", "Kiểm soát dụng cụ theo lượt"],
@@ -848,6 +876,26 @@ function HomePublic() {
                 <p>{selectedDentist.education}</p>
                 <ul>
                   {selectedDentist.certificates.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="clinic-doctor-profile-extra">
+                <article>
+                  <h3>Phụ trách thường gặp</h3>
+                  <p>{selectedDentist.clinicalFocus}</p>
+                </article>
+                <article>
+                  <h3>Cách tư vấn</h3>
+                  <p>{selectedDentist.consultation}</p>
+                </article>
+              </div>
+
+              <div className="clinic-doctor-profile-section compact">
+                <h3>Điểm khách hàng cần biết</h3>
+                <ul>
+                  {selectedDentist.carePoints.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>

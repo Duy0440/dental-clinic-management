@@ -516,3 +516,193 @@
     padding: 28px;
   }
 }
+
+/* Final polish for the public introduction page. */
+.about-public-mission-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.about-public-mission-grid article {
+  padding: 18px;
+  border: 1px solid rgba(201, 130, 46, 0.2);
+  border-radius: 22px;
+  background: linear-gradient(145deg, #fffdf9, #fff5e8);
+}
+
+.about-public-mission-grid h3 {
+  margin: 0 0 8px;
+  color: #8d4e13;
+  font-size: 0.98rem;
+  font-weight: 950;
+}
+
+.about-public-mission-grid p {
+  font-size: 0.9rem;
+  line-height: 1.62;
+}
+
+.about-public-equipment-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.about-public-equipment-list article {
+  grid-template-columns: 1fr;
+  gap: 0;
+  min-height: auto;
+}
+
+.about-public-equipment-list img {
+  height: 220px;
+  min-height: 220px;
+  padding: 16px;
+}
+
+.about-public-equipment-list div {
+  padding: 22px;
+}
+
+.about-public-equipment-list h3 {
+  margin-top: 10px;
+}
+
+.about-public-equipment-list p {
+  display: -webkit-box;
+  min-height: 4.9em;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+@media (max-width: 1060px) {
+  .about-public-mission-grid,
+  .about-public-equipment-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .about-public-page {
+    overflow-x: hidden;
+  }
+
+  .about-public-hero {
+    padding: 40px 0 44px;
+  }
+
+  .about-public-story,
+  .about-public-standards,
+  .about-public-doctors,
+  .about-public-facilities {
+    padding: 56px 0;
+  }
+
+  .about-public-copy-card {
+    padding: 22px;
+  }
+
+  .about-public-mission-grid {
+    gap: 10px;
+  }
+
+  .about-public-equipment-list img {
+    height: 190px;
+    min-height: 190px;
+  }
+
+  .about-public-equipment-list p {
+    min-height: 0;
+    -webkit-line-clamp: unset;
+  }
+}
+
+/* Equipment cards: image-led, concise and easier to scan. */
+.about-public-facilities {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(255, 225, 176, 0.18), transparent 34%),
+    linear-gradient(180deg, #fffaf3, #fffdf9);
+}
+
+.about-public-facility-grid {
+  align-items: start;
+}
+
+.about-public-equipment-list {
+  gap: 20px;
+}
+
+.about-public-equipment-list article {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, #fff 0%, #fffaf2 100%);
+}
+
+.about-public-equipment-list article::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 46%;
+  content: "";
+  background: radial-gradient(circle at 78% 12%, rgba(233, 169, 82, 0.18), transparent 36%);
+  pointer-events: none;
+}
+
+.about-public-equipment-list img {
+  position: relative;
+  height: 250px;
+  min-height: 250px;
+  padding: 22px;
+  object-fit: contain;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.98), transparent 54%),
+    linear-gradient(135deg, #fff4df, #f0dcc1);
+  filter: drop-shadow(0 18px 28px rgba(94, 58, 19, 0.14));
+}
+
+.about-public-equipment-list div {
+  position: relative;
+  padding: 22px 24px 24px;
+}
+
+.about-public-equipment-list h3 {
+  margin: 8px 0 10px;
+  color: #182435;
+  font-size: 1.28rem;
+  letter-spacing: -0.02em;
+}
+
+.about-public-equipment-list p {
+  min-height: 0;
+  -webkit-line-clamp: 2;
+}
+
+.about-public-equipment-list li {
+  padding: 8px 11px;
+  border-color: rgba(201, 130, 46, 0.22);
+  background: #fff7ec;
+}
+
+@media (min-width: 1180px) {
+  .about-public-equipment-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .about-public-equipment-list img {
+    height: 210px;
+    min-height: 210px;
+    padding: 18px;
+  }
+
+  .about-public-equipment-list div {
+    padding: 18px;
+  }
+
+  .about-public-equipment-list ul {
+    gap: 7px;
+  }
+}

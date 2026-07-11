@@ -4615,3 +4615,40 @@ img {
     height: 42px;
   }
 }
+
+/* Service information cards: keep the list clean, short, and aligned. */
+.service-info-card {
+  min-height: 100%;
+}
+
+.service-info-card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.service-info-card-body p {
+  display: -webkit-box;
+  min-height: 5.25em;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.service-info-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.service-info-actions a {
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .service-info-actions {
+    grid-template-columns: 1fr;
+  }
+}

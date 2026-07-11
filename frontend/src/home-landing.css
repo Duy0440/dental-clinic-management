@@ -2593,6 +2593,199 @@
   }
 }
 
+/* Final doctor profile and equipment polish. */
+.clinic-doctor-profile-panel {
+  grid-template-columns: minmax(360px, 0.78fr) minmax(560px, 1fr);
+  width: min(1280px, calc(100vw - 32px));
+  max-height: min(860px, calc(100vh - 28px));
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 78% 8%, rgba(255, 220, 162, 0.22), transparent 30%),
+    #fffaf3;
+}
+
+.clinic-doctor-profile-media {
+  min-height: auto;
+  height: min(860px, calc(100vh - 28px));
+}
+
+.clinic-doctor-profile-media img {
+  object-position: center top;
+}
+
+.clinic-doctor-profile-media > div {
+  right: 22px;
+  bottom: 22px;
+  left: 22px;
+  padding: 16px 18px;
+  border-radius: 20px;
+}
+
+.clinic-doctor-profile-content {
+  max-height: min(860px, calc(100vh - 28px));
+  padding: 44px 52px 38px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 130, 46, 0.54) rgba(255, 241, 223, 0.8);
+}
+
+.clinic-doctor-profile-content h2 {
+  max-width: 520px;
+  font-size: clamp(2.35rem, 3.3vw, 4rem);
+}
+
+.clinic-doctor-profile-philosophy {
+  margin: 20px 0 22px;
+}
+
+.clinic-doctor-profile-grid {
+  margin: 20px 0 22px;
+}
+
+.clinic-doctor-profile-extra {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.clinic-doctor-profile-extra article {
+  padding: 18px;
+  border: 1px solid rgba(201, 130, 46, 0.22);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 94% 0%, rgba(255, 222, 171, 0.26), transparent 34%),
+    #fff;
+}
+
+.clinic-doctor-profile-extra h3 {
+  margin: 0 0 10px;
+  color: #202938;
+  font-size: 1rem;
+}
+
+.clinic-doctor-profile-extra p {
+  margin: 0;
+  line-height: 1.65;
+}
+
+.clinic-doctor-profile-section.compact {
+  padding: 18px;
+}
+
+.clinic-doctor-profile-section.compact ul {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+.clinic-facilities-v2-media {
+  min-height: 540px;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.95), transparent 26%),
+    radial-gradient(circle at 78% 18%, rgba(255, 216, 151, 0.42), transparent 34%),
+    linear-gradient(135deg, #fff8ec 0%, #f4e3ca 100%);
+}
+
+.clinic-facilities-v2-media img {
+  height: 540px;
+  padding: 34px 48px 132px;
+  filter: drop-shadow(0 24px 34px rgba(89, 54, 17, 0.14));
+}
+
+.clinic-facility-v2-caption {
+  left: 28px;
+  bottom: 24px;
+  width: min(610px, calc(100% - 56px));
+  min-height: 0;
+  padding: 18px 22px;
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 247, 233, 0.92));
+}
+
+.clinic-facility-v2-caption h3 {
+  font-size: clamp(1.2rem, 2vw, 1.55rem);
+}
+
+.clinic-facility-v2-caption p {
+  -webkit-line-clamp: 2;
+}
+
+.clinic-facility-v2-controls {
+  top: 20px;
+  right: 20px;
+}
+
+@media (max-width: 1080px) {
+  .clinic-doctor-profile-panel {
+    grid-template-columns: 1fr;
+    width: min(760px, calc(100vw - 24px));
+    overflow-y: auto;
+  }
+
+  .clinic-doctor-profile-media {
+    height: 380px;
+    min-height: 380px;
+  }
+
+  .clinic-doctor-profile-content {
+    max-height: none;
+    padding: 32px 28px 34px;
+    overflow: visible;
+  }
+
+  .clinic-doctor-profile-extra,
+  .clinic-doctor-profile-section.compact ul {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .clinic-doctor-profile-panel {
+    border-radius: 22px;
+  }
+
+  .clinic-doctor-profile-media {
+    height: 300px;
+    min-height: 300px;
+  }
+
+  .clinic-doctor-profile-content {
+    padding: 26px 18px 24px;
+  }
+
+  .clinic-doctor-profile-content h2 {
+    margin-right: 40px;
+    font-size: 2.25rem;
+  }
+
+  .clinic-doctor-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .clinic-facilities-v2-media {
+    min-height: 360px;
+  }
+
+  .clinic-facilities-v2-media img {
+    height: 360px;
+    min-height: 360px;
+    padding: 16px 12px 104px;
+  }
+
+  .clinic-facility-v2-caption {
+    right: 10px;
+    left: 10px;
+    bottom: 10px;
+    width: auto;
+    padding: 12px 14px;
+  }
+
+  .clinic-facility-v2-caption p {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .clinic-service-v2-actions {
     grid-template-columns: 1fr 1fr;
@@ -2674,5 +2867,200 @@
     height: 440px;
     min-height: 440px;
     padding: 30px 16px 220px;
+  }
+}
+
+/* Keep the equipment carousel image-led and readable on mobile. */
+html,
+body,
+#root,
+.clinic-home-v2 {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.clinic-service-v2-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.clinic-service-v2-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.clinic-facilities-v2-media {
+  min-height: 500px;
+}
+
+.clinic-facilities-v2-media img {
+  height: 500px;
+  padding: 26px 38px 120px;
+}
+
+.clinic-facility-v2-caption {
+  right: auto;
+  left: 24px;
+  bottom: 22px;
+  display: block;
+  width: min(520px, calc(100% - 48px));
+  padding: 18px 20px;
+}
+
+.clinic-facility-v2-caption p {
+  display: -webkit-box;
+  max-width: 450px;
+  margin-top: 8px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.clinic-facility-v2-specs {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .clinic-facilities-v2-media {
+    min-height: 390px;
+    border-radius: 24px;
+  }
+
+  .clinic-facilities-v2-media img {
+    height: 390px;
+    min-height: 390px;
+    padding: 18px 12px 116px;
+  }
+
+  .clinic-facility-v2-caption {
+    right: 10px;
+    left: 10px;
+    bottom: 10px;
+    width: auto;
+    padding: 12px 14px;
+    border-radius: 18px;
+  }
+
+  .clinic-facility-v2-caption h3 {
+    font-size: 1.05rem;
+  }
+
+  .clinic-facility-v2-caption p {
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+
+  .clinic-facility-v2-controls {
+    top: 10px;
+    right: 10px;
+    transform: scale(0.88);
+    transform-origin: top right;
+  }
+}
+
+@media (max-width: 480px) {
+  .clinic-service-v2-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .clinic-facilities-v2-media {
+    min-height: 340px;
+  }
+
+  .clinic-facilities-v2-media img {
+    height: 340px;
+    min-height: 340px;
+    padding-bottom: 104px;
+  }
+}
+
+/* Final public-page polish: prevent mobile clipping and keep CTAs aligned. */
+.clinic-service-v2-card.info-card {
+  min-height: 100%;
+}
+
+.clinic-service-v2-card.info-card > p {
+  display: -webkit-box;
+  min-height: 5.1em;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.clinic-service-v2-actions a,
+.clinic-service-v2-actions button {
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.clinic-price-v2-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.clinic-price-v2-table {
+  width: 100%;
+}
+
+@media (max-width: 560px) {
+  .clinic-price-v2-table-wrap {
+    padding: 0;
+    overflow: visible;
+  }
+
+  .clinic-price-v2-table tr {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin: 0 0 12px;
+    overflow: hidden;
+    border: 1px solid rgba(211, 154, 66, 0.28);
+    border-radius: 18px;
+    background: #fffdf9;
+  }
+
+  .clinic-price-v2-table th {
+    display: none;
+  }
+
+  .clinic-price-v2-table td {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    padding: 13px 14px;
+    border-bottom: 1px solid rgba(211, 154, 66, 0.16);
+    font-size: 0.94rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .clinic-price-v2-table td:last-child {
+    border-bottom: 0;
+  }
+
+  .clinic-price-v2-table td::before {
+    color: #9a4b08;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .clinic-price-v2-table td:nth-child(1)::before {
+    content: "Dịch vụ";
+  }
+
+  .clinic-price-v2-table td:nth-child(2)::before {
+    content: "Chi phí";
+  }
+
+  .clinic-price-v2-table td:nth-child(3)::before {
+    content: "Ghi chú";
   }
 }

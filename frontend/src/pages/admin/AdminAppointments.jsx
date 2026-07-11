@@ -194,6 +194,10 @@ function AdminAppointments() {
           (appointment) => appointment.status === statusFilter,
         );
 
+  const assignableDentists = dentists.filter(
+    (dentist) => dentist.is_active !== false && dentist.user_is_active !== false,
+  );
+
   const formatDate = (date) => {
     if (!date) return "";
     const [year, month, day] = date.split("-");
@@ -319,7 +323,7 @@ function AdminAppointments() {
                 >
                   <option value="">Chưa phân công</option>
 
-                  {dentists.map((dentist) => (
+                  {assignableDentists.map((dentist) => (
                     <option key={dentist.id} value={dentist.id}>
                       {dentist.full_name} - {dentist.specialty}
                     </option>

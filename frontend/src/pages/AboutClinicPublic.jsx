@@ -2,7 +2,20 @@ import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "../about-clinic-public.css";
 
-const values = ["Tận tâm", "Minh bạch", "An toàn", "Chất lượng", "Hiện đại", "Đồng hành"];
+const missionCards = [
+  {
+    title: "Sứ mệnh",
+    text: "Giúp khách hàng hiểu đúng tình trạng răng miệng, được tư vấn rõ ràng và chọn phương án điều trị phù hợp thay vì quyết định theo cảm tính.",
+  },
+  {
+    title: "Định hướng",
+    text: "Xây dựng phòng khám nha khoa hiện đại, có đặt lịch online, hồ sơ điều trị và quy trình theo dõi sau khám minh bạch.",
+  },
+  {
+    title: "Cam kết",
+    text: "Ưu tiên bảo tồn răng thật khi còn khả năng, giải thích chi phí trước điều trị và không hứa hẹn quá mức khi chưa thăm khám.",
+  },
+];
 
 const serviceGroups = [
   "Nha khoa tổng quát",
@@ -69,7 +82,7 @@ const equipment = [
     details: ["Giảm khó chịu khi lấy dấu", "Hỗ trợ răng sứ, veneer, chỉnh nha", "Dễ trao đổi phương án với khách"],
   },
   {
-    title: "Vacuclave MELAG Class B",
+    title: "Vacuclave MELAG 323",
     label: "Khu vô trùng",
     text: "Nồi hấp MELAG của Đức, chuẩn Class B theo EN13060, hỗ trợ quy trình tiệt trùng dụng cụ nha khoa trước khi sử dụng.",
     image: "/images/equipment-melag-vacuclave-real.png",
@@ -126,14 +139,6 @@ function AboutClinicPublic() {
           </div>
         </div>
 
-        <div className="about-public-container about-public-values" aria-label="Giá trị của Nha khoa V">
-          {values.map((value) => (
-            <article key={value}>
-              <span>{value.charAt(0)}</span>
-              <strong>{value}</strong>
-            </article>
-          ))}
-        </div>
       </section>
 
       <section className="about-public-story" id="clinic-story">
@@ -155,6 +160,14 @@ function AboutClinicPublic() {
               Mục tiêu không chỉ là xử lý một chiếc răng đau, mà là giúp khách hàng chăm sóc nụ cười
               lâu dài hơn.
             </p>
+            <div className="about-public-mission-grid">
+              {missionCards.map((item) => (
+                <article key={item.title}>
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
+                </article>
+              ))}
+            </div>
           </div>
         </div>
       </section>

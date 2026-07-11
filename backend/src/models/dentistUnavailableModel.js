@@ -94,6 +94,10 @@ const checkDentistUnavailableConflict = async (
   appointmentDate,
   appointmentTime,
 ) => {
+  if (!dentistId) {
+    return false;
+  }
+
   const query = `
     SELECT id
     FROM dentist_unavailable_times

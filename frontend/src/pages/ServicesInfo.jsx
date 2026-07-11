@@ -64,12 +64,6 @@ function ServicesInfo() {
                     <h2>{service.title}</h2>
                     <p>{service.summary}</p>
 
-                    <div className="service-info-tags">
-                      {service.highlights.slice(0, 3).map((highlight) => (
-                        <small key={highlight}>{highlight}</small>
-                      ))}
-                    </div>
-
                     <div className="service-info-actions">
                       <Link to={`/services/${service.slug}`}>Xem thêm</Link>
                       <Link to="/?booking=open">Đặt lịch</Link>
