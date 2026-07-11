@@ -50,6 +50,13 @@ function AdminDentistDetail() {
   };
 
   const getWorkingStatus = () => {
+    if (dentist?.is_active === false || dentist?.user_is_active === false) {
+      return {
+        label: "Tạm ngưng",
+        className: "warning",
+      };
+    }
+
     const today = new Date().toISOString().slice(0, 10);
 
     const hasUnavailableToday = unavailableTimes.some(

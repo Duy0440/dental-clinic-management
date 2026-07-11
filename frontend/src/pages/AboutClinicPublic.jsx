@@ -55,28 +55,32 @@ const doctors = [
 
 const equipment = [
   {
-    title: "CBCT X5",
+    title: "CBCT 3 in 1 Hyperion X5",
     label: "Chẩn đoán 3D",
-    text: "Hỗ trợ khảo sát răng, xương hàm, xoang hàm và kế hoạch implant.",
-    image: "/images/equipment-cbct-x5.png",
+    text: "Thiết bị chụp phim đến từ Italy, hỗ trợ bác sĩ quan sát răng, xương hàm, xoang hàm và vùng cần điều trị trước khi tư vấn.",
+    image: "/images/equipment-hyperion-x5-real.png",
+    details: ["Hỗ trợ lập kế hoạch implant", "Đánh giá răng khôn, xương hàm", "Tư vấn rõ hơn bằng hình ảnh"],
   },
   {
-    title: "Scan Shining",
+    title: "Máy Scan Shinning 3D",
     label: "Lấy dấu kỹ thuật số",
-    text: "Ghi nhận dấu răng nhanh, giảm khó chịu so với lấy dấu truyền thống.",
-    image: "/images/equipment-intraoral-scan.png",
+    text: "Máy scan trong miệng ghi nhận hình dạng răng bằng dữ liệu số, giúp khách dễ xem tình trạng răng và hỗ trợ phục hình thẩm mỹ.",
+    image: "/images/equipment-shining-3d-real.png",
+    details: ["Giảm khó chịu khi lấy dấu", "Hỗ trợ răng sứ, veneer, chỉnh nha", "Dễ trao đổi phương án với khách"],
   },
   {
-    title: "Nồi hấp Class B",
+    title: "Vacuclave MELAG Class B",
     label: "Khu vô trùng",
-    text: "Hỗ trợ tiệt trùng dụng cụ, đóng gói và chuẩn bị theo từng lượt sử dụng.",
-    image: "/images/equipment-class-b-autoclave.png",
+    text: "Nồi hấp MELAG của Đức, chuẩn Class B theo EN13060, hỗ trợ quy trình tiệt trùng dụng cụ nha khoa trước khi sử dụng.",
+    image: "/images/equipment-melag-vacuclave-real.png",
+    details: ["Tiệt trùng dụng cụ sau mỗi lượt", "Đóng gói và lưu trữ riêng", "Tăng kiểm soát an toàn điều trị"],
   },
   {
-    title: "Ghế điều trị",
+    title: "Ghế nha khoa Runyess",
     label: "Không gian điều trị",
-    text: "Không gian sáng, sạch, giúp bác sĩ thao tác thuận tiện và khách thoải mái hơn.",
-    image: "/images/clinic-story-equipment.png",
+    text: "Ghế điều trị tích hợp các bộ phận hỗ trợ thao tác, giúp bác sĩ làm việc thuận tiện và khách hàng có tư thế nằm thoải mái hơn.",
+    image: "/images/equipment-runyess-chair-real.png",
+    details: ["Đèn điều trị và khay dụng cụ", "Tư thế ghế phù hợp khi khám", "Phù hợp nhiều nhóm dịch vụ"],
   },
 ];
 
@@ -242,6 +246,11 @@ function AboutClinicPublic() {
                   <span>{item.label}</span>
                   <h3>{item.title}</h3>
                   <p>{item.text}</p>
+                  <ul>
+                    {item.details.map((detail) => (
+                      <li key={detail}>{detail}</li>
+                    ))}
+                  </ul>
                 </div>
               </article>
             ))}

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 function CalendarIcon() {
   return (
@@ -109,7 +109,7 @@ const supportItems = [
   },
 ];
 
-function SupportLink({ item }) {
+function SupportLink({ item, onNavigate }) {
   const content = (
     <>
       <span className={`clinic-support-icon ${item.tone}`}>{item.icon}</span>
@@ -125,7 +125,7 @@ function SupportLink({ item }) {
 
   if (item.kind === "route") {
     return (
-      <Link className={`clinic-support-item ${item.tone}`} to={item.to}>
+      <Link className={`clinic-support-item ${item.tone}`} to={item.to} onClick={onNavigate}>
         {content}
       </Link>
     );
@@ -137,6 +137,7 @@ function SupportLink({ item }) {
       href={item.href}
       target={item.external ? "_blank" : undefined}
       rel={item.external ? "noreferrer" : undefined}
+      onClick={onNavigate}
     >
       {content}
     </a>
@@ -144,7 +145,12 @@ function SupportLink({ item }) {
 }
 
 function FloatingSupportClinic() {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname, location.search, location.hash]);
 
   return (
     <>
@@ -192,7 +198,7 @@ function FloatingSupportClinic() {
 
           <div className="clinic-support-body">
             {supportItems.map((item) => (
-              <SupportLink item={item} key={item.title} />
+              <SupportLink item={item} key={item.title} onNavigate={() => setIsOpen(false)} />
             ))}
           </div>
 

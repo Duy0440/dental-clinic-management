@@ -8,8 +8,8 @@ const defaultSuggestions = [
   "Tôi bị đau răng thì nên làm gì?",
   "Implant Dentium tốt không?",
   "Bọc răng sứ có hại không?",
+  "Tẩy trắng răng có ê buốt không?",
   "Giá điều trị phụ thuộc vào gì?",
-  "Quy trình khám lần đầu gồm những bước nào?",
 ];
 
 const suggestionGroups = {
@@ -49,11 +49,41 @@ const suggestionGroups = {
     "Inlay, onlay là gì?",
     "Răng sau chữa tủy có cần bọc sứ không?",
   ],
+  restoration: [
+    "Răng vỡ lớn nên trám hay bọc sứ?",
+    "Inlay, onlay dùng khi nào?",
+    "Mất răng nên làm cầu răng hay implant?",
+    "Hàm tháo lắp phù hợp với ai?",
+  ],
   rootCanal: [
     "Khi nào cần chữa tủy?",
     "Chữa tủy có đau không?",
     "Răng sau chữa tủy có cần bọc sứ không?",
     "Tôi muốn đặt lịch khám sớm",
+  ],
+  wisdomTooth: [
+    "Răng khôn mọc lệch có cần nhổ không?",
+    "Lợi trùm răng khôn xử lý sao?",
+    "Nhổ răng khôn có nguy hiểm không?",
+    "Tôi muốn đặt lịch kiểm tra",
+  ],
+  abscess: [
+    "Sưng mặt do răng có nguy hiểm không?",
+    "Răng có mủ là bị gì?",
+    "Áp xe răng xử lý thế nào?",
+    "Tôi muốn đặt lịch khám sớm",
+  ],
+  oralUlcer: [
+    "Nhiệt miệng bao lâu thì khỏi?",
+    "Loét miệng khi nào cần khám?",
+    "Nhiệt miệng tái đi tái lại là do đâu?",
+    "Tôi muốn đặt lịch kiểm tra",
+  ],
+  tmj: [
+    "Há miệng kêu lục cục là bị gì?",
+    "Đau khớp hàm có liên quan răng không?",
+    "Nghiến răng có hại không?",
+    "Tôi muốn đặt lịch kiểm tra",
   ],
   badBreath: [
     "Hôi miệng có phải do dạ dày không?",
@@ -61,17 +91,77 @@ const suggestionGroups = {
     "Chảy máu nướu có gây hôi miệng không?",
     "Tôi muốn đặt lịch kiểm tra",
   ],
+  toothAnatomy: [
+    "Răng số 6 quan trọng thế nào?",
+    "Răng cửa, răng nanh, răng hàm khác nhau gì?",
+    "Răng khôn là răng số mấy?",
+    "Trẻ em thay răng khi nào?",
+  ],
   toothCount: [
     "Người lớn có bao nhiêu răng?",
     "Trẻ em có bao nhiêu răng sữa?",
     "Răng khôn mọc khi nào?",
     "Thiếu răng nên xử lý thế nào?",
   ],
+  sensitivity: [
+    "Răng ê buốt là do đâu?",
+    "Ê buốt khi uống lạnh có nguy hiểm không?",
+    "Tụt nướu gây ê buốt phải làm sao?",
+    "Tôi muốn đặt lịch kiểm tra",
+  ],
+  caries: [
+    "Sâu răng có tự khỏi không?",
+    "Sâu răng khi nào cần trám?",
+    "Sâu răng khi nào cần chữa tủy?",
+    "Làm sao phòng sâu răng?",
+  ],
+  periodontal: [
+    "Viêm nướu và nha chu khác gì nhau?",
+    "Nha chu có làm mất răng không?",
+    "Răng lung lay do nha chu xử lý sao?",
+    "Bao lâu nên cạo vôi răng?",
+  ],
+  prevention: [
+    "Chải răng đúng cách như thế nào?",
+    "Bao lâu nên thay bàn chải?",
+    "Có nên dùng chỉ nha khoa không?",
+    "Khám răng định kỳ bao lâu một lần?",
+  ],
   pediatric: [
     "Trẻ mất răng sữa có sao không?",
     "Trẻ sâu răng sữa có cần trám không?",
     "Khi nào trẻ nên đi khám răng?",
     "Tôi muốn đặt lịch cho bé",
+  ],
+  frenulum: [
+    "Thắng môi thắng lưỡi có cần cắt không?",
+    "Thắng lưỡi ảnh hưởng nói không?",
+    "Trẻ có khe thưa răng cửa nên làm gì?",
+    "Tôi muốn đặt lịch cho bé",
+  ],
+  whitening: [
+    "Tẩy trắng răng có ê buốt không?",
+    "Răng vàng thì nên làm gì?",
+    "Tẩy trắng có hại men răng không?",
+    "Bao lâu nên tẩy trắng lại?",
+  ],
+  laser: [
+    "Điều trị bằng laser có tốt không?",
+    "Laser có thay thế nha sĩ không?",
+    "Khi nào nên dùng laser nha khoa?",
+    "Tôi muốn đặt lịch tư vấn",
+  ],
+  extractionAftercare: [
+    "Sau nhổ răng sưng nướu có sao không?",
+    "Nhổ răng xong khi nào cần tái khám?",
+    "Sau nhổ răng nên kiêng gì?",
+    "Tôi muốn đặt lịch kiểm tra",
+  ],
+  porcelainCompare: [
+    "Sứ kim loại và toàn sứ khác gì nhau?",
+    "Răng sứ zirconia là gì?",
+    "Bọc sứ có cần mài nhiều không?",
+    "Veneer khác bọc sứ thế nào?",
   ],
   price: [
     "Xem bảng giá công khai ở đâu?",
@@ -84,6 +174,12 @@ const suggestionGroups = {
     "Niềng răng mất bao lâu?",
     "Mắc cài và khay trong khác gì nhau?",
     "Giá niềng răng phụ thuộc vào gì?",
+  ],
+  malocclusion: [
+    "Răng hô móm có nên niềng không?",
+    "Răng chen chúc có nguy hiểm không?",
+    "Khớp cắn sai ảnh hưởng gì?",
+    "Khi nào nên chỉnh nha cho trẻ?",
   ],
   generalCare: [
     "Bao lâu nên cạo vôi răng một lần?",
@@ -116,6 +212,9 @@ const normalizeText = (text) =>
     .trim();
 
 const hasAny = (text, keywords) => keywords.some((keyword) => text.includes(keyword));
+
+const hasWordAny = (text, keywords) =>
+  keywords.some((keyword) => new RegExp(`(^|\\s)${keyword}(\\s|$)`).test(text));
 
 const hasPorcelainTerm = (text) =>
   hasAny(text, [
@@ -169,13 +268,31 @@ Kiến thức nha khoa cơ bản:
 - Răng sứ: phục hồi hoặc thẩm mỹ cho răng vỡ lớn, sau chữa tủy, răng mòn nhiều hoặc đổi màu nặng; không nên lạm dụng khi răng còn khỏe.
 - Veneer: mặt dán sứ mỏng ở mặt ngoài răng, thường dùng cho thẩm mỹ màu sắc/hình dáng răng, cần đánh giá men răng và khớp cắn trước.
 - Inlay/Onlay: miếng trám gián tiếp bằng sứ/composite, dùng khi răng sâu/vỡ lớn hơn trám thường nhưng chưa nhất thiết phải bọc cả mão răng.
+- Phục hình răng gồm phục hồi răng còn chân như trám, inlay/onlay, veneer, mão sứ; và phục hồi răng mất như cầu răng, hàm tháo lắp, implant.
+- Trám răng phù hợp với lỗ sâu/vỡ nhỏ đến vừa, còn đủ mô răng nâng đỡ. Inlay/onlay phù hợp khi mất mô răng lớn hơn nhưng vẫn muốn bảo tồn mô răng hơn mão sứ toàn phần.
+- Mão răng sứ thường dùng khi răng vỡ lớn, sau chữa tủy hoặc cần phục hồi chịu lực; cầu răng cần mài răng kế cận; implant không cần mài răng bên cạnh nhưng cần đủ điều kiện xương/nướu và chi phí cao hơn.
+- Hàm giả tháo lắp có chi phí dễ tiếp cận và phù hợp một số trường hợp mất nhiều răng, nhưng cảm giác ăn nhai và độ ổn định thường kém hơn cầu răng hoặc implant.
+- Tẩy trắng răng: có thể cải thiện màu răng tự nhiên nhưng không làm trắng mão sứ/trám cũ; ê buốt tạm thời có thể xảy ra, cần kiểm tra sâu răng, nứt răng, tụt nướu trước.
+- Sứ kim loại: bên trong có khung kim loại, chi phí thường dễ tiếp cận hơn nhưng lâu dài có thể ánh màu/đen viền nướu tùy trường hợp. Toàn sứ/Zirconia thẩm mỹ hơn, ít ánh kim loại hơn nhưng chi phí cao hơn.
+- Laser nha khoa: là công cụ hỗ trợ trong một số điều trị mô mềm/nướu, không phải “thần dược” thay thế khám, chụp phim hay tay nghề bác sĩ.
 - Chữa tủy: dùng khi tủy răng viêm/nhiễm khuẩn; sau chữa tủy răng có thể yếu hơn và cần phục hồi thân răng.
 - Đau răng: có thể do sâu răng, viêm nướu, viêm tủy, áp xe, răng khôn hoặc chấn thương; cần khám để xác định nguyên nhân.
 - Cạo vôi răng: giúp làm sạch mảng bám/vôi răng, giảm viêm nướu, chảy máu chân răng và hôi miệng.
 - Niềng răng: điều chỉnh răng lệch, hô, móm, sai khớp cắn; cần chụp phim và lập kế hoạch điều trị.
 - Nhổ răng/răng khôn: cần kiểm tra và có thể cần chụp phim trước; sau nhổ phải chăm sóc đúng hướng dẫn.
+- Răng khôn mọc lệch/mọc ngầm có thể gây đau, viêm lợi trùm, sâu răng bên cạnh hoặc kẹt thức ăn; không phải răng khôn nào cũng phải nhổ, cần khám và chụp phim.
+- Áp xe răng/nhiễm trùng quanh chân răng có thể gây sưng nướu, mủ, đau nhức, sưng mặt, sốt; đây là nhóm cần khám sớm, không tự chích nặn hoặc tự dùng thuốc kéo dài.
+- Nhiệt miệng/loét miệng thường có thể tự lành, nhưng nếu vết loét kéo dài, tái phát nhiều, lan rộng, đau nhiều hoặc kèm sốt/hạch thì nên kiểm tra.
+- Đau khớp hàm, há miệng kêu, mỏi hàm hoặc nghiến răng có thể liên quan khớp thái dương hàm, khớp cắn, stress hoặc thói quen nghiến/siết răng.
 - Răng người lớn thường có 28 răng nếu không tính răng khôn, tối đa 32 răng nếu đủ 4 răng khôn. Trẻ em thường có 20 răng sữa.
+- Cấu tạo răng gồm men răng, ngà răng và tủy răng; bên ngoài thường chia thân răng, cổ răng, chân răng.
+- Răng cửa dùng để cắn/cắt thức ăn và ảnh hưởng thẩm mỹ/phát âm; răng nanh giúp xé thức ăn và hướng dẫn vận động hàm; răng tiền hàm chuyển tiếp giữa xé và nghiền; răng hàm nghiền thức ăn, trong đó răng số 6 rất quan trọng cho khớp cắn.
+- Sâu răng thường tiến triển từ sâu men ít đau, sâu ngà gây ê buốt, viêm tủy gây đau tự phát/đau đêm; để lâu có thể áp-xe hoặc mất răng.
+- Viêm nướu thường do mảng bám/vôi răng gây đỏ, sưng, chảy máu; nếu tiến triển thành nha chu có thể tiêu xương, túi nha chu, răng lung lay và mất răng.
+- Ê buốt răng có thể do mòn men, tụt nướu, sâu răng, nứt răng, chải răng mạnh, tẩy trắng hoặc sau điều trị; cần kiểm tra nguyên nhân trước khi xử lý.
+- Phòng ngừa cơ bản: chải răng đúng cách 2 lần/ngày, làm sạch kẽ răng, hạn chế ăn ngọt nhiều lần trong ngày, thay bàn chải khoảng 3 tháng/lần và khám định kỳ khoảng 6 tháng/lần.
 - Với trẻ em, cần phân biệt mất răng sữa đúng tuổi hay mất răng do sâu/chấn thương; không nên tự nhổ hoặc bỏ qua đau/sưng.
+- Thắng môi/thắng lưỡi ở trẻ cần đánh giá mức độ ảnh hưởng bú, phát âm, vệ sinh, khe thưa răng cửa hoặc kéo tụt nướu; không phải trường hợp nào cũng cần cắt ngay.
 - Implant Dentium/Osstem thường thuộc nhóm implant Hàn Quốc, phổ biến và chi phí dễ tiếp cận hơn một số dòng cao cấp.
 - Implant Straumann/Nobel thường thuộc nhóm cao cấp hơn, nhưng lựa chọn loại implant phải dựa vào xương hàm, vị trí mất răng, sức khỏe và kế hoạch phục hình.
 - Nguyên tắc tư vấn: ưu tiên bảo tồn răng thật khi còn khả năng giữ; giải thích rõ lợi ích, rủi ro và lựa chọn ít xâm lấn trước khi nói đến phương án tốn kém.
@@ -209,10 +326,252 @@ const getTopicFromText = (text) => {
   }
 
   if (
+    hasAny(text, [
+      "thang moi",
+      "thang luoi",
+      "dinh thang",
+      "phanh moi",
+      "phanh luoi",
+      "dinh luoi",
+      "be bi thang",
+    ])
+  ) {
+    return "frenulum";
+  }
+
+  if (
+    hasAny(text, [
+      "sau khi nho",
+      "moi nho rang",
+      "nho rang xong",
+      "nho rang ve",
+      "hau phau",
+      "sau tieu phau",
+      "sung sau khi nho",
+      "chay mau sau khi nho",
+    ])
+  ) {
+    return "extractionAftercare";
+  }
+
+  if (
+    hasAny(text, [
+      "tay trang",
+      "trang rang",
+      "rang trang",
+      "rang vang",
+      "rang bi vang",
+      "rang duoc trang",
+      "lam trang",
+      "e buot khi tay trang",
+      "e buot khong",
+    ])
+  ) {
+    return "whitening";
+  }
+
+  if (hasAny(text, ["laser", "lazer", "laze", "dieu tri bang laser", "dieu tri bang lazer"])) {
+    return "laser";
+  }
+
+  if (hasAny(text, ["viem tuy", "chua tuy", "lay tuy", "dieu tri tuy", "tuy rang"])) {
+    return "rootCanal";
+  }
+
+  if (
+    hasAny(text, [
+      "rang so",
+      "so 6",
+      "so 7",
+      "so 8",
+      "rang cua",
+      "rang nanh",
+      "rang ham",
+      "rang tien ham",
+      "rang khon la rang",
+      "vi tri rang",
+      "cung ham",
+      "ham tren",
+      "ham duoi",
+    ])
+  ) {
+    return "toothAnatomy";
+  }
+
+  if (
+    hasAny(text, [
+      "nha chu",
+      "viem nha chu",
+      "viem nuou",
+      "viem loi",
+      "tui nha chu",
+      "tieu xuong",
+      "cao voi",
+      "lay cao rang",
+      "chay mau chan rang",
+      "chay mau nuou",
+      "chay mau loi",
+    ])
+  ) {
+    return "periodontal";
+  }
+
+  if (
+    hasAny(text, [
+      "e buot",
+      "nhay cam",
+      "uong lanh",
+      "nuoc lanh",
+      "lanh buot",
+      "an ngot",
+      "mon men",
+      "tut nuou",
+      "tut loi",
+    ])
+    || /(^|\s)an chua(\s|$)/.test(text)
+  ) {
+    return "sensitivity";
+  }
+
+  if (
     hasAny(text, ["tre em", "em be", "be bi", "rang sua", "mat rang sua", "rang tre", "nha khoa tre em"]) ||
-    (hasAny(text, ["mat rang", "gay rang", "sau rang"]) && hasAny(text, ["be", "tre", "con toi", "chau"]))
+    hasAny(text, ["khi nao tre", "tre nen di kham", "dua be di kham", "cho be di kham", "con toi bi", "be co"]) ||
+    (hasAny(text, ["mat rang", "gay rang", "sau rang"]) && (hasWordAny(text, ["be", "tre", "chau"]) || hasAny(text, ["con toi"])))
   ) {
     return "pediatric";
+  }
+
+  if (
+    hasAny(text, [
+      "sau rang",
+      "lo sau",
+      "rang bi sau",
+      "sau den tuy",
+      "sau co tu khoi",
+      "sau tu khoi",
+      "han tram",
+      "tram rang",
+      "sau men",
+      "sau nga",
+    ])
+  ) {
+    return "caries";
+  }
+
+  if (
+    hasAny(text, [
+      "rang khon",
+      "loi trum",
+      "moc lech",
+      "moc ngam",
+      "ket thuc an",
+      "viem loi trum",
+    ])
+  ) {
+    return "wisdomTooth";
+  }
+
+  if (
+    hasAny(text, [
+      "ap xe",
+      "co mu",
+      "chay mu",
+      "mu rang",
+      "sung mat",
+      "sung ma",
+      "sung ham",
+      "nhiem trung chan rang",
+      "o mu",
+    ])
+  ) {
+    return "abscess";
+  }
+
+  if (
+    hasAny(text, [
+      "nhiet mieng",
+      "loet mieng",
+      "loet moi",
+      "loet luoi",
+      "vet loet",
+      "ap xe mieng",
+      "dau mieng",
+    ])
+  ) {
+    return "oralUlcer";
+  }
+
+  if (
+    hasAny(text, [
+      "khop ham",
+      "thai duong ham",
+      "hai mieng",
+      "ha mieng",
+      "keu luc cuc",
+      "moi ham",
+      "nghien rang",
+      "siet rang",
+      "dau quai ham",
+    ])
+  ) {
+    return "tmj";
+  }
+
+  if (
+    hasAny(text, [
+      "phuc hinh",
+      "mat rang nen lam gi",
+      "mat rang lau nam",
+      "ham thao lap",
+      "ham gia",
+      "cau rang",
+      "cau rang su",
+      "trong rang gia",
+      "rang vo lon",
+      "rang vo nhieu",
+      "rang vo lon nen",
+      "nen tram hay boc su",
+      "tram hay boc su",
+      "inlay",
+      "onlay",
+      "overlay",
+      "mao su",
+    ])
+  ) {
+    return "restoration";
+  }
+
+  if (
+    hasAny(text, [
+      "cham soc rang",
+      "phong ngua",
+      "danh rang dung cach",
+      "chi nha khoa",
+      "nuoc suc mieng",
+      "thay ban chai",
+      "kham dinh ky",
+      "ve sinh rang mieng",
+      "giu rang",
+      "rang chac khoe",
+    ])
+  ) {
+    return "prevention";
+  }
+
+  if (
+    hasAny(text, [
+      "rang ho",
+      "rang mom",
+      "ho mom",
+      "sai khop can",
+      "lech khop can",
+      "khop can sai",
+      "rang chen chuc",
+      "rang khap khenh",
+      "rang moc lech",
+    ])
+  ) {
+    return "malocclusion";
   }
 
   if (isPriceQuestion(text)) {
@@ -281,8 +640,19 @@ const getTopicFromText = (text) => {
     return "bleedingGum";
   }
 
-  if (hasAny(text, ["viem tuy", "chua tuy", "lay tuy", "dieu tri tuy", "tuy rang"])) {
-    return "rootCanal";
+  if (
+    hasAny(text, [
+      "su kim loai",
+      "toan su",
+      "zirconia",
+      "cercon",
+      "rang su kim loai",
+      "rang toan su",
+      "khac nhau cho nao",
+      "khac nhau o dau",
+    ])
+  ) {
+    return "porcelainCompare";
   }
 
   if (hasPorcelainTerm(text)) {
@@ -364,6 +734,111 @@ const findRuleBasedReply = (message, history = []) => {
     );
   }
 
+  if (topic === "toothAnatomy") {
+    return createResult(
+      "Trong nha khoa, răng thường được hiểu theo nhóm chức năng. Răng cửa ở phía trước dùng để cắn/cắt thức ăn và ảnh hưởng nhiều đến thẩm mỹ, phát âm. Răng nanh giúp xé thức ăn và giữ hướng vận động hàm. Răng tiền hàm và răng hàm nằm phía sau, chịu lực nhai và nghiền thức ăn.\n\nRăng số 6 là răng hàm lớn mọc khá sớm, giữ vai trò quan trọng trong ăn nhai và khớp cắn nên nếu sâu, mất hoặc lệch thì không nên xem nhẹ. Răng khôn thường là răng số 8, có thể mọc thẳng, mọc lệch, mọc ngầm hoặc không mọc; nếu đau, viêm lợi trùm, sâu răng bên cạnh hoặc kẹt thức ăn thì nên chụp phim kiểm tra.",
+      suggestionGroups.toothAnatomy,
+    );
+  }
+
+  if (topic === "periodontal") {
+    return createResult(
+      "Viêm nướu và nha chu là hai mức độ khác nhau. Viêm nướu thường là giai đoạn sớm: nướu đỏ, sưng, dễ chảy máu khi đánh răng, thường liên quan mảng bám và vôi răng. Nếu xử lý sớm bằng vệ sinh răng miệng đúng cách và cạo vôi, tình trạng này thường cải thiện tốt.\n\nNha chu nặng hơn vì viêm đã ảnh hưởng mô nâng đỡ quanh răng, có thể tạo túi nha chu, tiêu xương, tụt nướu, hôi miệng, răng lung lay và thậm chí mất răng. Hướng xử lý thường là cạo vôi/làm sạch sâu, kiểm soát viêm, hướng dẫn vệ sinh kẽ răng và theo dõi định kỳ; trường hợp nặng cần điều trị nha chu chuyên sâu.",
+      suggestionGroups.periodontal,
+    );
+  }
+
+  if (topic === "sensitivity") {
+    return createResult(
+      "Răng ê buốt khi uống lạnh, ăn chua/ngọt hoặc chải răng có thể do mòn men, tụt nướu, sâu răng, nứt răng, chải răng quá mạnh, sau tẩy trắng hoặc sau một số điều trị. Nếu chỉ ê nhẹ, thoáng qua thì có thể bắt đầu bằng bàn chải mềm, kem đánh răng chống ê buốt và tránh chải ngang quá mạnh.\n\nNhưng nếu ê buốt kéo dài, đau nhói, đau tự phát, có lỗ sâu, răng nứt/mẻ hoặc nướu tụt nhiều thì nên khám để tìm nguyên nhân. Hướng điều trị có thể là bôi thuốc giảm ê, trám cổ răng, xử lý sâu răng, điều trị nướu hoặc chữa tủy nếu tổn thương đã vào tủy.",
+      suggestionGroups.sensitivity,
+    );
+  }
+
+  if (topic === "caries") {
+    return createResult(
+      "Sâu răng là quá trình mô răng bị phá hủy bởi acid từ vi khuẩn trong mảng bám. Giai đoạn rất sớm ở men răng có thể kiểm soát bằng vệ sinh, fluoride và thay đổi thói quen ăn ngọt; nhưng khi đã thành lỗ sâu thì thường không tự lành lại như da, nha sĩ cần trám hoặc phục hồi phần răng bị mất.\n\nNếu sâu lan vào ngà răng, bạn có thể ê buốt khi ăn lạnh/ngọt hoặc mắc thức ăn. Nếu sâu vào tủy, thường đau tự phát, đau về đêm, đau kéo dài hoặc sưng mủ; lúc đó có thể cần chữa tủy rồi phục hồi thân răng. Đi khám sớm giúp giữ răng thật và tránh điều trị tốn kém hơn.",
+      suggestionGroups.caries,
+    );
+  }
+
+  if (topic === "prevention") {
+    return createResult(
+      "Chăm sóc răng miệng cơ bản nên bắt đầu từ vài việc đều đặn: đánh răng ít nhất 2 lần/ngày bằng kem có fluoride, dùng bàn chải mềm, chải nhẹ theo đường viền nướu, làm sạch kẽ răng bằng chỉ nha khoa hoặc bàn chải kẽ và hạn chế ăn ngọt nhiều lần trong ngày.\n\nBạn nên thay bàn chải khoảng 3 tháng/lần hoặc sớm hơn nếu lông bàn chải xòe. Khám răng định kỳ khoảng 6 tháng/lần giúp phát hiện sớm sâu răng, vôi răng, viêm nướu, răng khôn hoặc khớp cắn bất thường trước khi thành vấn đề lớn.",
+      suggestionGroups.prevention,
+    );
+  }
+
+  if (topic === "malocclusion") {
+    return createResult(
+      "Răng hô, móm, chen chúc hoặc sai khớp cắn không chỉ là vấn đề thẩm mỹ. Nếu khớp cắn lệch nhiều, bạn có thể khó vệ sinh, dễ sâu kẽ răng, viêm nướu, mòn răng, đau khớp hàm hoặc ăn nhai không đều.\n\nNiềng răng/chỉnh nha là một hướng xử lý phổ biến, nhưng cần khám, chụp phim và phân tích khớp cắn trước. Với trẻ em, nếu có móm, lệch hàm, răng mọc chen chúc sớm, thở miệng hoặc thói quen mút tay kéo dài thì nên kiểm tra sớm để xem có cần can thiệp đúng thời điểm không.",
+      suggestionGroups.malocclusion,
+    );
+  }
+
+  if (topic === "wisdomTooth") {
+    return createResult(
+      "Răng khôn là răng hàm lớn thứ ba, thường là răng số 8. Không phải răng khôn nào cũng phải nhổ, nhưng nếu răng mọc lệch, mọc ngầm, gây đau, viêm lợi trùm, kẹt thức ăn, sâu răng số 7 bên cạnh hoặc sưng tái đi tái lại thì nên khám và chụp phim.\n\nHướng xử lý có thể là vệ sinh vùng lợi trùm, điều trị viêm cấp trước, hoặc nhổ/tiểu phẫu nếu răng có nguy cơ gây biến chứng. Bạn không nên tự uống thuốc nhiều lần rồi bỏ qua, vì viêm răng khôn dễ tái phát khi nguyên nhân cơ học vẫn còn.",
+      suggestionGroups.wisdomTooth,
+    );
+  }
+
+  if (topic === "abscess") {
+    return createResult(
+      "Răng có mủ, sưng nướu, sưng mặt hoặc đau nhức kèm sốt có thể liên quan nhiễm trùng quanh chân răng/áp xe răng. Đây là nhóm không nên tự xử lý ở nhà, vì nhiễm trùng có thể lan rộng và làm tình trạng nặng hơn.\n\nHướng điều trị tùy nguyên nhân: nếu răng còn giữ được có thể cần chữa tủy, dẫn lưu ổ nhiễm trùng và phục hồi răng; nếu răng hư quá nặng có thể phải nhổ. Bạn không nên tự chích/nặn mủ hoặc tự dùng kháng sinh kéo dài khi chưa được khám.",
+      suggestionGroups.abscess,
+    );
+  }
+
+  if (topic === "oralUlcer") {
+    return createResult(
+      "Nhiệt miệng hoặc vết loét nhỏ trong miệng thường có thể tự lành sau một thời gian, nhưng vẫn gây đau khi ăn uống. Bạn nên giữ vệ sinh miệng, tránh thức ăn cay/nóng/chua, uống đủ nước và không tự cạy vết loét.\n\nNếu vết loét kéo dài trên khoảng 2 tuần, tái phát liên tục, lan rộng, chảy máu, đau nhiều, kèm sốt/hạch hoặc xuất hiện sau khi cấn răng giả/răng sắc nhọn thì nên khám để loại trừ nguyên nhân khác và xử lý điểm gây chấn thương.",
+      suggestionGroups.oralUlcer,
+    );
+  }
+
+  if (topic === "tmj") {
+    return createResult(
+      "Há miệng kêu lục cục, đau vùng trước tai, mỏi hàm, đau khi nhai hoặc nghiến răng có thể liên quan khớp thái dương hàm, cơ nhai, khớp cắn hoặc thói quen siết/nghiến răng. Tình trạng này không nên chỉ xem là đau răng thông thường.\n\nBạn nên hạn chế nhai đồ cứng, tránh há miệng quá lớn, theo dõi thói quen nghiến răng và đặt lịch kiểm tra nếu đau kéo dài. Nha sĩ có thể đánh giá khớp cắn, tình trạng mòn răng và tư vấn máng nhai hoặc hướng điều trị phù hợp nếu cần.",
+      suggestionGroups.tmj,
+    );
+  }
+
+  if (topic === "restoration") {
+    return createResult(
+      "Phục hình răng có hai nhóm chính. Nếu răng còn chân và còn khả năng giữ, nha sĩ sẽ ưu tiên bảo tồn bằng trám răng, inlay/onlay, veneer hoặc mão sứ tùy mức độ mất mô răng. Nếu răng đã mất, lựa chọn thường là hàm tháo lắp, cầu răng sứ hoặc implant.\n\nTrám răng phù hợp lỗ sâu/vỡ nhỏ đến vừa. Inlay/onlay dùng khi răng mất mô lớn hơn trám thường nhưng vẫn muốn bảo tồn mô răng. Mão sứ phù hợp răng vỡ lớn, sau chữa tủy hoặc cần chịu lực tốt hơn. Cầu răng sứ cần mài răng kế cận để làm trụ; implant không cần mài răng bên cạnh nhưng cần đủ điều kiện xương/nướu. Hàm tháo lắp chi phí dễ tiếp cận hơn, phù hợp một số trường hợp mất nhiều răng nhưng cảm giác ăn nhai thường kém ổn định hơn.",
+      suggestionGroups.restoration,
+    );
+  }
+
+  if (topic === "whitening") {
+    return createResult(
+      "Tẩy trắng răng có thể gây ê buốt tạm thời, nhất là khi răng đang nhạy cảm, có sâu răng, mòn cổ răng, tụt nướu hoặc men răng yếu. Vì vậy trước khi tẩy trắng, nha sĩ thường cần kiểm tra răng nướu trước; nếu có vôi răng, sâu răng hoặc viêm nướu thì nên xử lý trước rồi mới làm trắng.\n\nNếu bạn muốn răng trắng hơn, cách an toàn là bắt đầu từ vệ sinh răng miệng, cạo vôi/đánh bóng nếu có mảng bám, hạn chế cà phê/trà/thuốc lá và khám để xem màu răng là do mảng bám, nhiễm màu bên ngoài hay đổi màu bên trong răng. Tẩy trắng không làm trắng mão sứ, miếng trám cũ hoặc veneer, nên nếu có phục hình cũ ở vùng răng cửa thì cần tư vấn kỹ để tránh lệch màu.",
+      suggestionGroups.whitening,
+    );
+  }
+
+  if (topic === "laser") {
+    return createResult(
+      "Laser trong nha khoa là một công cụ hỗ trợ, không phải phương pháp “thần kỳ” thay thế hoàn toàn tay nghề bác sĩ hay quy trình khám. Laser có thể hữu ích trong một số xử lý mô mềm, hỗ trợ điều trị nướu hoặc giảm chảy máu trong vài tình huống phù hợp.\n\nĐiểm quan trọng là không nên chọn điều trị chỉ vì nghe tên công nghệ. Bạn nên hỏi rõ: laser dùng để xử lý vấn đề gì, có lựa chọn nào khác không, lợi ích thực tế là gì, chi phí có phát sinh không và sau điều trị cần chăm sóc ra sao. Một phòng khám tư vấn minh bạch sẽ giải thích chỉ định trước khi làm.",
+      suggestionGroups.laser,
+    );
+  }
+
+  if (topic === "extractionAftercare") {
+    return createResult(
+      "Sau nhổ răng, nướu sưng nhẹ và đau âm ỉ trong vài ngày đầu có thể gặp, nhất là với răng khôn hoặc ca nhổ khó. Tuy nhiên nếu sưng tăng nhiều, đau dữ dội, chảy máu kéo dài, có mùi hôi/vị hôi trong ổ răng, sốt hoặc há miệng khó thì bạn nên liên hệ phòng khám để kiểm tra lại.\n\nTrong thời gian đầu, bạn nên cắn gạc đúng hướng dẫn, không súc miệng mạnh, không khạc nhổ liên tục, không hút thuốc, tránh nhai bên mới nhổ và ăn mềm. Không tự chọc vào ổ răng vì có thể làm bong cục máu đông, khiến vết thương lâu lành hơn.",
+      suggestionGroups.extractionAftercare,
+    );
+  }
+
+  if (topic === "porcelainCompare") {
+    return createResult(
+      "Sứ kim loại và toàn sứ khác nhau chủ yếu ở phần khung bên trong. Răng sứ kim loại có khung kim loại bên trong, chi phí thường dễ tiếp cận hơn nhưng lâu dài có thể bị ánh màu hoặc đen viền nướu tùy vị trí và cơ địa. Răng toàn sứ như zirconia/cercon không có khung kim loại, thẩm mỹ tốt hơn ở vùng răng cửa và thường ít bị ánh kim loại hơn, nhưng chi phí cao hơn.\n\nKhông phải ai cũng cần chọn loại đắt nhất. Nếu là răng hàm cần ăn nhai, răng cửa cần thẩm mỹ, răng đã chữa tủy hay răng còn khỏe thì chỉ định sẽ khác nhau. Bạn nên yêu cầu nha sĩ giải thích vì sao chọn loại sứ đó, cần mài bao nhiêu mô răng và có phương án ít xâm lấn hơn như trám, inlay/onlay hoặc veneer không.",
+      suggestionGroups.porcelainCompare,
+    );
+  }
+
   if (topic === "price") {
     return createResult(
       "Website có trang bảng giá công khai để khách tham khảo trước các nhóm dịch vụ như nha khoa tổng quát, Implant, niềng răng, răng sứ và nha khoa trẻ em. Tuy vậy chi phí thực tế không nên chốt chỉ bằng vài dòng trên website, vì còn phụ thuộc tình trạng răng thật, phim chụp, vật liệu, mức độ khó và chương trình ưu đãi tại thời điểm khám.\n\nVí dụ cùng là implant, người đủ xương và nướu khỏe sẽ khác người mất răng lâu, tiêu xương hoặc cần ghép xương. Vì vậy bảng giá dùng để dự trù ban đầu; giá cuối cùng nên được nha sĩ khám trực tiếp rồi lễ tân lập hóa đơn theo dịch vụ thực tế.",
@@ -385,7 +860,21 @@ const findRuleBasedReply = (message, history = []) => {
     );
   }
 
+  if (topic === "frenulum") {
+    return createResult(
+      "Thắng môi hoặc thắng lưỡi là dải mô nhỏ nối môi/lưỡi với nướu hoặc sàn miệng. Ở trẻ em, không phải trường hợp nào cũng cần cắt. Nha sĩ thường xem nó có gây khó bú, khó phát âm, hạn chế cử động lưỡi, tạo khe thưa răng cửa, kéo tụt nướu hoặc làm bé khó vệ sinh răng miệng không.\n\nNếu bé chỉ có thắng môi/thắng lưỡi nhưng ăn uống, nói, vệ sinh và mọc răng bình thường thì có thể chỉ cần theo dõi. Nếu có dấu hiệu ảnh hưởng, phòng khám sẽ khám trực tiếp rồi mới tư vấn có cần can thiệp hay không; thủ thuật có thể là cắt/chỉnh thắng bằng dụng cụ phù hợp, đôi khi có hỗ trợ laser tùy trang thiết bị và chỉ định.",
+      suggestionGroups.frenulum,
+    );
+  }
+
   if (topic === "pediatric") {
+    if (hasAny(text, ["khi nao", "bao lau", "may tuoi", "nen di kham"])) {
+      return createResult(
+        "Trẻ nên được kiểm tra răng định kỳ từ sớm, đặc biệt khi bắt đầu mọc răng sữa, có sâu răng, đau răng, hôi miệng, chảy máu nướu, răng mọc lệch, thói quen mút tay/thở miệng hoặc răng sữa lung lay bất thường. Mục tiêu không chỉ là chữa sâu răng mà còn theo dõi mọc răng, hướng dẫn vệ sinh và phát hiện lệch khớp cắn sớm.\n\nNếu bé sợ nha khoa, phụ huynh nên cho bé đi khám khi chưa đau nặng để bé quen môi trường trước. Khi đã đau, sưng hoặc sốt thì việc điều trị thường khó chịu hơn và bé dễ sợ hơn.",
+        suggestionGroups.pediatric,
+      );
+    }
+
     return createResult(
       "Với trẻ em, mất răng cần xem đó là răng sữa hay răng vĩnh viễn. Nếu răng sữa rụng đúng tuổi, thường là quá trình thay răng bình thường. Nhưng nếu răng mất do sâu, té ngã, đau, sưng nướu hoặc rụng quá sớm thì nên đưa bé đi khám để tránh ảnh hưởng mầm răng vĩnh viễn và khoảng mọc răng sau này.\n\nNếu là răng vĩnh viễn bị gãy/mất thì nên khám càng sớm càng tốt. Phụ huynh không nên tự nhổ, tự dán răng hoặc bỏ qua khi bé đau, hôi miệng, chảy máu hay sưng mặt.",
       suggestionGroups.pediatric,

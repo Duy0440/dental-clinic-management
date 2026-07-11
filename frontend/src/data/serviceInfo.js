@@ -7,7 +7,7 @@ export const serviceCategories = [
       "Giải pháp phục hồi răng mất bằng trụ Implant, giúp cải thiện ăn nhai, thẩm mỹ và hạn chế tiêu xương hàm.",
     image: "/images/service-implant-consultation.png",
     accent: "gold",
-    highlights: ["Dentium, Osstem, Straumann", "Tư vấn phim chụp trước điều trị", "Theo dõi tái khám"],
+    highlights: ["Implant DIO, Implant SIC", "Tư vấn phim chụp trước điều trị", "Theo dõi tái khám"],
     suitableFor: [
       "Khách mất một răng, nhiều răng hoặc mất răng lâu ngày.",
       "Khách muốn phục hồi ăn nhai cố định thay vì hàm tháo lắp.",

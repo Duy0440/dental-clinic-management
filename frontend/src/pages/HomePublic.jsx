@@ -177,27 +177,31 @@ const buildDoctorProfile = (dentist, index) => {
 const facilitySlides = [
   {
     label: "Phòng điều trị",
-    title: "Ghế nha khoa hiện đại",
-    text: "Không gian điều trị sáng, sạch và bố trí thuận tiện cho quá trình thăm khám.",
-    image: "/images/clinic-story-equipment.png",
+    title: "Ghế nha khoa Runyess",
+    text: "Ghế điều trị tích hợp đèn, khay dụng cụ và hệ thống hỗ trợ thao tác, giúp bác sĩ làm việc thuận tiện trong từng ca khám.",
+    image: "/images/equipment-runyess-chair-real.png",
+    specs: ["Tư thế nằm thoải mái", "Bố trí dụng cụ gọn", "Hỗ trợ điều trị tổng quát"],
   },
   {
     label: "Chẩn đoán hình ảnh",
-    title: "CBCT X5",
-    text: "Hỗ trợ khảo sát răng, xương hàm và vị trí cấy ghép bằng hình ảnh 3D.",
-    image: "/images/equipment-cbct-x5.png",
+    title: "CBCT 3 in 1 Hyperion X5",
+    text: "Thiết bị đến từ Italy, hỗ trợ khảo sát răng, xương hàm, xoang hàm và lập kế hoạch implant hoặc chỉnh nha rõ hơn.",
+    image: "/images/equipment-hyperion-x5-real.png",
+    specs: ["Hình ảnh 3D/2D/Ceph", "Khảo sát xương hàm", "Hỗ trợ kế hoạch implant"],
   },
   {
     label: "Lấy dấu kỹ thuật số",
-    title: "Scan Shining",
-    text: "Ghi nhận dấu răng nhanh, giảm khó chịu so với lấy dấu truyền thống.",
-    image: "/images/equipment-intraoral-scan.png",
+    title: "Máy Scan Shinning 3D",
+    text: "Ghi nhận dấu răng kỹ thuật số, hỗ trợ tư vấn phục hình, chỉnh nha và giảm khó chịu so với lấy dấu truyền thống.",
+    image: "/images/equipment-shining-3d-real.png",
+    specs: ["Lấy dấu nhanh", "Dễ quan sát trên màn hình", "Hỗ trợ phục hình thẩm mỹ"],
   },
   {
     label: "Khu vô trùng",
-    title: "Nồi hấp Class B",
-    text: "Dụng cụ được đóng gói và tiệt trùng theo từng lượt sử dụng.",
-    image: "/images/equipment-class-b-autoclave.png",
+    title: "Vacuclave MELAG Class B",
+    text: "Nồi hấp MELAG của Đức, chuẩn Class B theo EN13060, hỗ trợ tiệt trùng dụng cụ trước khi sử dụng cho khách hàng.",
+    image: "/images/equipment-melag-vacuclave-real.png",
+    specs: ["Chuẩn Class B", "Đạt EN13060", "Kiểm soát dụng cụ theo lượt"],
   },
 ];
 
@@ -471,7 +475,6 @@ function HomePublic() {
                 <small>{service.eyebrow}</small>
                 <h3>{service.title}</h3>
                 <p>{service.summary}</p>
-                <strong>{service.highlights[0]}</strong>
                 <div className="clinic-service-v2-actions">
                   <Link to={`/services/${service.slug}`}>Xem thêm</Link>
                   <button type="button" onClick={() => setShowBooking(true)}>
@@ -589,8 +592,8 @@ function HomePublic() {
             <span>Cơ sở vật chất</span>
             <h2>Không gian điều trị và thiết bị hỗ trợ</h2>
             <p>
-              Nha khoa V đầu tư phòng điều trị, chẩn đoán hình ảnh, scan kỹ thuật số
-              và khu vô trùng để quá trình thăm khám rõ ràng hơn.
+              Hệ thống ghế điều trị, chụp phim 3D, scan kỹ thuật số và khu tiệt trùng được bố trí
+              thành từng khu riêng để khách hàng hiểu rõ hơn trước khi điều trị.
             </p>
             <div className="clinic-facility-v2-tabs" aria-label="Chọn cơ sở vật chất">
               {facilitySlides.map((item, index) => (
@@ -614,7 +617,14 @@ function HomePublic() {
                 <span>{activeFacility.label}</span>
                 <h3>{activeFacility.title}</h3>
               </div>
-              <p>{activeFacility.text}</p>
+              <div>
+                <p>{activeFacility.text}</p>
+                <ul className="clinic-facility-v2-specs">
+                  {activeFacility.specs.map((spec) => (
+                    <li key={spec}>{spec}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
             <div className="clinic-facility-v2-controls">
               <button
