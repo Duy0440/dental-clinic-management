@@ -206,9 +206,9 @@ const facilitySlides = [
   {
     label: "Phòng điều trị",
     title: "Ghế nha khoa Runyess",
-    text: "Ghế điều trị tích hợp đèn, khay dụng cụ và hệ thống hỗ trợ thao tác, giúp bác sĩ làm việc thuận tiện trong từng ca khám.",
+    text: "Ghế điều trị tích hợp đèn, khay dụng cụ và hệ thống tay khoan, giúp bác sĩ thao tác ổn định hơn trong quá trình khám và điều trị.",
     image: "/images/equipment-runyess-chair-real.png",
-    specs: ["Tư thế nằm thoải mái", "Bố trí dụng cụ gọn", "Hỗ trợ điều trị tổng quát"],
+    specs: ["Đèn và khay dụng cụ", "Thao tác điều trị ổn định", "Không gian khám gọn gàng"],
   },
   {
     label: "Chẩn đoán hình ảnh",

@@ -91,9 +91,9 @@ const equipment = [
   {
     title: "Ghế nha khoa Runyess",
     label: "Không gian điều trị",
-    text: "Ghế điều trị tích hợp các bộ phận hỗ trợ thao tác, giúp bác sĩ làm việc thuận tiện và khách hàng có tư thế nằm thoải mái hơn.",
+    text: "Ghế điều trị tích hợp đèn, khay dụng cụ, tay khoan và hệ thống hỗ trợ thao tác, giúp bác sĩ làm việc ổn định hơn trong từng ca khám.",
     image: "/images/equipment-runyess-chair-real.png",
-    details: ["Đèn điều trị và khay dụng cụ", "Tư thế ghế phù hợp khi khám", "Phù hợp nhiều nhóm dịch vụ"],
+    details: ["Đèn điều trị và khay dụng cụ", "Hỗ trợ thao tác ổn định", "Không gian điều trị gọn gàng"],
   },
 ];
 
@@ -107,7 +107,7 @@ const equipmentHighlights = [
   "Chụp phim 3D hỗ trợ xem xương hàm và răng khôn",
   "Scan kỹ thuật số giúp giảm khó chịu khi lấy dấu",
   "Tiệt trùng dụng cụ theo quy trình riêng",
-  "Ghế điều trị bố trí thuận tiện cho bác sĩ và khách",
+  "Ghế điều trị bố trí gọn, hỗ trợ bác sĩ thao tác ổn định",
 ];
 
 function AboutClinicPublic() {

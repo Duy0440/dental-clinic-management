@@ -215,8 +215,11 @@ const normalizeDentalInput = (text) => {
     [/\b(nk|nhakhoa)\b/g, "nha khoa"],
     [/\b(j|z)\b/g, "gi"],
     [/\b(loi|nuu)\b/g, "nuou"],
+    [/\b(nuou|nou|nau)\b/g, "nuou"],
     [/\b(lazer|laze)\b/g, "laser"],
+    [/\b(tai s|tai sao z|tai sao v|sao v|sao z)\b/g, "tai sao"],
     [/daurang/g, "dau rang"],
+    [/dau?rang/g, "dau rang"],
     [/dauham/g, "dau ham"],
     [/nhucrang/g, "nhuc rang"],
     [/nhucham/g, "nhuc ham"],
@@ -241,8 +244,11 @@ const normalizeDentalInput = (text) => {
     [/chaymau/g, "chay mau"],
     [/chanrang/g, "chan rang"],
     [/sungnuou/g, "sung nuou"],
+    [/sungloi/g, "sung nuou"],
     [/viemnuou/g, "viem nuou"],
+    [/viemloi/g, "viem nuou"],
     [/tutnuou/g, "tut nuou"],
+    [/tutloi/g, "tut nuou"],
     [/taytrang/g, "tay trang"],
     [/lamtrang/g, "lam trang"],
     [/rangvang/g, "rang vang"],
@@ -277,6 +283,86 @@ const hasAny = (text, keywords) => keywords.some((keyword) => text.includes(keyw
 
 const hasWordAny = (text, keywords) =>
   keywords.some((keyword) => new RegExp(`(^|\\s)${keyword}(\\s|$)`).test(text));
+
+const hasSymptomQuestionIntent = (text) =>
+  hasAny(text, [
+    "toi bi",
+    "em bi",
+    "con toi bi",
+    "be bi",
+    "rang toi",
+    "rang em",
+    "nuou toi",
+    "loi toi",
+    "ham tren",
+    "ham duoi",
+    "tai sao",
+    "vi sao",
+    "nguyen nhan",
+    "nen lam gi",
+    "lam sao",
+    "co nguy hiem",
+    "co sao khong",
+  ]) &&
+  hasAny(text, [
+    "dau",
+    "nhuc",
+    "buot",
+    "e buot",
+    "sung",
+    "chay mau",
+    "hoi mieng",
+    "lung lay",
+    "rung rinh",
+    "mu",
+    "viem",
+    "gay",
+    "me",
+    "vo",
+    "be",
+    "nut",
+    "mat rang",
+  ]);
+
+const getSymptomTopic = (text) => {
+  if (hasAny(text, ["sau khi nho", "moi nho rang", "nho rang xong", "nho rang ve", "hau phau", "sau tieu phau"])) {
+    return "extractionAftercare";
+  }
+
+  if (hasAny(text, ["tre em", "em be", "be bi", "rang sua", "con toi", "cho be", "dua be", "chau"])) {
+    return "pediatric";
+  }
+
+  if (hasAny(text, ["co mu", "chay mu", "mu rang", "ap xe", "sung mat", "sung ma", "sot", "nhiem trung"])) {
+    return "abscess";
+  }
+
+  if (hasAny(text, ["chay mau", "sung nuou", "sung loi", "viem nuou", "viem loi", "nha chu", "hoi mieng"])) {
+    return text.includes("hoi mieng") && !hasAny(text, ["chay mau", "sung", "viem"]) ? "badBreath" : "periodontal";
+  }
+
+  if (hasAny(text, ["e buot", "buot", "nhay cam", "uong lanh", "an ngot", "an chua"])) {
+    return "sensitivity";
+  }
+
+  if (hasAny(text, ["gay", "me", "vo", "be", "nut", "rot mieng", "mat mieng"])) {
+    return "trauma";
+  }
+
+  if (hasAny(text, ["lung lay", "rung rinh", "sap rot", "sap roi", "muon rot", "muon roi"])) {
+    return "looseTooth";
+  }
+
+  if (hasAny(text, ["mat rang", "mat mot rang", "mat nhieu rang"])) {
+    return "restoration";
+  }
+
+  if (hasAny(text, ["dau", "nhuc", "dau ham", "dau rang"])) {
+    return "pain";
+  }
+
+  return null;
+};
 
 const hasPorcelainTerm = (text) =>
   hasAny(text, [
@@ -361,7 +447,7 @@ Kiến thức nha khoa cơ bản:
 - CBCT 3 in 1 Hyperion X5 hỗ trợ khảo sát 3D/2D/Ceph, xem răng, xương hàm, xoang hàm, răng khôn, vùng implant và chỉnh nha trước khi lập kế hoạch.
 - Máy scan Shinning 3D ghi nhận dấu răng kỹ thuật số, giảm khó chịu so với lấy dấu truyền thống và hỗ trợ phục hình, răng sứ/veneer, implant và chỉnh nha.
 - Nồi hấp Vacuclave MELAG 323 hỗ trợ kiểm soát tiệt trùng dụng cụ; chuẩn Class B theo EN13060 phù hợp quy trình chuẩn bị dụng cụ nha khoa trước khi sử dụng.
-- Ghế nha khoa Runyess hỗ trợ tư thế điều trị thoải mái, tích hợp đèn, khay dụng cụ và các bộ phận thao tác để bác sĩ làm việc thuận tiện hơn.
+- Ghế nha khoa Runyess tích hợp đèn, khay dụng cụ, tay khoan và các bộ phận hỗ trợ thao tác để bác sĩ làm việc ổn định hơn trong từng ca khám.
 - Nguyên tắc tư vấn: ưu tiên bảo tồn răng thật khi còn khả năng giữ; giải thích rõ lợi ích, rủi ro và lựa chọn ít xâm lấn trước khi nói đến phương án tốn kém.
 `;
 
@@ -395,6 +481,54 @@ const getTopicFromText = (text) => {
     ])
   ) {
     return "equipment";
+  }
+
+  if (isPriceQuestion(text)) {
+    return "price";
+  }
+
+  if (
+    hasAny(text, [
+      "cau rang hay implant",
+      "implant hay cau rang",
+      "ham thao lap hay implant",
+      "implant hay ham thao lap",
+      "mat rang nen lam gi",
+      "mat rang nen lam",
+      "mat rang phuc hinh",
+    ])
+  ) {
+    return "restoration";
+  }
+
+  if (hasAny(text, ["implant", "cay ghep", "trong rang", "dio", "sic", "tru implant", "dong implant"])) {
+    return "implant";
+  }
+
+  if (
+    hasAny(text, [
+      "tay trang",
+      "trang rang",
+      "rang trang",
+      "rang vang",
+      "rang bi vang",
+      "rang duoc trang",
+      "rang duoc trang hon",
+      "cho rang trang",
+      "muon rang trang",
+      "lam trang",
+      "lam sao trang rang",
+      "rang o vang",
+      "e buot khi tay trang",
+    ])
+  ) {
+    return "whitening";
+  }
+
+  const symptomTopic = hasSymptomQuestionIntent(text) ? getSymptomTopic(text) : null;
+
+  if (symptomTopic) {
+    return symptomTopic;
   }
 
   const mentionedServiceCount = [
@@ -499,27 +633,6 @@ const getTopicFromText = (text) => {
     ])
   ) {
     return "extractionAftercare";
-  }
-
-  if (
-    hasAny(text, [
-      "tay trang",
-      "trang rang",
-      "rang trang",
-      "rang vang",
-      "rang bi vang",
-      "rang duoc trang",
-      "rang duoc trang hon",
-      "cho rang trang",
-      "muon rang trang",
-      "lam trang",
-      "lam sao trang rang",
-      "rang o vang",
-      "e buot khi tay trang",
-      "e buot khong",
-    ])
-  ) {
-    return "whitening";
   }
 
   if (hasAny(text, ["laser", "lazer", "laze", "dieu tri bang laser", "dieu tri bang lazer"])) {
@@ -725,14 +838,6 @@ const getTopicFromText = (text) => {
     ])
   ) {
     return "malocclusion";
-  }
-
-  if (isPriceQuestion(text)) {
-    return "price";
-  }
-
-  if (hasAny(text, ["implant", "cay ghep", "trong rang", "dio", "sic", "tru implant", "dong implant"])) {
-    return "implant";
   }
 
   if (hasAny(text, ["nieng rang", "chinh nha", "rang ho", "rang mom", "rang lech", "khay trong", "mac cai"])) {
@@ -1035,13 +1140,13 @@ const findRuleBasedReply = (message, history = []) => {
 
     if (hasAny(text, ["ghe", "runyess", "ghe nha khoa", "ghe dieu tri"])) {
       return createResult(
-        "Ghế nha khoa Runyess là ghế điều trị tích hợp đèn, khay dụng cụ, tay khoan và các bộ phận hỗ trợ thao tác nha khoa. Một ghế điều trị tốt giúp bác sĩ làm việc ổn định hơn, đồng thời giúp khách nằm đúng tư thế và thoải mái hơn trong quá trình khám hoặc điều trị.\n\nGhế không quyết định toàn bộ chất lượng điều trị, nhưng là một phần của trải nghiệm phòng khám: không gian sạch, tư thế điều trị ổn định, thao tác thuận tiện và khách dễ phối hợp với bác sĩ hơn.",
+        "Ghế nha khoa Runyess là ghế điều trị tích hợp đèn, khay dụng cụ, tay khoan và các bộ phận hỗ trợ thao tác nha khoa. Một ghế điều trị tốt giúp bác sĩ quan sát rõ, lấy dụng cụ thuận tay và kiểm soát thao tác ổn định hơn trong quá trình khám hoặc điều trị.\n\nGhế không quyết định toàn bộ chất lượng điều trị, nhưng là một phần của trải nghiệm phòng khám: không gian sạch, bố trí gọn, thao tác thuận tiện và khách dễ phối hợp với bác sĩ hơn.",
         suggestionGroups.equipment,
       );
     }
 
     return createResult(
-      "Nha khoa V giới thiệu rõ thiết bị để khách hiểu mình được kiểm tra bằng gì, chứ không chỉ nghe tư vấn bằng lời nói.\n\nCBCT 3 in 1 Hyperion X5 hỗ trợ chụp 3D/2D/Ceph để xem răng, xương hàm, xoang hàm, răng khôn, vùng cần đặt implant hoặc chỉnh nha. Máy scan Shinning 3D ghi nhận dấu răng kỹ thuật số, giúp khách xem mô phỏng dễ hơn và giảm khó chịu so với lấy dấu cao su truyền thống. Nồi hấp Vacuclave MELAG 323 hỗ trợ quy trình tiệt trùng dụng cụ trước khi sử dụng. Ghế Runyess giúp tư thế điều trị ổn định, bác sĩ thao tác thuận tiện và khách nằm thoải mái hơn.\n\nThiết bị không thay thế nha sĩ, nhưng giúp quá trình tư vấn minh bạch hơn vì khách có hình ảnh và dữ liệu để hiểu tình trạng trước khi quyết định điều trị.",
+      "Nha khoa V giới thiệu rõ thiết bị để khách hiểu mình được kiểm tra bằng gì, chứ không chỉ nghe tư vấn bằng lời nói.\n\nCBCT 3 in 1 Hyperion X5 hỗ trợ chụp 3D/2D/Ceph để xem răng, xương hàm, xoang hàm, răng khôn, vùng cần đặt implant hoặc chỉnh nha. Máy scan Shinning 3D ghi nhận dấu răng kỹ thuật số, giúp khách xem mô phỏng dễ hơn và giảm khó chịu so với lấy dấu cao su truyền thống. Nồi hấp Vacuclave MELAG 323 hỗ trợ quy trình tiệt trùng dụng cụ trước khi sử dụng. Ghế Runyess bố trí đèn, khay dụng cụ và tay khoan gọn hơn để bác sĩ thao tác ổn định trong từng ca khám.\n\nThiết bị không thay thế nha sĩ, nhưng giúp quá trình tư vấn minh bạch hơn vì khách có hình ảnh và dữ liệu để hiểu tình trạng trước khi quyết định điều trị.",
       suggestionGroups.equipment,
     );
   }

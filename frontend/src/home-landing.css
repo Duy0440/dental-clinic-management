@@ -2906,15 +2906,15 @@ body,
 }
 
 .clinic-facility-v2-caption {
-  right: 24px;
   left: 24px;
+  right: auto;
   bottom: 22px;
   display: grid;
-  grid-template-columns: minmax(210px, 0.6fr) 1fr;
-  gap: 18px;
+  grid-template-columns: minmax(170px, 0.56fr) 1fr;
+  gap: 14px;
   align-items: center;
-  width: auto;
-  padding: 18px 22px;
+  width: min(560px, calc(100% - 48px));
+  padding: 16px 18px;
 }
 
 .clinic-facility-v2-caption p {
@@ -2922,8 +2922,8 @@ body,
   max-width: none;
   margin: 0;
   overflow: hidden;
-  font-size: 1rem;
-  line-height: 1.58;
+  font-size: 0.95rem;
+  line-height: 1.5;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -2960,8 +2960,7 @@ body,
   }
 
   .clinic-facility-v2-caption p {
-    font-size: 0.86rem;
-    line-height: 1.45;
+    display: none;
   }
 
   .clinic-facility-v2-controls {
@@ -2984,7 +2983,7 @@ body,
   .clinic-facilities-v2-media img {
     height: 340px;
     min-height: 340px;
-    padding-bottom: 104px;
+    padding-bottom: 0;
   }
 }
 

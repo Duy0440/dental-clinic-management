@@ -49,6 +49,9 @@ function AdminCustomerDetail() {
   const [successMessage, setSuccessMessage] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
   const todayText = getTodayText();
+  const assignableDentists = dentists.filter(
+    (dentist) => dentist.is_active !== false && dentist.user_is_active !== false,
+  );
 
 
   useEffect(() => {
@@ -543,7 +546,7 @@ function AdminCustomerDetail() {
                 onChange={handleAppointmentChange}
               >
                 <option value="">Để lễ tân phân công sau</option>
-                {dentists.map((dentist) => (
+                {assignableDentists.map((dentist) => (
                   <option key={dentist.id} value={dentist.id}>
                     {dentist.full_name} - {dentist.specialty}
                   </option>
