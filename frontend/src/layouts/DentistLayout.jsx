@@ -1,6 +1,7 @@
 ﻿import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import BrandLogo from "../components/BrandLogo";
 import "../dentist.css";
+import "../mobile-overrides.css";
 
 function DentistLayout() {
   const navigate = useNavigate();

@@ -1,6 +1,7 @@
 ﻿const {
   getAppointmentHistoryByPatientId,
   getAllAppointments,
+  withAppointmentSlotLock,
   createAppointment,
   checkAppointmentReferences,
   checkDentistAppointmentConflict,
@@ -42,6 +43,13 @@ const VALID_APPOINTMENT_STATUSES = [
   "Completed",
   "Cancelled",
 ];
+
+const createAppointmentError = (message, statusCode = 409, extra = {}) => {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  Object.assign(error, extra);
+  return error;
+};
 
 const isTimeInsideBlock = (time, block) => {
   const startTime = normalizeTime(block.start_time);
@@ -372,24 +380,76 @@ const addAppointment = async (req, res) => {
       });
     }
 
-    const newAppointment = await createAppointment({
-      patient_id: finalPatientId,
-      dentist_id: normalizedDentistId,
-      service_id,
+    const newAppointment = await withAppointmentSlotLock(
       appointment_date,
-      appointment_time: normalizedAppointmentTime,
-      status: normalizedStatus,
-      note,
-    });
+      normalizedAppointmentTime,
+      async (client) => {
+        const lockedAvailability = await buildAvailableTimes(
+          appointment_date,
+          normalizedDentistId,
+        );
+
+        if (!lockedAvailability.availableTimes.includes(normalizedAppointmentTime)) {
+          throw createAppointmentError(
+            lockedAvailability.availableTimes.length > 0
+              ? `Khung giờ ${normalizedAppointmentTime} vừa có người đặt. Các giờ còn trống: ${lockedAvailability.availableTimes.join(", ")}.`
+              : lockedAvailability.message || "Ngày này đã hết khung giờ phù hợp. Vui lòng chọn ngày khác để đặt lịch.",
+            409,
+            { availableTimes: lockedAvailability.availableTimes },
+          );
+        }
+
+        const lockedHasConflict = await checkDentistAppointmentConflict(
+          normalizedDentistId,
+          appointment_date,
+          normalizedAppointmentTime,
+        );
+
+        if (lockedHasConflict) {
+          throw createAppointmentError(
+            "Nha sĩ này vừa có lịch hẹn vào khung giờ bạn chọn. Vui lòng chọn giờ khác hoặc để phòng khám sắp xếp nha sĩ phù hợp.",
+          );
+        }
+
+        const lockedDentistUnavailable =
+          normalizedDentistId &&
+          (await checkDentistUnavailableConflict(
+            normalizedDentistId,
+            appointment_date,
+            normalizedAppointmentTime,
+          ));
+
+        if (lockedDentistUnavailable) {
+          throw createAppointmentError(
+            "Nha sĩ này vừa báo bận vào thời gian bạn chọn. Vui lòng chọn nha sĩ khác hoặc để phòng khám sắp xếp.",
+          );
+        }
+
+        return createAppointment(
+          {
+            patient_id: finalPatientId,
+            dentist_id: normalizedDentistId,
+            service_id,
+            appointment_date,
+            appointment_time: normalizedAppointmentTime,
+            status: normalizedStatus,
+            note,
+          },
+          client,
+        );
+      },
+    );
 
     res.status(201).json({
       message: "Appointment created successfully",
       data: newAppointment,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Server error",
-      error: error.message,
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({
+      message: statusCode === 500 ? "Server error" : error.message,
+      error: statusCode === 500 ? error.message : undefined,
+      available_times: error.availableTimes,
     });
   }
 };

@@ -25,7 +25,27 @@ const getAppointmentHistoryByPatientId = async (patientId) => {
   return result.rows;
 };
 
-const createAppointment = async (appointmentData) => {
+const withAppointmentSlotLock = async (appointmentDate, appointmentTime, callback) => {
+  const client = await pool.connect();
+  const lockKey = `appointment:${appointmentDate}:${appointmentTime}`;
+
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [lockKey]);
+
+    const result = await callback(client);
+
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+const createAppointment = async (appointmentData, db = pool) => {
   const {
     patient_id,
     dentist_id,
@@ -69,7 +89,7 @@ const createAppointment = async (appointmentData) => {
     note || null,
   ];
 
-  const result = await pool.query(query, values);
+  const result = await db.query(query, values);
   return result.rows[0];
 };
 
@@ -339,6 +359,7 @@ const markAppointmentCompletedById = async (appointmentId) => {
 
 module.exports = {
   getAppointmentHistoryByPatientId,
+  withAppointmentSlotLock,
   createAppointment,
   checkAppointmentReferences,
   checkDentistAppointmentConflict,

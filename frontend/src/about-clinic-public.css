@@ -6,6 +6,104 @@
   color: #202938;
 }
 
+/* About page mobile pass: more clinic information, less desktop squeeze. */
+@media (max-width: 640px) {
+  .about-public-page,
+  .about-public-page * {
+    min-width: 0;
+  }
+
+  .about-public-section,
+  .about-public-story {
+    padding-top: 56px;
+    padding-bottom: 56px;
+  }
+
+  .about-public-container,
+  .about-public-hero-inner,
+  .about-public-facility-grid {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .about-public-hero h1,
+  .about-public-heading h2,
+  .about-public-story .about-public-heading h2,
+  .about-public-facility-grid .about-public-heading h2 {
+    max-width: 100%;
+    font-size: clamp(2rem, 9vw, 2.75rem) !important;
+    line-height: 1.06;
+    letter-spacing: -0.045em;
+  }
+
+  .about-public-hero p,
+  .about-public-heading p,
+  .about-public-copy-card > p {
+    max-width: 100%;
+    font-size: 1rem;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+  }
+
+  .about-public-split,
+  .about-public-facility-grid,
+  .about-public-mission-grid,
+  .about-public-equipment-list {
+    grid-template-columns: 1fr !important;
+    gap: 18px;
+  }
+
+  .about-public-copy-card {
+    padding: 22px;
+    border-radius: 24px;
+  }
+
+  .about-public-mission-grid article {
+    min-height: auto;
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .about-public-equipment-summary {
+    gap: 10px;
+  }
+
+  .about-public-equipment-summary li {
+    padding: 16px;
+    border-radius: 18px;
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+
+  .about-public-equipment-list article {
+    border-radius: 24px;
+  }
+
+  .about-public-equipment-list img {
+    height: 230px;
+    min-height: 230px;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .about-public-equipment-list div {
+    padding: 18px 18px 22px;
+  }
+
+  .about-public-equipment-list h3 {
+    font-size: 1.18rem;
+  }
+
+  .about-public-equipment-list p {
+    font-size: 0.98rem;
+    line-height: 1.58;
+  }
+
+  .about-public-equipment-list li {
+    font-size: 0.82rem;
+  }
+}
+
 .about-public-container {
   width: min(1180px, calc(100% - 48px));
   margin: 0 auto;
@@ -1028,5 +1126,82 @@
   .about-public-equipment-list img {
     height: 260px;
     min-height: 260px;
+  }
+}
+
+/* Final phone override. Keep this at EOF so it wins older desktop rules. */
+@media (max-width: 640px) {
+  .about-public-page {
+    overflow-x: hidden !important;
+  }
+
+  .about-public-section,
+  .about-public-story {
+    padding: 52px 0 !important;
+  }
+
+  .about-public-container,
+  .about-public-hero-inner,
+  .about-public-facility-grid {
+    padding-right: 1rem !important;
+    padding-left: 1rem !important;
+  }
+
+  .about-public-hero h1,
+  .about-public-heading h2,
+  .about-public-story .about-public-heading h2,
+  .about-public-facility-grid .about-public-heading h2 {
+    max-width: 100% !important;
+    font-size: clamp(2rem, 9vw, 2.7rem) !important;
+    line-height: 1.06 !important;
+    letter-spacing: -0.045em !important;
+  }
+
+  .about-public-hero p,
+  .about-public-heading p,
+  .about-public-copy-card > p {
+    max-width: 100% !important;
+    font-size: 1rem !important;
+    line-height: 1.65 !important;
+  }
+
+  .about-public-split,
+  .about-public-facility-grid,
+  .about-public-mission-grid,
+  .about-public-equipment-list {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+
+  .about-public-copy-card,
+  .about-public-equipment-list article {
+    border-radius: 24px !important;
+  }
+
+  .about-public-copy-card {
+    padding: 22px !important;
+  }
+
+  .about-public-equipment-summary li {
+    padding: 16px !important;
+    border-radius: 18px !important;
+    font-size: 1rem !important;
+    line-height: 1.45 !important;
+  }
+
+  .about-public-equipment-list img {
+    height: 230px !important;
+    min-height: 230px !important;
+    object-fit: cover !important;
+    object-position: center !important;
+  }
+
+  .about-public-equipment-list div {
+    padding: 18px 18px 22px !important;
+  }
+
+  .about-public-equipment-list h3 {
+    font-size: 1.18rem !important;
+    line-height: 1.25 !important;
   }
 }

@@ -4,6 +4,8 @@
 const SHORT_SAFETY_MESSAGE =
   "Lưu ý: Nội dung này chỉ để tham khảo, không thay thế chẩn đoán trực tiếp của nha sĩ.";
 
+const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 5000);
+
 const defaultSuggestions = [
   "Tôi bị đau răng thì nên làm gì?",
   "Implant DIO/SIC khác gì nhau?",
@@ -203,7 +205,7 @@ const suggestionGroups = {
     "CBCT Hyperion X5 dùng để làm gì?",
     "Máy scan Shinning 3D có lợi gì?",
     "Nồi hấp MELAG 323 quan trọng thế nào?",
-    "Ghế nha khoa Runyess hỗ trợ gì?",
+    "Ghế nha khoa RunTour hỗ trợ gì?",
   ],
 };
 
@@ -264,6 +266,7 @@ const normalizeDentalInput = (text) => {
     [/matrang/g, "mat rang"],
     [/merang/g, "me rang"],
     [/gayrang/g, "gay rang"],
+    [/runtour/g, "run tour"],
   ];
 
   return replacements.reduce((current, [pattern, replacement]) => current.replace(pattern, replacement), text);
@@ -443,11 +446,11 @@ Kiến thức nha khoa cơ bản:
 - Thắng môi/thắng lưỡi ở trẻ cần đánh giá mức độ ảnh hưởng bú, phát âm, vệ sinh, khe thưa răng cửa hoặc kéo tụt nướu; không phải trường hợp nào cũng cần cắt ngay.
 - Implant DIO và Implant SIC là các dòng trụ implant có thể được tư vấn tùy vị trí mất răng, xương hàm, nướu, kế hoạch phục hình và ngân sách; không nên chọn chỉ vì tên hãng.
 - Các dòng implant khác nhau ở thiết kế ren, bề mặt xử lý, hệ phục hình, bảo hành và chi phí; lựa chọn đúng phải dựa trên phim chụp và khám trực tiếp.
-- Thiết bị tại Nha khoa V gồm ghế nha khoa Runyess, máy CBCT 3 in 1 Hyperion X5, máy scan Shinning 3D và nồi hấp Vacuclave MELAG 323.
+- Thiết bị tại Nha khoa V gồm ghế nha khoa RunTour, máy CBCT 3 in 1 Hyperion X5, máy scan Shinning 3D và nồi hấp Vacuclave MELAG 323.
 - CBCT 3 in 1 Hyperion X5 hỗ trợ khảo sát 3D/2D/Ceph, xem răng, xương hàm, xoang hàm, răng khôn, vùng implant và chỉnh nha trước khi lập kế hoạch.
 - Máy scan Shinning 3D ghi nhận dấu răng kỹ thuật số, giảm khó chịu so với lấy dấu truyền thống và hỗ trợ phục hình, răng sứ/veneer, implant và chỉnh nha.
 - Nồi hấp Vacuclave MELAG 323 hỗ trợ kiểm soát tiệt trùng dụng cụ; chuẩn Class B theo EN13060 phù hợp quy trình chuẩn bị dụng cụ nha khoa trước khi sử dụng.
-- Ghế nha khoa Runyess tích hợp đèn, khay dụng cụ, tay khoan và các bộ phận hỗ trợ thao tác để bác sĩ làm việc ổn định hơn trong từng ca khám.
+- Ghế nha khoa RunTour tích hợp đèn, khay dụng cụ, tay khoan và các bộ phận hỗ trợ thao tác để bác sĩ làm việc ổn định hơn trong từng ca khám.
 - Nguyên tắc tư vấn: ưu tiên bảo tồn răng thật khi còn khả năng giữ; giải thích rõ lợi ích, rủi ro và lựa chọn ít xâm lấn trước khi nói đến phương án tốn kém.
 `;
 
@@ -458,6 +461,8 @@ const getTopicFromText = (text) => {
       "may moc",
       "co so vat chat",
       "ghe nha khoa",
+      "run tour",
+      "runtour",
       "runyess",
       "cbct",
       "hyperion",
@@ -1138,15 +1143,15 @@ const findRuleBasedReply = (message, history = []) => {
       );
     }
 
-    if (hasAny(text, ["ghe", "runyess", "ghe nha khoa", "ghe dieu tri"])) {
+    if (hasAny(text, ["ghe", "run tour", "runtour", "runyess", "ghe nha khoa", "ghe dieu tri"])) {
       return createResult(
-        "Ghế nha khoa Runyess là ghế điều trị tích hợp đèn, khay dụng cụ, tay khoan và các bộ phận hỗ trợ thao tác nha khoa. Một ghế điều trị tốt giúp bác sĩ quan sát rõ, lấy dụng cụ thuận tay và kiểm soát thao tác ổn định hơn trong quá trình khám hoặc điều trị.\n\nGhế không quyết định toàn bộ chất lượng điều trị, nhưng là một phần của trải nghiệm phòng khám: không gian sạch, bố trí gọn, thao tác thuận tiện và khách dễ phối hợp với bác sĩ hơn.",
+        "Ghế nha khoa RunTour là ghế điều trị tích hợp đèn, khay dụng cụ, tay khoan và các bộ phận hỗ trợ thao tác nha khoa. Một ghế điều trị tốt giúp bác sĩ quan sát rõ, lấy dụng cụ thuận tay và kiểm soát thao tác ổn định hơn trong quá trình khám hoặc điều trị.\n\nGhế không quyết định toàn bộ chất lượng điều trị, nhưng là một phần của trải nghiệm phòng khám: không gian sạch, bố trí gọn, thao tác thuận tiện và khách dễ phối hợp với bác sĩ hơn.",
         suggestionGroups.equipment,
       );
     }
 
     return createResult(
-      "Nha khoa V giới thiệu rõ thiết bị để khách hiểu mình được kiểm tra bằng gì, chứ không chỉ nghe tư vấn bằng lời nói.\n\nCBCT 3 in 1 Hyperion X5 hỗ trợ chụp 3D/2D/Ceph để xem răng, xương hàm, xoang hàm, răng khôn, vùng cần đặt implant hoặc chỉnh nha. Máy scan Shinning 3D ghi nhận dấu răng kỹ thuật số, giúp khách xem mô phỏng dễ hơn và giảm khó chịu so với lấy dấu cao su truyền thống. Nồi hấp Vacuclave MELAG 323 hỗ trợ quy trình tiệt trùng dụng cụ trước khi sử dụng. Ghế Runyess bố trí đèn, khay dụng cụ và tay khoan gọn hơn để bác sĩ thao tác ổn định trong từng ca khám.\n\nThiết bị không thay thế nha sĩ, nhưng giúp quá trình tư vấn minh bạch hơn vì khách có hình ảnh và dữ liệu để hiểu tình trạng trước khi quyết định điều trị.",
+      "Nha khoa V giới thiệu rõ thiết bị để khách hiểu mình được kiểm tra bằng gì, chứ không chỉ nghe tư vấn bằng lời nói.\n\nCBCT 3 in 1 Hyperion X5 hỗ trợ chụp 3D/2D/Ceph để xem răng, xương hàm, xoang hàm, răng khôn, vùng cần đặt implant hoặc chỉnh nha. Máy scan Shinning 3D ghi nhận dấu răng kỹ thuật số, giúp khách xem mô phỏng dễ hơn và giảm khó chịu so với lấy dấu cao su truyền thống. Nồi hấp Vacuclave MELAG 323 hỗ trợ quy trình tiệt trùng dụng cụ trước khi sử dụng. Ghế RunTour bố trí đèn, khay dụng cụ và tay khoan gọn hơn để bác sĩ thao tác ổn định trong từng ca khám.\n\nThiết bị không thay thế nha sĩ, nhưng giúp quá trình tư vấn minh bạch hơn vì khách có hình ảnh và dữ liệu để hiểu tình trạng trước khi quyết định điều trị.",
       suggestionGroups.equipment,
     );
   }
@@ -1369,8 +1374,17 @@ const formatHistory = (history = []) =>
     })
     .join("\n");
 
-const buildDentalPrompt = (message, history = []) => {
+const stripSafetyNote = (answer = "") =>
+  String(answer)
+    .replace(SAFETY_MESSAGE, "")
+    .replace(SHORT_SAFETY_MESSAGE, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+const buildDentalPrompt = (message, history = [], context = {}) => {
   const conversationContext = formatHistory(history);
+  const internalDraft = stripSafetyNote(context.internalAnswer || "");
+  const detectedTopic = context.topic || "general";
 
   return `
 Bạn là trợ lý tư vấn nha khoa của Nha khoa V.
@@ -1389,9 +1403,17 @@ Nguyên tắc trả lời:
 - Nếu khách hỏi về hãng implant, tư vấn trung lập, không khẳng định tuyệt đối hãng nào tốt nhất.
 - Nếu khách hỏi chưa rõ, hỏi lại tối đa 2 câu ngắn.
 - Trả lời khoảng 2 đến 5 đoạn, không lan man.
+- Khách có thể gõ không dấu, sai chính tả, viết tắt. Hãy hiểu theo ý nha khoa gần nhất.
+- Ưu tiên trả lời đúng trọng tâm câu hỏi mới, không tự chuyển sang chủ đề khác.
+- Nếu nội dung nội bộ bên dưới đã có hướng trả lời phù hợp, hãy dựa vào đó để viết lại tự nhiên, dễ hiểu hơn; không bịa chẩn đoán chắc chắn.
 
 Kiến thức và ngữ cảnh nội bộ được phép dùng:
 ${DENTAL_KNOWLEDGE_CONTEXT}
+
+Chủ đề hệ thống nhận diện: ${detectedTopic}
+
+Khung trả lời nội bộ để bám sát:
+${internalDraft || "Chưa có khung nội bộ cụ thể, hãy trả lời theo kiến thức nha khoa an toàn trong phạm vi trên."}
 
 Ngữ cảnh hội thoại gần đây:
 ${conversationContext || "Chưa có ngữ cảnh trước đó."}
@@ -1401,7 +1423,7 @@ ${message}
 `;
 };
 
-const getGeminiReply = async (message, history = []) => {
+const getGeminiReply = async (message, history = [], context = {}) => {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
 
   if (!apiKey || apiKey === "key_cua_ban" || apiKey === "your_gemini_api_key") {
@@ -1409,61 +1431,70 @@ const getGeminiReply = async (message, history = []) => {
   }
 
   const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
-  const prompt = buildDentalPrompt(message, history);
+  const prompt = buildDentalPrompt(message, history, context);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          topP: 0.9,
-          maxOutputTokens: 700,
-        },
-      }),
-    },
-  );
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        signal: controller.signal,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.35,
+            topP: 0.85,
+            maxOutputTokens: 520,
+          },
+        }),
+      },
+    );
 
-  if (!response.ok) {
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+  } catch (error) {
     return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
 };
 
 const generateDentalReply = async (message, history = []) => {
   const normalizedMessage = normalizeText(message);
   const detectedTopic = getTopic(normalizedMessage, history);
+  const fallbackResult = findRuleBasedReply(message, history);
 
-  if (!normalizedMessage || isGreetingMessage(normalizedMessage) || detectedTopic !== "general") {
-    const safeResult = findRuleBasedReply(message, history);
-
+  if (!normalizedMessage || isGreetingMessage(normalizedMessage)) {
     return {
-      answer: safeResult.answer,
+      answer: fallbackResult.answer,
       source: "rule_based",
-      suggestions: safeResult.suggestions,
+      suggestions: fallbackResult.suggestions,
     };
   }
 
   try {
-    const geminiReply = await getGeminiReply(message, history);
+    const geminiReply = await getGeminiReply(message, history, {
+      topic: detectedTopic,
+      internalAnswer: fallbackResult.answer,
+    });
 
     if (geminiReply) {
       return {
         answer: createAnswer(geminiReply),
         source: "gemini",
-        suggestions: suggestionGroups[getTopic(normalizeText(message), history)] || defaultSuggestions,
+        suggestions: fallbackResult.suggestions,
       };
     }
   } catch (error) {
     // Nếu AI API lỗi, hệ thống vẫn dùng bộ tri thức nội bộ để demo không bị đứng.
   }
-
-  const fallbackResult = findRuleBasedReply(message, history);
 
   return {
     answer: fallbackResult.answer,

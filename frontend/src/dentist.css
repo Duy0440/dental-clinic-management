@@ -8,6 +8,196 @@
   color: #172033;
 }
 
+/* Dentist mobile workspace: appointments and records should feel app-like. */
+@media (max-width: 640px) {
+  .dentist-layout {
+    display: block;
+    overflow-x: hidden;
+  }
+
+  .dentist-sidebar {
+    position: static;
+    min-height: auto;
+    padding: 14px;
+    border-radius: 0 0 24px 24px;
+  }
+
+  .dentist-brand {
+    padding-bottom: 12px;
+  }
+
+  .dentist-logo {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+  }
+
+  .dentist-brand strong {
+    font-size: 1rem;
+  }
+
+  .dentist-brand span,
+  .dentist-sidebar-note {
+    display: none;
+  }
+
+  .dentist-menu {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .dentist-menu::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dentist-menu a {
+    flex: 0 0 auto;
+    min-width: 132px;
+    padding: 10px;
+    border-radius: 14px;
+    font-size: 0.86rem;
+  }
+
+  .dentist-menu-icon {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    border-radius: 10px;
+  }
+
+  .dentist-sidebar-actions {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .dentist-sidebar-actions button {
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+
+  .dentist-main {
+    padding: 12px;
+  }
+
+  .dentist-header,
+  .dentist-page,
+  .dentist-table-card,
+  .dentist-form-card,
+  .dentist-list-card,
+  .dentist-record-card {
+    border-radius: 22px;
+    padding: 16px;
+  }
+
+  .dentist-header h1,
+  .dentist-page-header h2 {
+    font-size: 1.45rem;
+    line-height: 1.2;
+  }
+
+  .dentist-header p,
+  .dentist-page-header p {
+    font-size: 0.94rem;
+    line-height: 1.55;
+  }
+
+  .dentist-header span {
+    align-self: flex-start;
+    white-space: normal;
+  }
+
+  .dentist-stat-grid,
+  .dentist-stat-grid.four-columns {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .dentist-stat-card {
+    min-height: auto;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .dentist-stat-card strong {
+    font-size: 1.55rem;
+  }
+
+  .dentist-filter-bar,
+  .dentist-form-grid,
+  .dentist-two-columns,
+  .dentist-record-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dentist-table-wrapper {
+    overflow-x: visible;
+  }
+
+  .dentist-table {
+    min-width: 0;
+  }
+
+  .dentist-table thead {
+    display: none;
+  }
+
+  .dentist-table,
+  .dentist-table tbody,
+  .dentist-table tr,
+  .dentist-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .dentist-table tr {
+    margin-bottom: 12px;
+    padding: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background: #ffffff;
+  }
+
+  .dentist-table td {
+    padding: 8px 0;
+    border-bottom: 1px solid #edf2f7;
+  }
+
+  .dentist-table td:last-child {
+    border-bottom: 0;
+  }
+
+  .dentist-modal-backdrop,
+  .dentist-image-preview {
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .dentist-modal,
+  .dentist-image-preview-content {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .dentist-modal-header h3 {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .dentist-stat-grid,
+  .dentist-stat-grid.four-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
 .dentist-sidebar {
   position: sticky;
   top: 0;
@@ -838,5 +1028,108 @@
   .dentist-form-grid,
   .dentist-filter-bar {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Final dentist phone override. */
+@media (max-width: 640px) {
+  .dentist-layout {
+    display: block !important;
+    overflow-x: hidden !important;
+  }
+
+  .dentist-sidebar {
+    position: static !important;
+    min-height: auto !important;
+    padding: 14px !important;
+    border-radius: 0 0 24px 24px !important;
+  }
+
+  .dentist-brand span,
+  .dentist-sidebar-note {
+    display: none !important;
+  }
+
+  .dentist-logo {
+    width: 42px !important;
+    height: 42px !important;
+    flex: 0 0 42px !important;
+  }
+
+  .dentist-menu {
+    display: flex !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    padding-bottom: 4px !important;
+    scrollbar-width: none !important;
+  }
+
+  .dentist-menu::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .dentist-menu a {
+    flex: 0 0 auto !important;
+    min-width: 132px !important;
+    padding: 10px !important;
+    border-radius: 14px !important;
+    font-size: 0.86rem !important;
+  }
+
+  .dentist-menu-icon {
+    width: 30px !important;
+    height: 30px !important;
+    flex: 0 0 30px !important;
+  }
+
+  .dentist-main {
+    padding: 12px !important;
+  }
+
+  .dentist-header,
+  .dentist-page,
+  .dentist-table-card,
+  .dentist-form-card,
+  .dentist-list-card,
+  .dentist-record-card {
+    padding: 16px !important;
+    border-radius: 22px !important;
+  }
+
+  .dentist-header h1,
+  .dentist-page-header h2 {
+    font-size: 1.45rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .dentist-stat-grid,
+  .dentist-stat-grid.four-columns {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  .dentist-table-wrapper {
+    overflow-x: visible !important;
+  }
+
+  .dentist-table,
+  .dentist-table tbody,
+  .dentist-table tr,
+  .dentist-table td {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .dentist-table thead {
+    display: none !important;
+  }
+
+  .dentist-table tr {
+    margin-bottom: 12px !important;
+    padding: 14px !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 18px !important;
+    background: #fff !important;
   }
 }

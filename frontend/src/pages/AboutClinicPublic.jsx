@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "../about-clinic-public.css";
+import "../mobile-overrides.css";
 
 const missionCards = [
   {
@@ -89,7 +90,7 @@ const equipment = [
     details: ["Tiệt trùng dụng cụ sau mỗi lượt", "Đóng gói và lưu trữ riêng", "Tăng kiểm soát an toàn điều trị"],
   },
   {
-    title: "Ghế nha khoa Runyess",
+    title: "Ghế nha khoa RunTour",
     label: "Không gian điều trị",
     text: "Ghế điều trị tích hợp đèn, khay dụng cụ, tay khoan và hệ thống hỗ trợ thao tác, giúp bác sĩ làm việc ổn định hơn trong từng ca khám.",
     image: "/images/equipment-runyess-chair-real.png",

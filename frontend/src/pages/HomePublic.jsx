@@ -5,6 +5,7 @@ import { promotions } from "../data/promotions";
 import { serviceCategories } from "../data/serviceInfo";
 import Booking from "./Booking";
 import "../home-landing.css";
+import "../mobile-overrides.css";
 
 const fallbackServices = [
   {
@@ -205,7 +206,7 @@ const buildDoctorProfile = (dentist, index) => {
 const facilitySlides = [
   {
     label: "Phòng điều trị",
-    title: "Ghế nha khoa Runyess",
+    title: "Ghế nha khoa RunTour",
     text: "Ghế điều trị tích hợp đèn, khay dụng cụ và hệ thống tay khoan, giúp bác sĩ thao tác ổn định hơn trong quá trình khám và điều trị.",
     image: "/images/equipment-runyess-chair-real.png",
     specs: ["Đèn và khay dụng cụ", "Thao tác điều trị ổn định", "Không gian khám gọn gàng"],

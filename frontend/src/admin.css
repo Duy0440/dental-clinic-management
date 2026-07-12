@@ -631,6 +631,108 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Admin mobile fallback for real phone testing. */
+@media (max-width: 640px) {
+  .admin-layout {
+    display: block;
+    overflow-x: hidden;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    min-height: auto;
+    padding: 14px;
+  }
+
+  .admin-main {
+    padding: 12px;
+  }
+
+  .admin-header,
+  .admin-topbar-v2,
+  .admin-page,
+  .dashboard-hero,
+  .dashboard-hero-v2 {
+    border-radius: 22px;
+    padding: 16px;
+  }
+
+  .admin-header h1,
+  .admin-page-header h2,
+  .dashboard-hero h2,
+  .dashboard-hero-v2 h2 {
+    font-size: 1.45rem;
+    line-height: 1.2;
+  }
+
+  .admin-header p,
+  .admin-page-header p {
+    font-size: 0.94rem;
+    line-height: 1.55;
+  }
+
+  .dashboard-card-grid,
+  .dashboard-money-grid,
+  .dashboard-grid-two,
+  .dashboard-attention-grid,
+  .admin-form-grid,
+  .admin-form-grid.two-columns,
+  .invoice-detail-row.flexible {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-table-wrapper {
+    overflow-x: visible;
+  }
+
+  .admin-table {
+    min-width: 0;
+  }
+
+  .admin-table thead {
+    display: none;
+  }
+
+  .admin-table,
+  .admin-table tbody,
+  .admin-table tr,
+  .admin-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-table tr {
+    margin-bottom: 12px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background: #ffffff;
+  }
+
+  .admin-table td {
+    padding: 8px 0;
+    border-bottom: 1px solid #edf2f7;
+  }
+
+  .admin-table td:last-child {
+    border-bottom: 0;
+  }
+
+  .admin-modal-overlay {
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .admin-modal,
+  .admin-modal-wide {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    padding: 18px;
+    border-radius: 22px;
+  }
+}
 .invoice-detail-row.flexible {
   grid-template-columns: 1fr 1.7fr 0.55fr 0.8fr 0.8fr 0.8fr auto;
 }
@@ -1540,5 +1642,75 @@
 @media (max-width: 768px) {
   .admin-form-grid.two-columns {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Final admin phone override. */
+@media (max-width: 640px) {
+  .admin-layout {
+    display: block !important;
+    overflow-x: hidden !important;
+  }
+
+  .admin-sidebar {
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 14px !important;
+  }
+
+  .admin-main {
+    padding: 12px !important;
+  }
+
+  .admin-header,
+  .admin-topbar-v2,
+  .admin-page,
+  .dashboard-hero,
+  .dashboard-hero-v2 {
+    padding: 16px !important;
+    border-radius: 22px !important;
+  }
+
+  .admin-header h1,
+  .admin-page-header h2,
+  .dashboard-hero h2,
+  .dashboard-hero-v2 h2 {
+    font-size: 1.45rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .dashboard-card-grid,
+  .dashboard-money-grid,
+  .dashboard-grid-two,
+  .dashboard-attention-grid,
+  .admin-form-grid,
+  .admin-form-grid.two-columns,
+  .invoice-detail-row.flexible {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-table-wrapper {
+    overflow-x: visible !important;
+  }
+
+  .admin-table,
+  .admin-table tbody,
+  .admin-table tr,
+  .admin-table td {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-table thead {
+    display: none !important;
+  }
+
+  .admin-table tr {
+    margin-bottom: 12px !important;
+    padding: 12px !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 18px !important;
+    background: #fff !important;
   }
 }

@@ -13,6 +13,150 @@
   --shadow-strong: 0 24px 48px rgba(217, 109, 0, 0.16);
 }
 
+/* Shared phone polish for customer pages, booking modal, and support widgets. */
+@media (max-width: 640px) {
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    font-size: 15px;
+  }
+
+  .container.py-5 {
+    max-width: 100%;
+    padding: 2rem 1rem 2.5rem !important;
+  }
+
+  .container.py-5 h2 {
+    font-size: clamp(1.65rem, 7vw, 2rem);
+    line-height: 1.15;
+  }
+
+  .container.py-5 h4 {
+    font-size: 1.15rem;
+    line-height: 1.25;
+  }
+
+  .card-body.p-4,
+  .card-body.p-lg-5 {
+    padding: 1rem !important;
+  }
+
+  .rounded-4 {
+    border-radius: 1.1rem !important;
+  }
+
+  .row.g-4 {
+    --bs-gutter-y: 1rem;
+  }
+
+  .d-flex.justify-content-between.align-items-start {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .badge.rounded-pill {
+    align-self: flex-start;
+    white-space: normal;
+    text-align: left;
+  }
+
+  .booking-time-panel {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .booking-time-panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .booking-time-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .booking-time-chip {
+    min-height: 42px;
+    border-radius: 14px;
+    font-size: 0.95rem;
+  }
+
+  .modal-backdrop-custom,
+  .modal-overlay {
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .modal-card-custom,
+  .modal-card {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .record-attachment-item,
+  .record-image-button img {
+    max-width: 100%;
+  }
+
+  .clinic-support-toggle,
+  .floating-chat-v2-toggle {
+    right: 14px;
+    bottom: 14px;
+    width: 56px;
+    height: 56px;
+    border-radius: 20px;
+  }
+
+  .clinic-support-panel,
+  .floating-support-v2-panel {
+    right: 10px;
+    bottom: 82px;
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+    padding: 12px;
+    border-radius: 24px;
+  }
+
+  .clinic-support-item,
+  .floating-support-v2-item {
+    min-height: 60px;
+    grid-template-columns: 44px 1fr 18px;
+    gap: 10px;
+    padding: 9px;
+    border-radius: 18px;
+  }
+
+  .clinic-support-icon,
+  .floating-support-v2-icon {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 15px;
+  }
+}
+
+@media (max-width: 380px) {
+  .booking-time-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .container.py-5 {
+    padding-right: 0.8rem !important;
+    padding-left: 0.8rem !important;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -4650,5 +4794,82 @@ img {
 @media (max-width: 480px) {
   .service-info-actions {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Final shared phone override for customer pages and widgets. */
+@media (max-width: 640px) {
+  html,
+  body,
+  #root {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .container.py-5 {
+    max-width: 100% !important;
+    padding: 2rem 1rem 2.5rem !important;
+  }
+
+  .container.py-5 h2 {
+    font-size: clamp(1.65rem, 7vw, 2rem) !important;
+    line-height: 1.15 !important;
+  }
+
+  .container.py-5 h4 {
+    font-size: 1.15rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .card-body.p-4,
+  .card-body.p-lg-5 {
+    padding: 1rem !important;
+  }
+
+  .d-flex.justify-content-between.align-items-start {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .booking-time-panel {
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .booking-time-panel-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+
+  .booking-time-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .booking-time-chip {
+    min-height: 42px !important;
+    border-radius: 14px !important;
+    font-size: 0.95rem !important;
+  }
+
+  .clinic-support-toggle,
+  .floating-chat-v2-toggle {
+    right: 14px !important;
+    bottom: 14px !important;
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 20px !important;
+  }
+
+  .clinic-support-panel,
+  .floating-support-v2-panel {
+    right: 10px !important;
+    bottom: 82px !important;
+    width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - 110px) !important;
+    overflow-y: auto !important;
+    padding: 12px !important;
+    border-radius: 24px !important;
   }
 }

@@ -1,0 +1,389 @@
+/* Mobile overrides for public, customer, admin, and dentist screens. */
+@media (max-width: 640px) {
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    font-size: 15px;
+  }
+
+  .clinic-home-v2,
+  .about-public-page,
+  .admin-layout,
+  .dentist-layout {
+    overflow-x: hidden !important;
+  }
+
+  .clinic-section-v2,
+  .about-public-section,
+  .about-public-story {
+    padding-top: 52px !important;
+    padding-bottom: 52px !important;
+  }
+
+  .clinic-hero-v2-content,
+  .clinic-facilities-v2-grid,
+  .clinic-services-v2 .container,
+  .clinic-doctors-v2 .container,
+  .clinic-promotions-v2 .container,
+  .clinic-reason-v2 .container,
+  .about-public-container,
+  .about-public-hero-inner,
+  .about-public-facility-grid,
+  .container.py-5 {
+    max-width: 100% !important;
+    padding-right: 1rem !important;
+    padding-left: 1rem !important;
+  }
+
+  .clinic-hero-v2-content h1,
+  .clinic-services-v2 h2,
+  .clinic-doctors-v2 h2,
+  .clinic-promotions-v2 h2,
+  .clinic-reason-v2 h2,
+  .clinic-facilities-v2-copy h2,
+  .about-public-hero h1,
+  .about-public-heading h2,
+  .about-public-story .about-public-heading h2,
+  .about-public-facility-grid .about-public-heading h2 {
+    max-width: 100% !important;
+    font-size: clamp(2rem, 9vw, 2.7rem) !important;
+    line-height: 1.06 !important;
+    letter-spacing: -0.045em !important;
+  }
+
+  .clinic-hero-v2-content p,
+  .clinic-facilities-v2-copy p,
+  .about-public-hero p,
+  .about-public-heading p,
+  .about-public-copy-card > p {
+    max-width: 100% !important;
+    font-size: 1rem !important;
+    line-height: 1.65 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .clinic-hero-v2-actions,
+  .clinic-service-v2-actions,
+  .service-info-actions {
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+  }
+
+  .clinic-hero-v2-actions a,
+  .clinic-hero-v2-actions button,
+  .clinic-service-v2-actions a,
+  .clinic-service-v2-actions button,
+  .service-info-actions a {
+    min-height: 50px !important;
+    width: 100% !important;
+    justify-content: center !important;
+    white-space: normal !important;
+  }
+
+  .clinic-facilities-v2-grid,
+  .clinic-service-v2-grid,
+  .clinic-reason-v2-grid,
+  .clinic-promo-v2-grid,
+  .about-public-split,
+  .about-public-facility-grid,
+  .about-public-mission-grid,
+  .about-public-equipment-list {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+
+  .clinic-facility-v2-tabs {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .clinic-facility-v2-tab {
+    padding: 15px 16px !important;
+    border-radius: 18px !important;
+    font-size: 0.96rem !important;
+  }
+
+  .clinic-facilities-v2-media,
+  .clinic-facilities-v2-media img {
+    min-height: 340px !important;
+    height: 340px !important;
+  }
+
+  .clinic-facilities-v2-media {
+    border-radius: 24px !important;
+  }
+
+  .clinic-facility-v2-caption {
+    right: 10px !important;
+    left: 10px !important;
+    bottom: 10px !important;
+    width: auto !important;
+    grid-template-columns: 1fr !important;
+    padding: 12px 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .clinic-facility-v2-caption h3 {
+    font-size: 1.05rem !important;
+    line-height: 1.18 !important;
+  }
+
+  .clinic-facility-v2-caption p,
+  .clinic-facility-v2-specs {
+    display: none !important;
+  }
+
+  .clinic-facility-v2-controls {
+    top: 10px !important;
+    right: 10px !important;
+    transform: scale(0.82) !important;
+    transform-origin: top right !important;
+  }
+
+  .about-public-copy-card,
+  .about-public-equipment-list article,
+  .clinic-service-v2-card,
+  .clinic-reason-v2-card,
+  .clinic-promo-v2-card {
+    border-radius: 24px !important;
+  }
+
+  .about-public-copy-card {
+    padding: 22px !important;
+  }
+
+  .about-public-equipment-summary li {
+    padding: 16px !important;
+    border-radius: 18px !important;
+    font-size: 1rem !important;
+    line-height: 1.45 !important;
+  }
+
+  .about-public-equipment-list img {
+    height: 230px !important;
+    min-height: 230px !important;
+    object-fit: cover !important;
+    object-position: center !important;
+  }
+
+  .about-public-equipment-list div {
+    padding: 18px 18px 22px !important;
+  }
+
+  .about-public-equipment-list h3 {
+    font-size: 1.18rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .container.py-5 {
+    padding-top: 2rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+
+  .container.py-5 h2 {
+    font-size: clamp(1.65rem, 7vw, 2rem) !important;
+    line-height: 1.15 !important;
+  }
+
+  .container.py-5 h4 {
+    font-size: 1.15rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .card-body.p-4,
+  .card-body.p-lg-5 {
+    padding: 1rem !important;
+  }
+
+  .d-flex.justify-content-between.align-items-start {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .booking-time-panel {
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .booking-time-panel-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+
+  .booking-time-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .booking-time-chip {
+    min-height: 42px !important;
+    border-radius: 14px !important;
+    font-size: 0.95rem !important;
+  }
+
+  .admin-layout,
+  .dentist-layout {
+    display: block !important;
+  }
+
+  .admin-sidebar,
+  .dentist-sidebar {
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 14px !important;
+    border-radius: 0 0 24px 24px !important;
+  }
+
+  .dentist-brand span,
+  .dentist-sidebar-note {
+    display: none !important;
+  }
+
+  .dentist-logo {
+    width: 42px !important;
+    height: 42px !important;
+    flex: 0 0 42px !important;
+  }
+
+  .dentist-menu {
+    display: flex !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    padding-bottom: 4px !important;
+    scrollbar-width: none !important;
+  }
+
+  .dentist-menu::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .dentist-menu a {
+    flex: 0 0 auto !important;
+    min-width: 132px !important;
+    padding: 10px !important;
+    border-radius: 14px !important;
+    font-size: 0.86rem !important;
+  }
+
+  .dentist-menu-icon {
+    width: 30px !important;
+    height: 30px !important;
+    flex: 0 0 30px !important;
+  }
+
+  .admin-main,
+  .dentist-main {
+    padding: 12px !important;
+  }
+
+  .admin-header,
+  .admin-topbar-v2,
+  .admin-page,
+  .dashboard-hero,
+  .dashboard-hero-v2,
+  .dentist-header,
+  .dentist-page,
+  .dentist-table-card,
+  .dentist-form-card,
+  .dentist-list-card,
+  .dentist-record-card {
+    padding: 16px !important;
+    border-radius: 22px !important;
+  }
+
+  .admin-header h1,
+  .admin-page-header h2,
+  .dashboard-hero h2,
+  .dashboard-hero-v2 h2,
+  .dentist-header h1,
+  .dentist-page-header h2 {
+    font-size: 1.45rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .dashboard-card-grid,
+  .dashboard-money-grid,
+  .dashboard-grid-two,
+  .dashboard-attention-grid,
+  .admin-form-grid,
+  .admin-form-grid.two-columns,
+  .invoice-detail-row.flexible,
+  .dentist-filter-bar,
+  .dentist-form-grid,
+  .dentist-two-columns,
+  .dentist-record-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dentist-stat-grid,
+  .dentist-stat-grid.four-columns {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  .admin-table-wrapper,
+  .dentist-table-wrapper {
+    overflow-x: visible !important;
+  }
+
+  .admin-table,
+  .admin-table tbody,
+  .admin-table tr,
+  .admin-table td,
+  .dentist-table,
+  .dentist-table tbody,
+  .dentist-table tr,
+  .dentist-table td {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-table thead,
+  .dentist-table thead {
+    display: none !important;
+  }
+
+  .admin-table tr,
+  .dentist-table tr {
+    margin-bottom: 12px !important;
+    padding: 12px !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 18px !important;
+    background: #fff !important;
+  }
+
+  .clinic-support-toggle,
+  .floating-chat-v2-toggle {
+    right: 14px !important;
+    bottom: 14px !important;
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 20px !important;
+  }
+
+  .clinic-support-panel,
+  .floating-support-v2-panel {
+    right: 10px !important;
+    bottom: 82px !important;
+    width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - 110px) !important;
+    overflow-y: auto !important;
+    padding: 12px !important;
+    border-radius: 24px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .booking-time-grid,
+  .dentist-stat-grid,
+  .dentist-stat-grid.four-columns {
+    grid-template-columns: 1fr !important;
+  }
+}

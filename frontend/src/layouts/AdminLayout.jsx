@@ -1,6 +1,7 @@
 ﻿import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import BrandLogo from "../components/BrandLogo";
 import "../admin.css";
+import "../mobile-overrides.css";
 
 const menuGroups = [
   {
