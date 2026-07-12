@@ -706,3 +706,322 @@
     gap: 7px;
   }
 }
+
+/* Balanced final layout for the public clinic story and equipment page. */
+.about-public-split {
+  grid-template-columns: minmax(330px, 0.82fr) minmax(0, 1.18fr);
+  gap: 42px;
+  align-items: stretch;
+}
+
+.about-public-story .about-public-heading,
+.about-public-facility-grid > .about-public-heading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.about-public-story .about-public-heading h2,
+.about-public-facility-grid .about-public-heading h2 {
+  max-width: 520px;
+  font-size: clamp(2.4rem, 3.8vw, 3.6rem);
+}
+
+.about-public-heading p,
+.about-public-copy-card p,
+.about-public-standard-grid p,
+.about-public-doctor-grid p,
+.about-public-equipment-list p {
+  font-size: 1.04rem;
+  line-height: 1.82;
+}
+
+.about-public-story-highlights {
+  display: grid;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.about-public-story-highlights article {
+  padding: 18px 20px;
+  border: 1px solid rgba(201, 130, 46, 0.22);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 18px 44px rgba(84, 56, 24, 0.07);
+}
+
+.about-public-story-highlights strong,
+.about-public-story-highlights span {
+  display: block;
+}
+
+.about-public-story-highlights strong {
+  color: #8d4e13;
+  font-size: 1.05rem;
+  font-weight: 950;
+}
+
+.about-public-story-highlights span {
+  margin-top: 6px;
+  color: #5f6d82;
+  font-size: 1rem;
+  line-height: 1.62;
+}
+
+.about-public-copy-card {
+  padding: 36px;
+}
+
+.about-public-mission-grid article {
+  padding: 22px;
+}
+
+.about-public-mission-grid h3 {
+  font-size: 1.08rem;
+}
+
+.about-public-mission-grid p {
+  font-size: 0.98rem;
+}
+
+.about-public-facility-grid {
+  grid-template-columns: minmax(320px, 0.7fr) minmax(0, 1.3fr);
+  gap: 46px;
+}
+
+.about-public-equipment-summary {
+  display: grid;
+  gap: 12px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-public-equipment-summary li {
+  position: relative;
+  padding: 15px 18px 15px 46px;
+  border: 1px solid rgba(201, 130, 46, 0.22);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #344154;
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.about-public-equipment-summary li::before {
+  position: absolute;
+  top: 17px;
+  left: 18px;
+  width: 14px;
+  height: 14px;
+  border: 4px solid #f4d6a9;
+  border-radius: 50%;
+  content: "";
+  background: #c9822e;
+}
+
+.about-public-equipment-list {
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 22px;
+}
+
+.about-public-equipment-list article {
+  border-radius: 30px;
+}
+
+.about-public-equipment-list img {
+  height: 275px;
+  min-height: 275px;
+  padding: 0;
+  object-fit: cover;
+  object-position: center;
+  background: #f7ead7;
+  filter: none;
+}
+
+.about-public-equipment-list div {
+  padding: 24px 26px 26px;
+}
+
+.about-public-equipment-list h3 {
+  font-size: 1.34rem;
+}
+
+.about-public-equipment-list p {
+  display: block;
+  min-height: 0;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+
+.about-public-equipment-list li {
+  padding: 9px 12px;
+  font-size: 0.86rem;
+}
+
+@media (max-width: 1060px) {
+  .about-public-split,
+  .about-public-facility-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-public-story .about-public-heading h2,
+  .about-public-facility-grid .about-public-heading h2 {
+    max-width: 760px;
+  }
+}
+
+@media (max-width: 720px) {
+  .about-public-story .about-public-heading h2,
+  .about-public-facility-grid .about-public-heading h2 {
+    font-size: 2.15rem;
+  }
+
+  .about-public-copy-card {
+    padding: 22px;
+  }
+
+  .about-public-mission-grid,
+  .about-public-equipment-list {
+    grid-template-columns: 1fr;
+  }
+
+  .about-public-equipment-list img {
+    height: 245px;
+    min-height: 245px;
+  }
+
+  .about-public-equipment-summary li {
+    font-size: 0.98rem;
+  }
+}
+
+/* Final about-page polish: richer reading rhythm and balanced equipment cards. */
+.about-public-story {
+  padding-top: 96px;
+}
+
+.about-public-story .about-public-heading h2 {
+  max-width: 620px;
+  letter-spacing: -0.055em;
+}
+
+.about-public-copy-card {
+  border-radius: 34px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 247, 236, 0.82)),
+    #fffdf8;
+}
+
+.about-public-copy-card > p {
+  font-size: 1.08rem;
+  line-height: 1.88;
+}
+
+.about-public-mission-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.about-public-mission-grid article {
+  min-height: 170px;
+}
+
+.about-public-facility-grid {
+  grid-template-columns: minmax(360px, 0.66fr) minmax(0, 1.34fr);
+  align-items: start;
+}
+
+.about-public-facility-grid .about-public-heading {
+  position: sticky;
+  top: 112px;
+  align-self: start;
+}
+
+.about-public-facility-grid .about-public-heading h2 {
+  max-width: 560px;
+}
+
+.about-public-facility-grid .about-public-heading p {
+  max-width: 540px;
+  color: #55647a;
+}
+
+.about-public-equipment-summary {
+  grid-template-columns: 1fr;
+  max-width: 520px;
+}
+
+.about-public-equipment-list {
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.about-public-equipment-list article {
+  min-height: 100%;
+  overflow: hidden;
+  border-radius: 32px;
+  background: #fffdf8;
+}
+
+.about-public-equipment-list img {
+  width: 100%;
+  height: 285px;
+  min-height: 285px;
+  padding: 0;
+  object-fit: cover;
+  object-position: center;
+  background: #f8ead8;
+}
+
+.about-public-equipment-list div {
+  padding: 24px 26px 28px;
+}
+
+.about-public-equipment-list h3 {
+  margin-top: 6px;
+  font-size: 1.32rem;
+  line-height: 1.22;
+}
+
+.about-public-equipment-list p {
+  color: #506077;
+  font-size: 1.02rem;
+  line-height: 1.72;
+}
+
+.about-public-equipment-list ul {
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.about-public-equipment-list li {
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 1120px) {
+  .about-public-facility-grid .about-public-heading {
+    position: static;
+  }
+}
+
+@media (max-width: 820px) {
+  .about-public-story {
+    padding-top: 72px;
+  }
+
+  .about-public-mission-grid,
+  .about-public-equipment-list {
+    grid-template-columns: 1fr;
+  }
+
+  .about-public-copy-card > p {
+    font-size: 1rem;
+  }
+
+  .about-public-equipment-list img {
+    height: 250px;
+    min-height: 250px;
+  }
+}

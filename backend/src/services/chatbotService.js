@@ -217,6 +217,11 @@ const normalizeDentalInput = (text) => {
     [/\b(loi|nuu)\b/g, "nuou"],
     [/\b(lazer|laze)\b/g, "laser"],
     [/daurang/g, "dau rang"],
+    [/dauham/g, "dau ham"],
+    [/nhucrang/g, "nhuc rang"],
+    [/nhucham/g, "nhuc ham"],
+    [/ebuot/g, "e buot"],
+    [/ebout/g, "e buot"],
     [/saurang/g, "sau rang"],
     [/rangkhon/g, "rang khon"],
     [/niengrang/g, "nieng rang"],
@@ -239,7 +244,17 @@ const normalizeDentalInput = (text) => {
     [/viemnuou/g, "viem nuou"],
     [/tutnuou/g, "tut nuou"],
     [/taytrang/g, "tay trang"],
+    [/lamtrang/g, "lam trang"],
+    [/rangvang/g, "rang vang"],
     [/hamrang/g, "ham rang"],
+    [/hamtren/g, "ham tren"],
+    [/hamduoi/g, "ham duoi"],
+    [/ranghamtren/g, "rang ham tren"],
+    [/ranghamduoi/g, "rang ham duoi"],
+    [/trangrang/g, "trang rang"],
+    [/sukimloai/g, "su kim loai"],
+    [/toansu/g, "toan su"],
+    [/rangtoansu/g, "rang toan su"],
     [/matrang/g, "mat rang"],
     [/merang/g, "me rang"],
     [/gayrang/g, "gay rang"],
@@ -388,6 +403,55 @@ const getTopicFromText = (text) => {
     ["rang su", "boc su", "boc rang", "dan su"],
   ].filter((keywords) => hasAny(text, keywords)).length;
 
+  const hasSymptomIntent = hasAny(text, [
+    "dau",
+    "nhuc",
+    "buot",
+    "e buot",
+    "sung",
+    "chay mau",
+    "hoi mieng",
+    "lung lay",
+    "rung rinh",
+    "mu",
+    "viem",
+    "nhiem trung",
+    "gay",
+    "me",
+    "vo",
+    "be",
+    "nut",
+  ]);
+
+  const hasPainIntent = hasAny(text, [
+    "dau rang",
+    "nhuc rang",
+    "dau ham",
+    "nhuc ham",
+    "dau o ham",
+    "dau khi nhai",
+    "dau ve dem",
+    "dau tu phat",
+    "dau am i",
+    "dau lan",
+    "dau loi",
+    "dau nuou",
+  ]);
+
+  if (
+    hasPainIntent &&
+    !hasAny(text, [
+      "sau khi nho",
+      "moi nho rang",
+      "nho rang xong",
+      "nho rang ve",
+      "hau phau",
+      "sau tieu phau",
+    ])
+  ) {
+    return "pain";
+  }
+
   if (
     mentionedServiceCount >= 2 ||
     hasAny(text, [
@@ -445,7 +509,12 @@ const getTopicFromText = (text) => {
       "rang vang",
       "rang bi vang",
       "rang duoc trang",
+      "rang duoc trang hon",
+      "cho rang trang",
+      "muon rang trang",
       "lam trang",
+      "lam sao trang rang",
+      "rang o vang",
       "e buot khi tay trang",
       "e buot khong",
     ])
@@ -477,6 +546,7 @@ const getTopicFromText = (text) => {
       "ham tren",
       "ham duoi",
     ])
+    && !hasSymptomIntent
   ) {
     return "toothAnatomy";
   }
@@ -518,7 +588,7 @@ const getTopicFromText = (text) => {
 
   if (
     hasAny(text, ["tre em", "em be", "be bi", "rang sua", "mat rang sua", "rang tre", "nha khoa tre em"]) ||
-    hasAny(text, ["khi nao tre", "tre nen di kham", "dua be di kham", "cho be di kham", "con toi bi", "be co"]) ||
+    hasAny(text, ["khi nao tre", "tre nen di kham", "tre di kham rang", "tre kham rang", "tre nen kham", "dua be di kham", "cho be di kham", "con toi bi", "be co"]) ||
     (hasAny(text, ["mat rang", "gay rang", "sau rang"]) && (hasWordAny(text, ["be", "tre", "chau"]) || hasAny(text, ["con toi"])))
   ) {
     return "pediatric";
@@ -727,12 +797,17 @@ const getTopicFromText = (text) => {
     hasAny(text, [
       "su kim loai",
       "toan su",
+      "toan su khac",
+      "su kim loai khac",
       "zirconia",
       "cercon",
       "rang su kim loai",
       "rang toan su",
+      "kim loai va toan su",
+      "toan su va kim loai",
       "khac nhau cho nao",
       "khac nhau o dau",
+      "khac gi",
     ])
   ) {
     return "porcelainCompare";
@@ -1101,6 +1176,13 @@ const findRuleBasedReply = (message, history = []) => {
   }
 
   if (topic === "pain") {
+    if (hasAny(text, ["ham tren", "rang ham tren", "dau ham tren", "dau rang tren"])) {
+      return createResult(
+        "Đau răng hàm trên có thể do sâu răng, viêm tủy, viêm nướu quanh răng, răng khôn mọc lệch, nứt/mẻ răng hoặc kẹt thức ăn sâu trong kẽ răng. Riêng vùng hàm trên đôi khi còn có cảm giác đau lan từ xoang hàm, nên nếu bạn đau âm ỉ vùng má, đau tăng khi cúi đầu hoặc kèm nghẹt mũi thì cũng nên nói rõ với bác sĩ khi khám.\n\nBạn nên để ý thêm: đau khi nhai hay đau tự phát, có ê buốt lạnh/nóng không, có sưng nướu/sưng má/chảy mủ/sốt không. Nếu đau kéo dài, đau về đêm, sưng hoặc dùng thuốc rồi vẫn tái lại thì nên đặt lịch khám và có thể cần chụp phim để xác định đúng nguyên nhân.",
+        suggestionGroups.pain,
+      );
+    }
+
     return createResult(
       "Đau răng có thể đến từ nhiều nguyên nhân như sâu răng, viêm nướu, viêm tủy, răng khôn mọc lệch, áp xe quanh chân răng hoặc chấn thương. Nếu đau khi ăn ngọt/lạnh có thể liên quan sâu răng hoặc ê buốt; nếu đau tự phát, đau về đêm, đau lan lên thái dương hoặc sưng mặt thì nên khám sớm.\n\nTrước mắt bạn nên vệ sinh nhẹ nhàng, tránh nhai bên đau và không tự dùng thuốc kéo dài. Khi đặt lịch, bạn nên ghi rõ đau răng nào, đau bao lâu, có sưng/chảy máu/sốt không để phòng khám sắp xếp phù hợp.",
       suggestionGroups.pain,

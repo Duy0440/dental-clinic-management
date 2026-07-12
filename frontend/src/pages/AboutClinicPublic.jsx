@@ -97,6 +97,19 @@ const equipment = [
   },
 ];
 
+const storyHighlights = [
+  ["Tư vấn rõ ràng", "Giải thích tình trạng răng miệng bằng ngôn ngữ dễ hiểu trước khi điều trị."],
+  ["Ưu tiên bảo tồn", "Chỉ tư vấn phục hình hoặc can thiệp lớn khi răng thật không còn đáp ứng tốt."],
+  ["Theo dõi sau khám", "Lưu lịch hẹn, kết quả điều trị và lịch tái khám để khách dễ quay lại."],
+];
+
+const equipmentHighlights = [
+  "Chụp phim 3D hỗ trợ xem xương hàm và răng khôn",
+  "Scan kỹ thuật số giúp giảm khó chịu khi lấy dấu",
+  "Tiệt trùng dụng cụ theo quy trình riêng",
+  "Ghế điều trị bố trí thuận tiện cho bác sĩ và khách",
+];
+
 function AboutClinicPublic() {
   const location = useLocation();
 
@@ -146,6 +159,14 @@ function AboutClinicPublic() {
           <div className="about-public-heading">
             <span className="about-public-kicker">Câu chuyện phòng khám</span>
             <h2>Một nơi để khách hàng hiểu đúng trước khi điều trị</h2>
+            <div className="about-public-story-highlights">
+              {storyHighlights.map(([title, text]) => (
+                <article key={title}>
+                  <strong>{title}</strong>
+                  <span>{text}</span>
+                </article>
+              ))}
+            </div>
           </div>
           <div className="about-public-copy-card">
             <p>
@@ -249,6 +270,11 @@ function AboutClinicPublic() {
               Phòng khám đầu tư các thiết bị cần thiết để bác sĩ quan sát rõ hơn tình trạng răng miệng,
               giảm cảm giác khó chịu trong quá trình lấy dấu và kiểm soát vô trùng dụng cụ.
             </p>
+            <ul className="about-public-equipment-summary">
+              {equipmentHighlights.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
           </div>
 
           <div className="about-public-equipment-list">

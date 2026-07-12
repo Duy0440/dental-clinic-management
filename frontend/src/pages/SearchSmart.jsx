@@ -208,6 +208,54 @@ const cleanKnowledgeResults = [
   },
 ];
 
+const publicKnowledgeResults = [
+  {
+    id: "knowledge-caries-public",
+    type: "Kiến thức nha khoa",
+    title: "Sâu răng, viêm tủy và trám răng",
+    description: "Tìm hiểu sâu răng, đau răng, khi nào cần trám răng hoặc chữa tủy.",
+    link: "/chatbot",
+    action: "Hỏi chatbot",
+    keywords: ["sau rang", "dau rang", "viem tuy", "chua tuy", "tram rang", "lo sau"],
+  },
+  {
+    id: "knowledge-gum-public",
+    type: "Kiến thức nha khoa",
+    title: "Viêm nướu, nha chu và chảy máu chân răng",
+    description: "Tra cứu nguyên nhân sưng nướu, chảy máu chân răng, hôi miệng và cạo vôi.",
+    link: "/chatbot",
+    action: "Hỏi chatbot",
+    keywords: ["viem nuou", "nha chu", "sung nuou", "chay mau chan rang", "hoi mieng", "cao voi"],
+  },
+  {
+    id: "knowledge-restoration-public",
+    type: "Kiến thức nha khoa",
+    title: "Phục hình răng: trám, inlay/onlay, răng sứ, implant",
+    description: "So sánh các cách phục hồi răng vỡ, răng mất hoặc răng yếu sau chữa tủy.",
+    link: "/chatbot",
+    action: "Hỏi chatbot",
+    keywords: ["phuc hinh", "inlay", "onlay", "veneer", "rang su", "cau rang", "ham thao lap", "implant"],
+  },
+  {
+    id: "knowledge-equipment-public",
+    type: "Thiết bị",
+    title: "CBCT Hyperion X5, scan Shinning 3D, MELAG 323",
+    description: "Xem thiết bị hỗ trợ chẩn đoán, lấy dấu kỹ thuật số và kiểm soát vô trùng.",
+    link: "/about#about-facilities",
+    action: "Xem thiết bị",
+    keywords: ["cbct x5", "hyperion", "scan shinning", "melag", "vacuclave", "melag 323", "runyess"],
+  },
+  {
+    id: "knowledge-facilities-public",
+    type: "Cơ sở vật chất",
+    title: "Thiết bị và không gian điều trị",
+    description: "Xem ghế Runyess, CBCT Hyperion X5, scan Shinning 3D và nồi hấp MELAG 323 tại Nha khoa V.",
+    link: "/about#about-facilities",
+    action: "Xem thiết bị",
+    keywords: ["thiet bi nha khoa", "co so vat chat", "cbct", "hyperion x5", "scan shinning", "noi hap melag", "runyess", "ghe nha khoa", "vo trung"],
+  },
+];
+
 const synonymMap = {
   "bang gia": ["gia", "chi phi", "bao nhieu tien"],
   "chat bot": ["chatbot", "ai", "tu van"],
@@ -415,7 +463,7 @@ function SearchSmart() {
 
     return [
       ...navigationResults.map((item) => ({ ...item, priority: 2 })),
-      ...cleanKnowledgeResults.map((item) => ({ ...item, priority: 2 })),
+      ...publicKnowledgeResults.map((item) => ({ ...item, priority: 2 })),
       ...promotionResults,
       ...serviceResults,
       ...createPriceResults(),
