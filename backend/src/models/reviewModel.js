@@ -1,5 +1,6 @@
 ﻿const pool = require("../config/db");
 
+// review list (lay tat ca danh gia)
 const getAllReviews = async () => {
   const query = `
     SELECT
@@ -21,6 +22,7 @@ const getAllReviews = async () => {
   return result.rows;
 };
 
+// patient reviews (lay danh gia cua khach)
 const getReviewsByPatientId = async (patientId) => {
   const query = `
     SELECT
@@ -41,6 +43,7 @@ const getReviewsByPatientId = async (patientId) => {
   return result.rows;
 };
 
+// duplicate check (kiem tra da danh gia chua)
 const findExistingReview = async (patientId, serviceId) => {
   const query = `
     SELECT id
@@ -54,6 +57,7 @@ const findExistingReview = async (patientId, serviceId) => {
   return result.rows[0];
 };
 
+// completed check (chi danh gia khi da kham xong)
 const checkCompletedAppointmentForReview = async (
   patientId,
   serviceId,
@@ -73,6 +77,7 @@ const checkCompletedAppointmentForReview = async (
   return result.rows.length > 0;
 };
 
+// create review (them danh gia dich vu)
 const createReview = async (reviewData) => {
   const { patient_id, service_id, rating, comment } = reviewData;
 

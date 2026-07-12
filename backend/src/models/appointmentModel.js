@@ -1,5 +1,6 @@
 ﻿const pool = require("../config/db");
 
+// find history (lay lich hen theo benh nhan)
 const getAppointmentHistoryByPatientId = async (patientId) => {
   const query = `
     SELECT
@@ -25,6 +26,7 @@ const getAppointmentHistoryByPatientId = async (patientId) => {
   return result.rows;
 };
 
+// advisory lock (khoa slot de tranh dat trung luc cung luc)
 const withAppointmentSlotLock = async (appointmentDate, appointmentTime, callback) => {
   const client = await pool.connect();
   const lockKey = `appointment:${appointmentDate}:${appointmentTime}`;
@@ -45,6 +47,7 @@ const withAppointmentSlotLock = async (appointmentDate, appointmentTime, callbac
   }
 };
 
+// create appointment (them lich hen)
 const createAppointment = async (appointmentData, db = pool) => {
   const {
     patient_id,
@@ -93,6 +96,7 @@ const createAppointment = async (appointmentData, db = pool) => {
   return result.rows[0];
 };
 
+// check refs (kiem tra patient, dentist, service co ton tai)
 const checkAppointmentReferences = async (
   patientId,
   dentistId,
@@ -119,6 +123,7 @@ const checkAppointmentReferences = async (
   };
 };
 
+// conflict check (kiem tra nha si co trung lich khong)
 const checkDentistAppointmentConflict = async (
   dentistId,
   appointmentDate,
@@ -146,6 +151,7 @@ const checkDentistAppointmentConflict = async (
   return result.rows.length > 0;
 };
 
+// booked slots (lay slot da co lich trong ngay)
 const getBookedAppointmentSlotsByDate = async (appointmentDate, dentistId) => {
   const values = [appointmentDate];
   const dentistFilter = dentistId ? "AND dentist_id = $2" : "";
@@ -168,6 +174,7 @@ const getBookedAppointmentSlotsByDate = async (appointmentDate, dentistId) => {
   return result.rows;
 };
 
+// unavailable blocks (lay khoang nha si bao ban)
 const getUnavailableBlocksByDate = async (appointmentDate, dentistId) => {
   const values = [appointmentDate];
   const dentistFilter = dentistId ? "AND dentist_id = $2" : "";
@@ -190,6 +197,7 @@ const getUnavailableBlocksByDate = async (appointmentDate, dentistId) => {
   return result.rows;
 };
 
+// cancel appointment (khach huy lich cua minh)
 const cancelAppointmentById = async (appointmentId, patientId) => {
   const query = `
     UPDATE appointments
@@ -213,6 +221,7 @@ const cancelAppointmentById = async (appointmentId, patientId) => {
   return result.rows[0];
 };
 
+// list appointments (lay tat ca lich hen cho admin)
 const getAllAppointments = async () => {
   const query = `
     SELECT
@@ -240,6 +249,7 @@ const getAllAppointments = async () => {
   return result.rows;
 };
 
+// find appointment (tim lich hen theo id)
 const findAppointmentById = async (appointmentId) => {
   const query = `
     SELECT
@@ -257,6 +267,7 @@ const findAppointmentById = async (appointmentId) => {
   return result.rows[0];
 };
 
+// update conflict (kiem tra trung khi admin phan cong)
 const checkAppointmentConflictForUpdate = async (
   dentistId,
   appointmentDate,
@@ -287,6 +298,7 @@ const checkAppointmentConflictForUpdate = async (
   return result.rows.length > 0;
 };
 
+// admin update (cap nhat trang thai va nha si)
 const updateAppointmentByAdmin = async (
   appointmentId,
   dentistId,
@@ -313,6 +325,7 @@ const updateAppointmentByAdmin = async (
   return result.rows[0];
 };
 
+// dentist schedule (lay lich cua nha si)
 const getAppointmentsByDentistId = async (dentistId) => {
   const query = `
     SELECT
@@ -345,6 +358,7 @@ const getAppointmentsByDentistId = async (dentistId) => {
   return result.rows;
 };
 
+// mark completed (chuyen lich sang da hoan thanh)
 const markAppointmentCompletedById = async (appointmentId) => {
   const query = `
     UPDATE appointments

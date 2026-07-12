@@ -8,6 +8,7 @@
 
 const VALID_PAYMENT_METHODS = ["Tiền mặt", "Chuyển khoản"];
 
+// invoice list (danh sách hóa đơn)
 const listInvoices = async (req, res) => {
   try {
     const invoices = await getAllInvoices();
@@ -24,6 +25,7 @@ const listInvoices = async (req, res) => {
   }
 };
 
+// create invoice (lập hóa đơn kèm chi tiết)
 const addInvoice = async (req, res) => {
   try {
     const {
@@ -127,6 +129,7 @@ const addInvoice = async (req, res) => {
   }
 };
 
+// delete invoice (xóa hóa đơn)
 const removeInvoice = async (req, res) => {
   try {
     const { invoiceId } = req.params;

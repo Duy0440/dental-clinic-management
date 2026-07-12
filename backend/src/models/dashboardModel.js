@@ -1,5 +1,6 @@
 ﻿const pool = require("../config/db");
 
+// track visit (luu luot truy cap)
 const recordPageVisit = async ({ path, userAgent, ip }) => {
   const query = `
     INSERT INTO page_visits (page_path, user_agent, ip_address)
@@ -16,6 +17,7 @@ const recordPageVisit = async ({ path, userAgent, ip }) => {
   return result.rows[0];
 };
 
+// dashboard summary (tong hop so lieu admin)
 const getDashboardSummary = async () => {
   const [
     overviewResult,

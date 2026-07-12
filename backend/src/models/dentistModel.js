@@ -1,5 +1,6 @@
 const pool = require("../config/db");
 
+// dentist list (lay tat ca nha si)
 const getAllDentists = async () => {
   const query = `
     SELECT
@@ -21,6 +22,7 @@ const getAllDentists = async () => {
   return result.rows;
 };
 
+// active dentists (lay nha si dang hoat dong)
 const getActiveDentists = async () => {
   const query = `
     SELECT
@@ -41,6 +43,7 @@ const getActiveDentists = async () => {
   return result.rows;
 };
 
+// create dentist (them ho so nha si)
 const createDentist = async (dentistData) => {
   const { user_id, full_name, specialty, phone, email } = dentistData;
 
@@ -70,6 +73,7 @@ const createDentist = async (dentistData) => {
   return result.rows[0];
 };
 
+// find by user (tim nha si theo tai khoan)
 const findDentistByUserId = async (userId) => {
   const query = `
     SELECT
@@ -88,6 +92,7 @@ const findDentistByUserId = async (userId) => {
   return result.rows[0];
 };
 
+// active status (tam ngung hoac kich hoat nha si)
 const updateDentistActiveStatus = async (dentistId, isActive) => {
   const query = `
     UPDATE dentists
@@ -107,6 +112,7 @@ const updateDentistActiveStatus = async (dentistId, isActive) => {
   return result.rows[0];
 };
 
+// find dentist (tim nha si theo id)
 const findDentistById = async (dentistId) => {
   const query = `
     SELECT

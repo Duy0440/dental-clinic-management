@@ -1,5 +1,6 @@
 ﻿const pool = require("../config/db");
 
+// invoice list (lay danh sach hoa don)
 const getAllInvoices = async () => {
   const query = `
     SELECT
@@ -54,6 +55,7 @@ const getAllInvoices = async () => {
   return result.rows;
 };
 
+// find invoice (tim hoa don theo ma)
 const findInvoiceByCode = async (invoiceCode) => {
   const query = `
     SELECT id
@@ -65,6 +67,7 @@ const findInvoiceByCode = async (invoiceCode) => {
   return result.rows[0];
 };
 
+// check refs (kiem tra khach hang va lich hen)
 const checkInvoiceReferences = async (patientId, appointmentId) => {
   const patientQuery = "SELECT id FROM patients WHERE id = $1";
   const patientResult = await pool.query(patientQuery, [patientId]);
@@ -83,6 +86,7 @@ const checkInvoiceReferences = async (patientId, appointmentId) => {
   };
 };
 
+// transaction (tao hoa don va chi tiet cung luc)
 const createInvoiceWithDetails = async (invoiceData) => {
   const {
     patient_id,
@@ -209,6 +213,7 @@ const createInvoiceWithDetails = async (invoiceData) => {
   }
 };
 
+// delete invoice (xoa hoa don theo id)
 const deleteInvoiceById = async (invoiceId) => {
   const client = await pool.connect();
 

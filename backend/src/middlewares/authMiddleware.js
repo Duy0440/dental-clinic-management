@@ -1,5 +1,6 @@
 ﻿const jwt = require("jsonwebtoken");
 
+// auth check (kiem tra token bat buoc)
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -22,6 +23,7 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+// optional auth (co token thi lay user, khong co van cho qua)
 const optionalVerifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -42,6 +44,7 @@ const optionalVerifyToken = (req, res, next) => {
   }
 };
 
+// role guard (chan user sai vai tro)
 const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {

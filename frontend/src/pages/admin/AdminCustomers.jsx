@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
+import PasswordField from "../../components/PasswordField";
 
 const initialCustomerForm = {
   full_name: "",
@@ -361,13 +362,14 @@ function AdminCustomers() {
 
               <label>
                 Mật khẩu
-                <input
+                <PasswordField
                   required
-                  type="password"
                   name="password"
                   value={accountForm.password}
                   onChange={handleAccountChange}
                   placeholder="123456"
+                  className=""
+                  autoComplete="new-password"
                 />
               </label>
 

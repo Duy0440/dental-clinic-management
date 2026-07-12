@@ -29,6 +29,7 @@ const {
   normalizeTime,
 } = require("../utils/clinicSchedule");
 
+// record list (xem ho so)
 const listMedicalRecords = async (req, res) => {
   try {
     let records = await getAllMedicalRecords();
@@ -59,6 +60,7 @@ const listMedicalRecords = async (req, res) => {
   }
 };
 
+// patient result (khách xem kết quả khám)
 const getMedicalResultsByPatientId = async (req, res) => {
   try {
     const { patientId } = req.params;
@@ -87,6 +89,7 @@ const getMedicalResultsByPatientId = async (req, res) => {
   }
 };
 
+// create record (tạo hồ sơ điều trị)
 const addMedicalRecord = async (req, res) => {
   try {
     const {
@@ -109,6 +112,7 @@ const addMedicalRecord = async (req, res) => {
 
     let finalDentistId = dentist_id;
 
+    // role scope (lấy hồ sơ nha sĩ đang đăng nhập)
     if (req.user.role === "dentist") {
       const dentistProfile = await findDentistByUserId(req.user.id);
 
@@ -152,6 +156,7 @@ const addMedicalRecord = async (req, res) => {
       });
     }
 
+    // prevent duplicate (chặn nhập trùng kết quả)
     if (appointment_id) {
       const existingRecord = await findMedicalRecordByAppointmentId(
         appointment_id,
@@ -166,6 +171,7 @@ const addMedicalRecord = async (req, res) => {
 
     const normalizedReExaminationTime = normalizeTime(re_examination_time);
 
+    // validate re-exam (kiểm tra ngày giờ tái khám)
     if (
       (re_examination_date && !normalizedReExaminationTime) ||
       (!re_examination_date && normalizedReExaminationTime)
@@ -192,6 +198,7 @@ const addMedicalRecord = async (req, res) => {
         });
       }
 
+      // re-exam conflict (trùng lịch tái khám)
       const hasReExaminationConflict = await checkReExaminationConflict(
         finalDentistId,
         re_examination_date,
@@ -204,6 +211,7 @@ const addMedicalRecord = async (req, res) => {
         });
       }
 
+      // appointment conflict (trùng lịch hẹn)
       const hasAppointmentConflict = await checkDentistAppointmentConflict(
         finalDentistId,
         re_examination_date,
@@ -216,6 +224,7 @@ const addMedicalRecord = async (req, res) => {
         });
       }
 
+      // unavailable conflict (trùng lịch bận)
       const hasUnavailableConflict = await checkDentistUnavailableConflict(
         finalDentistId,
         re_examination_date,
@@ -243,6 +252,7 @@ const addMedicalRecord = async (req, res) => {
     });
 
     if (appointment_id) {
+      // complete appointment (hoàn thành lịch hẹn)
       await markAppointmentCompletedById(appointment_id);
     }
 
@@ -258,6 +268,7 @@ const addMedicalRecord = async (req, res) => {
   }
 };
 
+// upload attachment (tải ảnh/tài liệu điều trị)
 const uploadMedicalRecordAttachment = async (req, res) => {
   try {
     const { recordId } = req.params;

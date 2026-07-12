@@ -44,6 +44,7 @@ const VALID_APPOINTMENT_STATUSES = [
   "Cancelled",
 ];
 
+// custom error (loi rieng cho dat lịch)
 const createAppointmentError = (message, statusCode = 409, extra = {}) => {
   const error = new Error(message);
   error.statusCode = statusCode;
@@ -62,6 +63,7 @@ const isTimeInsideBlock = (time, block) => {
   return time >= startTime && time < endTime;
 };
 
+// available slots (tinh gio con trong)
 const buildAvailableTimes = async (appointmentDate, dentistId = null) => {
   const dayInfo = getClinicDayInfo(appointmentDate);
   const timeOptions = getClinicBookingTimeOptions(appointmentDate);
@@ -154,6 +156,7 @@ const buildAvailableTimes = async (appointmentDate, dentistId = null) => {
   };
 };
 
+// slot API (tra danh sach gio cho frontend)
 const getAvailableAppointmentTimes = async (req, res) => {
   try {
     const { date, dentist_id } = req.query;
@@ -197,6 +200,7 @@ const getAvailableAppointmentTimes = async (req, res) => {
   }
 };
 
+// auth scope (khach chi xem lich cua minh)
 const getAppointmentHistory = async (req, res) => {
   try {
     const { patientId } = req.params;
@@ -225,6 +229,7 @@ const getAppointmentHistory = async (req, res) => {
   }
 };
 
+// create appointment (tao lich)
 const addAppointment = async (req, res) => {
   try {
     const {
@@ -248,6 +253,7 @@ const addAppointment = async (req, res) => {
     let finalPatientId = patient_id;
     const normalizedDentistId = dentist_id ? Number(dentist_id) : null;
 
+    // auth scope (khoa theo ho so ca nhan dang nhap)
     if (req.user?.role === "customer") {
       const patientProfile = await findPatientByUserId(req.user.id);
 
@@ -260,6 +266,7 @@ const addAppointment = async (req, res) => {
 
       finalPatientId = patientProfile.id;
     } else if (!req.user) {
+      // guest booking (tao ho so cho khach vang lai)
       if (!guest_full_name || !guest_phone) {
         return res.status(400).json({
           message: "Guest full name and phone number are required",
@@ -293,6 +300,7 @@ const addAppointment = async (req, res) => {
       });
     }
 
+    // validate time (kiem tra gio nhan lich online)
     if (!isClinicBookingTime(appointment_date, normalizedAppointmentTime)) {
       const dayInfo = getClinicDayInfo(appointment_date);
       return res.status(400).json({
@@ -337,6 +345,7 @@ const addAppointment = async (req, res) => {
       });
     }
 
+    // pre-check slot (kiểm tra slot)
     const availability = await buildAvailableTimes(
       appointment_date,
       normalizedDentistId,
@@ -352,6 +361,7 @@ const addAppointment = async (req, res) => {
       });
     }
 
+    // conflict check (check trùng lịch nha sĩ)
     const hasConflict = await checkDentistAppointmentConflict(
       normalizedDentistId,
       appointment_date,
@@ -365,6 +375,7 @@ const addAppointment = async (req, res) => {
       });
     }
 
+    // unavailable check (check lịch bận nha sĩ)
     const isDentistUnavailable =
       normalizedDentistId &&
       (await checkDentistUnavailableConflict(
@@ -380,6 +391,7 @@ const addAppointment = async (req, res) => {
       });
     }
 
+    // race condition guard (khóa slot khi nhieu lich dạt cung thoi diem)
     const newAppointment = await withAppointmentSlotLock(
       appointment_date,
       normalizedAppointmentTime,
@@ -454,6 +466,7 @@ const addAppointment = async (req, res) => {
   }
 };
 
+// cancel appointment 
 const cancelAppointment = async (req, res) => {
   try {
     const { appointmentId } = req.params;
@@ -497,6 +510,7 @@ const cancelAppointment = async (req, res) => {
 
 
 
+// admin list (xem danh sách lịch)
 const getAppointmentsForAdmin = async (req, res) => {
   try {
     const appointments = await getAllAppointments();
@@ -513,6 +527,7 @@ const getAppointmentsForAdmin = async (req, res) => {
   }
 };
 
+// admin update (phân công lịch)
 const manageAppointment = async (req, res) => {
   try {
     const { appointmentId } = req.params;
@@ -536,6 +551,7 @@ const manageAppointment = async (req, res) => {
 
     const normalizedDentistId = dentist_id ? Number(dentist_id) : null;
 
+    // validate dentist (xác nhận lịch phải có nha sĩ)
     if (status === "Confirmed" && !normalizedDentistId) {
       return res.status(400).json({
         message: "Please assign a dentist before confirming",
@@ -564,6 +580,7 @@ const manageAppointment = async (req, res) => {
       }
     }
 
+    // conflict check (báo trùng khi phân công)
     const hasConflict =
       status !== "Cancelled" &&
       (await checkAppointmentConflictForUpdate(
@@ -581,6 +598,7 @@ const manageAppointment = async (req, res) => {
       });
     }
 
+    // unavailable check (báo nha sĩ đang bận)
     const isDentistUnavailable =
       status !== "Cancelled" &&
       (await checkDentistUnavailableConflict(
@@ -620,6 +638,7 @@ const manageAppointment = async (req, res) => {
   }
 };
 
+// dentist schedule (nha sĩ xem lịch được phân công)
 const getAppointmentsForDentist = async (req, res) => {
   try {
     const dentistProfile = await findDentistByUserId(req.user.id);

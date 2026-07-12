@@ -11,6 +11,7 @@ const {
   updateUserActiveStatus,
 } = require("../models/userModel");
 
+// dentist list (danh sách nha sĩ)
 const listDentists = async (req, res) => {
   try {
     const dentists = await getAllDentists();
@@ -27,6 +28,7 @@ const listDentists = async (req, res) => {
   }
 };
 
+// active dentists (nha sĩ đang hoạt động)
 const listActiveDentists = async (req, res) => {
   try {
     const dentists = await getActiveDentists();
@@ -43,6 +45,7 @@ const listActiveDentists = async (req, res) => {
   }
 };
 
+// create dentist (tạo tk bác sĩ)
 const addDentist = async (req, res) => {
   try {
     const { full_name, specialty, phone, email, username, password } = req.body;
@@ -95,6 +98,7 @@ const addDentist = async (req, res) => {
   }
 };
 
+// active status (tạm ngưng hoặc kích hoạt nha sĩ)
 const changeDentistActiveStatus = async (req, res) => {
   try {
     const { dentistId } = req.params;

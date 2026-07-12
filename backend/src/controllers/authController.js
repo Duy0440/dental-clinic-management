@@ -11,6 +11,7 @@ const {
 } = require("../models/patientModel");
 const { findDentistByUserId } = require("../models/dentistModel");
 
+// auth register (dky tai khoan khach)
 const register = async (req, res) => {
   try {
     const {
@@ -85,6 +86,7 @@ const register = async (req, res) => {
   }
 };
 
+// auth login (đăng nhập và cấp token JWT)
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -155,6 +157,7 @@ const login = async (req, res) => {
 
 const normalizePhone = (phone) => String(phone || "").replace(/\D/g, "");
 
+// reset password (đổi mật khẩu bằng sdt)
 const forgotPassword = async (req, res) => {
   try {
     const { username, phone, new_password } = req.body;

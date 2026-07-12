@@ -1,5 +1,6 @@
 ﻿const pool = require("../config/db");
 
+// record list (lay tat ca ho so dieu tri)
 const getAllMedicalRecords = async () => {
   const query = `
     SELECT
@@ -53,6 +54,7 @@ const getAllMedicalRecords = async () => {
   return result.rows;
 };
 
+// patient records (lay ket qua dieu tri cua khach)
 const getMedicalRecordsByPatientId = async (patientId) => {
   const query = `
     SELECT
@@ -105,6 +107,7 @@ const getMedicalRecordsByPatientId = async (patientId) => {
   return result.rows;
 };
 
+// create record (them ket qua dieu tri)
 const createMedicalRecord = async (recordData) => {
   const {
     appointment_id,
@@ -172,6 +175,7 @@ const createMedicalRecord = async (recordData) => {
   return result.rows[0];
 };
 
+// check refs (kiem tra appointment, patient, dentist)
 const checkMedicalRecordReferences = async (
   patientId,
   dentistId,
@@ -217,6 +221,7 @@ const checkMedicalRecordReferences = async (
   };
 };
 
+// find by appointment (tim ho so theo lich hen)
 const findMedicalRecordByAppointmentId = async (appointmentId) => {
   if (!appointmentId) {
     return null;
@@ -232,6 +237,7 @@ const findMedicalRecordByAppointmentId = async (appointmentId) => {
   return result.rows[0];
 };
 
+// re-exam conflict (kiem tra trung lich tai kham)
 const checkReExaminationConflict = async (
   dentistId,
   reExaminationDate,

@@ -4,6 +4,7 @@ const {
   checkChatbotUserExists,
 } = require("../models/chatbotLogModel");
 
+// chatbot logs (xem lịch sử hỏi đáp)
 const listChatbotLogs = async (req, res) => {
   try {
     const logs = await getAllChatbotLogs();
@@ -20,6 +21,7 @@ const listChatbotLogs = async (req, res) => {
   }
 };
 
+// save log (luu cau hoi)
 const addChatbotLog = async (req, res) => {
   try {
     const { user_id, question, answer } = req.body;

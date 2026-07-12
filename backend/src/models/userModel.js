@@ -1,5 +1,6 @@
 ﻿const pool = require("../config/db");
 
+// find user (tim tai khoan theo username)
 const findUserByUsername = async (username) => {
   const query = `
     SELECT
@@ -18,6 +19,7 @@ const findUserByUsername = async (username) => {
   return result.rows[0];
 };
 
+// create user (them tai khoan)
 const createUser = async (userData) => {
   const { username, password, role, phone, email } = userData;
 
@@ -46,6 +48,7 @@ const createUser = async (userData) => {
   return result.rows[0];
 };
 
+// active status (khoa hoac mo tai khoan)
 const updateUserActiveStatus = async (userId, isActive) => {
   const query = `
     UPDATE users
@@ -64,6 +67,7 @@ const updateUserActiveStatus = async (userId, isActive) => {
   return result.rows[0];
 };
 
+// update password (cap nhat mat khau da hash)
 const updateUserPasswordById = async (userId, hashedPassword) => {
   const query = `
     UPDATE users

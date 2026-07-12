@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
+import PasswordField from "../components/PasswordField";
 
 const initialForm = {
   username: "",
@@ -95,28 +96,26 @@ function ForgotPassword() {
 
                 <div className="mb-3">
                   <label className="form-label">Mật khẩu mới</label>
-                  <input
+                  <PasswordField
                     required
                     minLength="6"
-                    type="password"
                     name="new_password"
-                    className="form-control"
                     value={formData.new_password}
                     onChange={handleChange}
                     placeholder="Ít nhất 6 ký tự"
+                    autoComplete="new-password"
                   />
                 </div>
 
                 <div className="mb-4">
                   <label className="form-label">Nhập lại mật khẩu mới</label>
-                  <input
+                  <PasswordField
                     required
                     minLength="6"
-                    type="password"
                     name="confirm_password"
-                    className="form-control"
                     value={formData.confirm_password}
                     onChange={handleChange}
+                    autoComplete="new-password"
                   />
                 </div>
 

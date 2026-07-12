@@ -6,6 +6,7 @@
   deactivateServiceById,
 } = require("../models/serviceModel");
 
+// active services (dịch vụ đang hoạt động)
 const listServices = async (req, res) => {
   try {
     const services = await getActiveServices();
@@ -22,6 +23,7 @@ const listServices = async (req, res) => {
   }
 };
 
+// service admin list (danh sách dịch vụ cho admin)
 const listServicesForAdmin = async (req, res) => {
   try {
     const services = await getAllServicesForAdmin();
@@ -38,6 +40,7 @@ const listServicesForAdmin = async (req, res) => {
   }
 };
 
+// create service (thêm dịch vụ)
 const addService = async (req, res) => {
   try {
     const { service_name, description, is_active } = req.body;
@@ -66,6 +69,7 @@ const addService = async (req, res) => {
   }
 };
 
+// update service (sửa dịch vụ)
 const updateService = async (req, res) => {
   try {
     const { serviceId } = req.params;
@@ -101,6 +105,7 @@ const updateService = async (req, res) => {
   }
 };
 
+// soft delete (ẩn dịch vụ, không xóa khỏi DB)
 const deleteService = async (req, res) => {
   try {
     const { serviceId } = req.params;

@@ -4,6 +4,7 @@
 } = require("../models/chatbotLogModel");
 const { generateDentalReply } = require("../services/chatbotService");
 
+// chatbot reply (trả lời câu hỏi và lưu lịch sử)
 const getChatbotReply = async (req, res) => {
   try {
     const { message, user_id, history = [] } = req.body;

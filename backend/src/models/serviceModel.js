@@ -1,5 +1,6 @@
 ﻿const pool = require("../config/db");
 
+// active services (lay dich vu dang hien thi)
 const getActiveServices = async () => {
   const query = `
     SELECT
@@ -16,6 +17,7 @@ const getActiveServices = async () => {
   return result.rows;
 };
 
+// service admin list (lay tat ca dich vu cho admin)
 const getAllServicesForAdmin = async () => {
   const query = `
     SELECT
@@ -31,6 +33,7 @@ const getAllServicesForAdmin = async () => {
   return result.rows;
 };
 
+// create service (them dich vu)
 const createService = async (serviceData) => {
   const { service_name, description, is_active } = serviceData;
 
@@ -56,6 +59,7 @@ const createService = async (serviceData) => {
   return result.rows[0];
 };
 
+// update service (sua thong tin dich vu)
 const updateServiceById = async (serviceId, serviceData) => {
   const { service_name, description, is_active } = serviceData;
 
@@ -84,6 +88,7 @@ const updateServiceById = async (serviceId, serviceData) => {
   return result.rows[0];
 };
 
+// soft delete (an dich vu, khong xoa khoi DB)
 const deactivateServiceById = async (serviceId) => {
   const query = `
     UPDATE services

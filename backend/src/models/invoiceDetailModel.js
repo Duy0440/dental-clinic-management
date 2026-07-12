@@ -1,5 +1,6 @@
 const pool = require("../config/db");
 
+// invoice detail list (lay chi tiet hoa don)
 const getAllInvoiceDetails = async () => {
   const query = `
     SELECT
@@ -18,6 +19,7 @@ const getAllInvoiceDetails = async () => {
   return result.rows;
 };
 
+// create detail (them dong dich vu vao hoa don)
 const createInvoiceDetail = async (detailData) => {
   const {
     invoice_id,
@@ -61,6 +63,7 @@ const createInvoiceDetail = async (detailData) => {
   return result.rows[0];
 };
 
+// check refs (kiem tra hoa don va dich vu)
 const checkInvoiceDetailReferences = async (invoiceId, serviceId) => {
   const invoiceQuery = "SELECT id FROM invoices WHERE id = $1";
   const serviceQuery = "SELECT id FROM services WHERE id = $1";

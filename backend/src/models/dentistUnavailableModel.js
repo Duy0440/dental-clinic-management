@@ -1,5 +1,6 @@
 const pool = require("../config/db");
 
+// unavailable list (lay lich ban theo nha si)
 const getUnavailableTimesByDentistId = async (dentistId) => {
   const query = `
     SELECT
@@ -21,6 +22,7 @@ const getUnavailableTimesByDentistId = async (dentistId) => {
   return result.rows;
 };
 
+// recent unavailable (lay lich ban moi nhat)
 const getRecentUnavailableTimes = async (limit = 5) => {
   const query = `
     SELECT
@@ -44,6 +46,7 @@ const getRecentUnavailableTimes = async (limit = 5) => {
   return result.rows;
 };
 
+// create unavailable (them lich ban/nghi)
 const createUnavailableTime = async (data) => {
   const {
     dentist_id,
@@ -89,6 +92,7 @@ const createUnavailableTime = async (data) => {
   return result.rows[0];
 };
 
+// unavailable conflict (kiem tra gio co nam trong lich ban)
 const checkDentistUnavailableConflict = async (
   dentistId,
   appointmentDate,

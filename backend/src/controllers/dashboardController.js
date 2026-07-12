@@ -3,6 +3,7 @@
   getDashboardSummary,
 } = require("../models/dashboardModel");
 
+// track visit (lưu lượt truy cập)
 const savePageVisit = async (req, res) => {
   try {
     await recordPageVisit({
@@ -22,6 +23,7 @@ const savePageVisit = async (req, res) => {
   }
 };
 
+// dashboard summary (thống kê tổng quan)
 const getSummary = async (req, res) => {
   try {
     const dashboard = await getDashboardSummary();

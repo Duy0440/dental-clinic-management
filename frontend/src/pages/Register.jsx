@@ -1,6 +1,7 @@
 ﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
+import PasswordField from "../components/PasswordField";
 
 function Register() {
   const navigate = useNavigate();
@@ -105,12 +106,11 @@ function Register() {
 
                 <div className="mb-3">
                   <label className="form-label">Mật khẩu</label>
-                  <input
-                    type="password"
+                  <PasswordField
                     name="password"
-                    className="form-control"
                     value={formData.password}
                     onChange={handleChange}
+                    autoComplete="new-password"
                   />
                 </div>
 

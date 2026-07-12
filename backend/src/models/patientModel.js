@@ -1,5 +1,6 @@
 ﻿const pool = require("../config/db");
 
+// patient list (lay danh sach khach hang)
 const getAllPatients = async () => {
   const query = `
     SELECT
@@ -20,6 +21,7 @@ const getAllPatients = async () => {
   return result.rows;
 };
 
+// create patient (them ho so khach hang)
 const createPatient = async (patientData) => {
   const { user_id, full_name, phone, gender, birth_date, address } =
     patientData;
@@ -59,6 +61,7 @@ const createPatient = async (patientData) => {
   return result.rows[0];
 };
 
+// find by user (tim khach hang theo tai khoan)
 const findPatientByUserId = async (userId) => {
   const query = `
     SELECT
@@ -79,6 +82,7 @@ const findPatientByUserId = async (userId) => {
   return result.rows[0];
 };
 
+// find patient (tim khach hang theo id)
 const findPatientById = async (patientId) => {
   const query = `
     SELECT
@@ -99,6 +103,7 @@ const findPatientById = async (patientId) => {
   return result.rows[0];
 };
 
+// link account (gan tai khoan cho ho so khach)
 const updatePatientUserId = async (patientId, userId) => {
   const query = `
     UPDATE patients

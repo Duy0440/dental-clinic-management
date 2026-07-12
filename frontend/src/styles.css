@@ -187,6 +187,39 @@ select {
   font-family: "Be Vietnam Pro", sans-serif;
 }
 
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.password-field-input {
+  padding-right: 86px !important;
+}
+
+.password-toggle-button {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #efd6bd;
+  border-radius: 999px;
+  background: #fff7ef;
+  color: #9a4b08;
+  font-size: 0.82rem;
+  font-weight: 800;
+  transform: translateY(-50%);
+}
+
+.password-toggle-button svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+}
+
 a {
   text-decoration: none;
 }

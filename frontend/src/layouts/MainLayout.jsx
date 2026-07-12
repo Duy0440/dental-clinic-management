@@ -10,14 +10,21 @@ function MainLayout() {
   const location = useLocation();
 
   useEffect(() => {
+    // track visit (moi phien mo website chi tinh 1 luot)
+    if (sessionStorage.getItem("clinic_visit_tracked")) {
+      return;
+    }
+
+    sessionStorage.setItem("clinic_visit_tracked", "true");
+
     axiosClient
       .post("/dashboard/visit", {
         path: location.pathname,
       })
       .catch(() => {
-        // Không chặn người dùng nếu việc ghi nhận lượt truy cập bị lỗi.
+        sessionStorage.removeItem("clinic_visit_tracked");
       });
-  }, [location.pathname]);
+  }, []);
 
   useEffect(() => {
     if (location.hash) {

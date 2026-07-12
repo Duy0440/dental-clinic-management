@@ -4,10 +4,12 @@ const fs = require("fs");
 
 const uploadDir = path.join(__dirname, "../../uploads/medical-records");
 
+// ensure folder (tao thu muc upload neu chua co)
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+// upload storage (cau hinh noi luu file)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -19,6 +21,7 @@ const storage = multer.diskStorage({
   },
 });
 
+// file filter (chi nhan anh va PDF)
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
 
@@ -29,6 +32,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// upload middleware (gioi han dung luong file)
 const uploadMedicalFile = multer({
   storage,
   fileFilter,

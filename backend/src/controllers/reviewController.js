@@ -7,6 +7,7 @@
 } = require("../models/reviewModel");
 const { findPatientByUserId } = require("../models/patientModel");
 
+// review list (danh sách đánh giá)
 const listReviews = async (req, res) => {
   try {
     const reviews = await getAllReviews();
@@ -23,6 +24,7 @@ const listReviews = async (req, res) => {
   }
 };
 
+// my reviews (đánh giá của khách)
 const listMyReviews = async (req, res) => {
   try {
     const patientProfile = await findPatientByUserId(req.user.id);
@@ -49,6 +51,7 @@ const listMyReviews = async (req, res) => {
   }
 };
 
+// validate review (chỉ đánh giá sau khi khám xong)
 const addReview = async (req, res) => {
   try {
     const { patient_id, service_id, appointment_id, rating, comment } = req.body;

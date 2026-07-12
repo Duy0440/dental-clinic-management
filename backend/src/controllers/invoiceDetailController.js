@@ -4,6 +4,7 @@ const {
   checkInvoiceDetailReferences,
 } = require("../models/invoiceDetailModel");
 
+// invoice detail list (chi tiết hóa đơn)
 const listInvoiceDetails = async (req, res) => {
   try {
     const details = await getAllInvoiceDetails();
@@ -20,6 +21,7 @@ const listInvoiceDetails = async (req, res) => {
   }
 };
 
+// create invoice detail (thêm dòng dịch vụ)
 const addInvoiceDetail = async (req, res) => {
   try {
     const {

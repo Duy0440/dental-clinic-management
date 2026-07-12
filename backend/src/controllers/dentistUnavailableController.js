@@ -5,6 +5,7 @@ const {
 } = require("../models/dentistUnavailableModel");
 const { findDentistByUserId } = require("../models/dentistModel");
 
+// unavailable list (xem lịch bận của nha sĩ)
 const listUnavailableTimes = async (req, res) => {
   try {
     const { dentistId } = req.params;
@@ -23,6 +24,7 @@ const listUnavailableTimes = async (req, res) => {
   }
 };
 
+// recent unavailable (lịch bận mới nhất)
 const listRecentUnavailableTimes = async (req, res) => {
   try {
     const unavailableTimes = await getRecentUnavailableTimes(6);
@@ -39,6 +41,7 @@ const listRecentUnavailableTimes = async (req, res) => {
   }
 };
 
+// create unavailable (tạo lịch bận/nghỉ)
 const addUnavailableTime = async (req, res) => {
   try {
     const { dentist_id, unavailable_date, start_time, end_time, reason } =

@@ -1,5 +1,6 @@
 const pool = require("../config/db");
 
+// chatbot logs (lay lich su hoi dap)
 const getAllChatbotLogs = async () => {
   const query = `
     SELECT
@@ -16,6 +17,7 @@ const getAllChatbotLogs = async () => {
   return result.rows;
 };
 
+// create log (luu cau hoi va cau tra loi)
 const createChatbotLog = async (logData) => {
   const { user_id, question, answer } = logData;
 
@@ -40,6 +42,7 @@ const createChatbotLog = async (logData) => {
   return result.rows[0];
 };
 
+// check user (kiem tra user truoc khi luu log)
 const checkChatbotUserExists = async (userId) => {
   if (!userId) {
     return true;

@@ -8,6 +8,7 @@ const {
 } = require("../models/patientModel");
 const { findUserByUsername, createUser } = require("../models/userModel");
 
+// patient list (danh sách khách hàng)
 const listPatients = async (req, res) => {
   try {
     const patients = await getAllPatients();
@@ -24,6 +25,7 @@ const listPatients = async (req, res) => {
   }
 };
 
+// create patient (tạo hồ sơ khách hàng)
 const addPatient = async (req, res) => {
   try {
     const { user_id, full_name, phone, gender, birth_date, address } = req.body;
@@ -65,6 +67,7 @@ const addPatient = async (req, res) => {
   }
 };
 
+// patient detail (chi tiết khách hàng)
 const getPatientDetail = async (req, res) => {
   try {
     const { patientId } = req.params;
@@ -89,6 +92,7 @@ const getPatientDetail = async (req, res) => {
   }
 };
 
+// create account (tạo tài khoản cho khách)
 const createAccountForPatient = async (req, res) => {
   try {
     const { patientId } = req.params;
