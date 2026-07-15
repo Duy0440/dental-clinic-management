@@ -103,6 +103,29 @@ const findPatientById = async (patientId) => {
   return result.rows[0];
 };
 
+// find by phone (tim ho so khach theo so dien thoai)
+const findPatientByPhone = async (phone) => {
+  const query = `
+    SELECT
+      id,
+      user_id,
+      full_name,
+      phone,
+      gender,
+      TO_CHAR(birth_date, 'YYYY-MM-DD') AS birth_date,
+      TO_CHAR(birth_date, 'DD/MM/YYYY') AS birth_date_display,
+      address,
+      created_at
+    FROM patients
+    WHERE phone = $1
+    ORDER BY id DESC
+    LIMIT 1
+  `;
+
+  const result = await pool.query(query, [phone]);
+  return result.rows[0];
+};
+
 // link account (gan tai khoan cho ho so khach)
 const updatePatientUserId = async (patientId, userId) => {
   const query = `
@@ -130,5 +153,6 @@ module.exports = {
   createPatient,
   findPatientByUserId,
   findPatientById,
+  findPatientByPhone,
   updatePatientUserId,
 };

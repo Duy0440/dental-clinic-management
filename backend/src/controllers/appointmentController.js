@@ -27,6 +27,7 @@ const {
 const {
   findPatientByUserId,
   createPatient,
+  findPatientByPhone,
 } = require("../models/patientModel");
 
 const {
@@ -250,7 +251,7 @@ const addAppointment = async (req, res) => {
       });
     }
 
-    let finalPatientId = patient_id;
+    let finalPatientId = patient_id ? Number(patient_id) : null;
     const normalizedDentistId = dentist_id ? Number(dentist_id) : null;
 
     // auth scope (khoa theo ho so ca nhan dang nhap)
@@ -265,24 +266,34 @@ const addAppointment = async (req, res) => {
       }
 
       finalPatientId = patientProfile.id;
-    } else if (!req.user) {
-      // guest booking (tao ho so cho khach vang lai)
-      if (!guest_full_name || !guest_phone) {
+    } else if (!finalPatientId) {
+      // guest booking (dat lich ngoai website bang ten va so dien thoai)
+      const guestName = guest_full_name?.trim();
+      const guestPhone = guest_phone?.trim();
+
+      if (!guestName || !guestPhone) {
         return res.status(400).json({
           message: "Guest full name and phone number are required",
         });
       }
 
-      const newPatient = await createPatient({
-        user_id: null,
-        full_name: guest_full_name,
-        phone: guest_phone,
-        gender: null,
-        birth_date: null,
-        address: null,
-      });
+      // reuse old profile (khach quay lai thi dung lai ho so cu)
+      const existingPatient = await findPatientByPhone(guestPhone);
 
-      finalPatientId = newPatient.id;
+      if (existingPatient) {
+        finalPatientId = existingPatient.id;
+      } else {
+        const newPatient = await createPatient({
+          user_id: null,
+          full_name: guestName,
+          phone: guestPhone,
+          gender: null,
+          birth_date: null,
+          address: null,
+        });
+
+        finalPatientId = newPatient.id;
+      }
     }
 
     const normalizedStatus = status || "Pending";
