@@ -283,7 +283,11 @@ function AboutClinicPublic() {
           <div className="about-public-equipment-list">
             {equipment.map((item) => (
               <article key={item.title}>
-                <img src={item.image} alt={item.title} />
+                <img
+                  className={item.title.includes("RunTour") ? "is-chair-image" : ""}
+                  src={item.image}
+                  alt={item.title}
+                />
                 <div>
                   <span>{item.label}</span>
                   <h3>{item.title}</h3>

@@ -644,7 +644,11 @@ function HomePublic() {
           </div>
 
           <div className="clinic-facilities-v2-media" aria-live="polite">
-            <img src={activeFacility.image} alt={activeFacility.title} />
+            <img
+              className={activeFacility.title.includes("RunTour") ? "is-chair-image" : ""}
+              src={activeFacility.image}
+              alt={activeFacility.title}
+            />
             <div className="clinic-facility-v2-caption">
               <div>
                 <span>{activeFacility.label}</span>

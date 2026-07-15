@@ -3072,6 +3072,11 @@ body,
   object-position: center;
 }
 
+.clinic-facilities-v2-media img.is-chair-image {
+  transform: scale(1.14);
+  transform-origin: 44% 50%;
+}
+
 .clinic-facility-v2-caption {
   left: 24px;
   right: auto;
@@ -3109,6 +3114,11 @@ body,
     height: 390px;
     min-height: 390px;
     padding: 0;
+  }
+
+  .clinic-facilities-v2-media img.is-chair-image {
+    transform: scale(1.12);
+    transform-origin: 43% 50%;
   }
 
   .clinic-facility-v2-caption {

@@ -1077,6 +1077,11 @@
   background: #f8ead8;
 }
 
+.about-public-equipment-list img.is-chair-image {
+  transform: scale(1.2);
+  transform-origin: 42% 50%;
+}
+
 .about-public-equipment-list div {
   flex: 1;
   padding: 24px 26px 28px;
@@ -1195,6 +1200,11 @@
     min-height: 230px !important;
     object-fit: cover !important;
     object-position: center !important;
+  }
+
+  .about-public-equipment-list img.is-chair-image {
+    transform: scale(1.18) !important;
+    transform-origin: 42% 50% !important;
   }
 
   .about-public-equipment-list div {
