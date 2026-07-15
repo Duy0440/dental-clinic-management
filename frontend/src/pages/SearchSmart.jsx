@@ -4,6 +4,7 @@ import axiosClient from "../api/axiosClient";
 import { priceGroups } from "../data/priceData";
 import { promotions } from "../data/promotions";
 
+// stop words (bo qua tu khong quan trong khi search)
 const stopWords = new Set([
   "anh",
   "bao",
@@ -256,6 +257,7 @@ const publicKnowledgeResults = [
   },
 ];
 
+// synonym map (mo rong tu khoa co dau/khong dau/viet tat)
 const synonymMap = {
   "bang gia": ["gia", "chi phi", "bao nhieu tien"],
   "chat bot": ["chatbot", "ai", "tu van"],
@@ -288,6 +290,7 @@ const popularKeywords = [
   "chatbot AI",
 ];
 
+// normalize text (dua ve khong dau de tim kiem de hon)
 const normalizeText = (value) =>
   String(value || "")
     .toLowerCase()
@@ -322,6 +325,7 @@ const getExpandedTokens = (keyword) => {
 
 const buildSearchText = (...values) => values.flat().filter(Boolean).join(" ");
 
+// score result (cham diem ket qua phu hop)
 const scoreResult = (keyword, item) => {
   const normalizedKeyword = normalizeText(keyword);
   const title = normalizeText(item.title);
@@ -376,6 +380,7 @@ const createPriceResults = () =>
     return [groupResult, ...rowResults];
   });
 
+// smart search page (tim dich vu, bac si, bang gia, kien thuc)
 function SearchSmart() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -391,6 +396,7 @@ function SearchSmart() {
   }, [keyword]);
 
   useEffect(() => {
+    // fetch search data (lay dich vu va nha si)
     const fetchSearchData = async () => {
       try {
         const [serviceResponse, dentistResponse] = await Promise.allSettled([
@@ -471,6 +477,7 @@ function SearchSmart() {
     ];
   }, [dentists, services]);
 
+  // matched results (sap xep ket qua theo diem)
   const matchedResults = useMemo(() => {
     return allResults
       .map((item) => ({
@@ -492,6 +499,7 @@ function SearchSmart() {
   }, [matchedResults]);
 
   const handleSubmit = (event) => {
+    // search submit (cap nhat keyword tren url)
     event.preventDefault();
     const finalKeyword = draftKeyword.trim();
 

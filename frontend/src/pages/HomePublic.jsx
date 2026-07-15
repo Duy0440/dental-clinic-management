@@ -7,6 +7,7 @@ import Booking from "./Booking";
 import "../home-landing.css";
 import "../mobile-overrides.css";
 
+// fallback services (dich vu hien khi api chua tai duoc)
 const fallbackServices = [
   {
     id: "consulting",
@@ -38,6 +39,7 @@ const getDoctorInitials = (name = "") =>
     .map((word) => word.charAt(0).toUpperCase())
     .join("");
 
+// doctor profile content (noi dung popup bac si)
 const doctorShowcaseAssets = [
   {
     image: "/images/home-doctor-01.png",
@@ -203,6 +205,7 @@ const buildDoctorProfile = (dentist, index) => {
   };
 };
 
+// facility slides (thiet bi va co so vat chat)
 const facilitySlides = [
   {
     label: "Phòng điều trị",
@@ -309,6 +312,7 @@ const formatPrice = (value) => {
   return `${numericValue.toLocaleString("vi-VN")} VNĐ`;
 };
 
+// home page (trang chu public)
 function HomePublic() {
   const location = useLocation();
   const navigate = useNavigate();

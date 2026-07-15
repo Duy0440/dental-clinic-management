@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import axiosClient from "../api/axiosClient";
 
+// quick suggestions (cau hoi goi y ban dau)
 const defaultSuggestions = [
   "Tôi bị đau răng quá",
   "Răng tôi bị gãy rồi",
@@ -33,6 +34,7 @@ const getCurrentUser = () => {
   }
 };
 
+// chatbot page (tu van nha khoa va goi api chatbot)
 function ChatbotConsultantV3() {
   const user = useMemo(getCurrentUser, []);
   const messagesRef = useRef(null);
@@ -50,6 +52,7 @@ function ChatbotConsultantV3() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // auto scroll (cuon xuong tin moi)
     const messagesElement = messagesRef.current;
 
     if (!messagesElement) return;
@@ -61,6 +64,7 @@ function ChatbotConsultantV3() {
   }, [conversation, loading]);
 
   const sendQuestion = async (questionText) => {
+    // send question (gui cau hoi, nhan cau tra loi)
     const finalQuestion = String(questionText || message).trim();
 
     if (!finalQuestion || loading) return;
@@ -120,6 +124,7 @@ function ChatbotConsultantV3() {
   };
 
   const resetConversation = () => {
+    // reset chat (lam moi hoi dap)
     setConversation([
       {
         role: "bot",

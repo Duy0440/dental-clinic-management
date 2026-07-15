@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { serviceCategories } from "../data/serviceInfo";
 import BrandLogo from "./BrandLogo";
 
+// navbar ui (menu, search, login va mobile menu)
 function NavbarClean() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ function NavbarClean() {
     setIsMenuOpen(false);
   }, [location.pathname, location.search, location.hash]);
 
+  // close mobile menu (dong menu khi chuyen trang)
   const closeMenu = () => {
     setIsMenuOpen(false);
     const menuElement = document.getElementById("mainNavbar");
@@ -29,6 +31,7 @@ function NavbarClean() {
     togglerElement?.setAttribute("aria-expanded", "false");
   };
 
+  // logout (xoa phien dang nhap)
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -37,6 +40,7 @@ function NavbarClean() {
     navigate("/");
   };
 
+  // search submit (chuyen sang trang ket qua tim kiem)
   const handleSearchSubmit = (event) => {
     event.preventDefault();
 

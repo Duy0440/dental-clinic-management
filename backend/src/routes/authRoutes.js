@@ -7,6 +7,7 @@ const {
 
 const router = express.Router();
 
+// auth routes (dang ky, dang nhap, quen mat khau)
 router.post("/register", register);
 router.post("/login", login);
 router.post("/forgot-password", forgotPassword);

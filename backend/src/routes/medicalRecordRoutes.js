@@ -14,6 +14,7 @@ const {
 const uploadMedicalFile = require("../middlewares/uploadMiddleware");
 const router = express.Router();
 
+// medical record routes (ket qua dieu tri va file dinh kem)
 router.get(
   "/",
   verifyToken,
@@ -37,4 +38,3 @@ router.post(
 );
 
 module.exports = router;
-

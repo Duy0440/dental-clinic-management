@@ -1,8 +1,3 @@
--- Dental Clinic Management - PostgreSQL clean reset
--- Copy the whole file into pgAdmin4 Query Tool and run it once.
--- Result: the full system schema is recreated from scratch.
--- Only one admin account is created; operational data is entered later through the web app.
---
 -- Admin login:
 --   username: admin01
 --   password: 123456

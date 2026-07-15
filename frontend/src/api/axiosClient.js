@@ -2,10 +2,12 @@
 
 import { API_BASE_URL } from "./urlHelpers";
 
+// axios client (cau hinh url backend)
 const axiosClient = axios.create({
   baseURL: API_BASE_URL,
 });
 
+// attach token (gan jwt vao moi request neu da dang nhap)
 axiosClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
 
@@ -16,6 +18,7 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
+// handle auth error (het phien thi ve trang dang nhap)
 axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {

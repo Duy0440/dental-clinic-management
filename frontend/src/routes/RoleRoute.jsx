@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 
+// role route (chan trang theo vai tro)
 function RoleRoute({ allowedRoles, children }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 

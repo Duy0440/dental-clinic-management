@@ -2,6 +2,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { findPromotionBySlug, promotions } from "../data/promotions";
 import "../home-landing.css";
 
+// promotion detail page (chi tiet uu dai)
 function PromotionDetail() {
   const { slug } = useParams();
   const promotion = findPromotionBySlug(slug);
@@ -10,6 +11,7 @@ function PromotionDetail() {
     return <Navigate to="/" replace />;
   }
 
+  // related promotions (goi y uu dai khac)
   const relatedPromotions = promotions.filter((item) => item.slug !== slug);
 
   return (

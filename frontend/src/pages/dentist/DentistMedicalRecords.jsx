@@ -6,6 +6,7 @@ const isImageFile = (fileType) => {
   return fileType?.startsWith("image/");
 };
 
+// dentist records page (xem ho so dieu tri da cap nhat)
 function DentistMedicalRecords() {
   const [records, setRecords] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -13,6 +14,7 @@ function DentistMedicalRecords() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
+    // fetch records (lay danh sach ho so dieu tri)
     const fetchRecords = async () => {
       try {
         const response = await axiosClient.get("/medical-records");

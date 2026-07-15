@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+// scroll button (hien nut cuon len dau trang)
 function ScrollToTopButton() {
   const [isVisible, setIsVisible] = useState(false);
 

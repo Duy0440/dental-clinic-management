@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 import PasswordField from "../components/PasswordField";
 
+// forgot password form (du lieu dat lai mat khau)
 const initialForm = {
   username: "",
   phone: "",
@@ -10,6 +11,7 @@ const initialForm = {
   confirm_password: "",
 };
 
+// forgot password page (quen mat khau don gian)
 function ForgotPassword() {
   const [formData, setFormData] = useState(initialForm);
   const [saving, setSaving] = useState(false);
@@ -17,6 +19,7 @@ function ForgotPassword() {
   const [isError, setIsError] = useState(false);
 
   const handleChange = (event) => {
+    // update form (nhap thong tin tai khoan)
     setFormData({
       ...formData,
       [event.target.name]: event.target.value,
@@ -24,6 +27,7 @@ function ForgotPassword() {
   };
 
   const handleSubmit = async (event) => {
+    // reset password (doi mat khau bang username va sdt)
     event.preventDefault();
     setSaving(true);
     setMessage("");

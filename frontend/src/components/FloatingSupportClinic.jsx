@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
+// support icons (icon cho tung nut ho tro)
 function CalendarIcon() {
   return (
     <svg viewBox="0 0 48 48" aria-hidden="true">
@@ -64,6 +65,7 @@ function ConciergeIcon() {
   );
 }
 
+// support actions (dat lich, map, chatbot, zalo, goi dien)
 const supportItems = [
   {
     kind: "route",

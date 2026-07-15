@@ -1,4 +1,4 @@
-/* Mobile overrides for public, customer, admin, and dentist screens. */
+/* mobile UI (chinh responsive cho public, khach, admin, nha si) */
 @media (max-width: 640px) {
   html,
   body,

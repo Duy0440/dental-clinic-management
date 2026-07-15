@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 
+// today min date (khong cho dat lich ngay qua khu)
 const getTodayText = () => {
   const today = new Date();
   const year = today.getFullYear();
@@ -10,6 +11,7 @@ const getTodayText = () => {
   return `${year}-${month}-${day}`;
 };
 
+// booking page (khach dat lich kham online)
 function Booking() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
@@ -33,6 +35,7 @@ function Booking() {
   const todayText = getTodayText();
 
   useEffect(() => {
+    // fetch booking data (lay nha si va dich vu)
     const fetchBookingData = async () => {
       try {
         const [dentistResponse, serviceResponse] = await Promise.all([
@@ -53,6 +56,7 @@ function Booking() {
   }, []);
 
   useEffect(() => {
+    // fetch available times (kiem tra gio con trong)
     const fetchAvailableTimes = async () => {
       if (!formData.appointment_date) {
         setAvailableTimes([]);
@@ -112,6 +116,7 @@ function Booking() {
   }, [formData.appointment_date, formData.dentist_id]);
 
   const handleChange = (event) => {
+    // update form (doi ngay/nha si thi reset gio kham)
     const { name, value } = event.target;
 
     setFormData((current) => {
@@ -131,6 +136,7 @@ function Booking() {
   };
 
   const handleSubmit = async (event) => {
+    // submit booking (gui lich hen len server)
     event.preventDefault();
     setMessage("");
     setIsSuccess(false);

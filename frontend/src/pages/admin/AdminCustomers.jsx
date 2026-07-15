@@ -17,6 +17,7 @@ const initialAccountForm = {
   email: "",
 };
 
+// admin customers page (quan ly khach hang va tao tai khoan)
 function AdminCustomers() {
   const [customers, setCustomers] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -30,6 +31,7 @@ function AdminCustomers() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  // fetch customers (lay danh sach khach hang)
   const fetchCustomers = async () => {
     try {
       const response = await axiosClient.get("/patients");
@@ -47,6 +49,7 @@ function AdminCustomers() {
     fetchCustomers();
   }, []);
 
+  // smart search (tim theo ten, sdt, dia chi)
   const filteredCustomers = customers.filter((customer) => {
     const keyword = searchText.trim().toLowerCase();
 
@@ -91,6 +94,7 @@ function AdminCustomers() {
     setShowAccountForm(true);
   };
 
+  // create customer (them ho so khach hang vang lai)
   const handleCreateCustomer = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -115,6 +119,7 @@ function AdminCustomers() {
     }
   };
 
+  // create account (tao tai khoan cho khach hang)
   const handleCreateAccount = async (event) => {
     event.preventDefault();
 

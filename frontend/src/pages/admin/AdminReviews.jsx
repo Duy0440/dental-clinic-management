@@ -8,12 +8,14 @@ const getRatingText = (rating) => {
   return "Cần cải thiện";
 };
 
+// admin reviews page (xem danh gia cua khach hang)
 function AdminReviews() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
+    // fetch reviews (lay danh sach danh gia)
     const fetchReviews = async () => {
       try {
         const response = await axiosClient.get("/reviews");

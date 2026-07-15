@@ -27,6 +27,7 @@ const STATUS_LABELS = {
   Cancelled: "Đã hủy",
 };
 
+// customer detail page (ho so khach hang, lich hen, ket qua dieu tri)
 function AdminCustomerDetail() {
   const { customerId } = useParams();
 
@@ -55,6 +56,7 @@ function AdminCustomerDetail() {
 
 
   useEffect(() => {
+    // fetch customer data (lay thong tin khach hang va du lieu lien quan)
     const fetchCustomerData = async () => {
       try {
         const [
@@ -88,6 +90,7 @@ function AdminCustomerDetail() {
     fetchCustomerData();
   }, [customerId]);
 
+  // refresh records (tai lai ho so dieu tri)
   const refreshMedicalRecords = async () => {
     const response = await axiosClient.get(
       `/medical-records/patient/${customerId}`,
@@ -97,6 +100,7 @@ function AdminCustomerDetail() {
     setShowRecordForm(false);
   };
 
+  // refresh appointments (tai lai lich hen cua khach)
   const refreshAppointments = async () => {
     const response = await axiosClient.get(`/appointments/history/${customerId}`);
     setAppointments(response.data.data || []);
@@ -109,6 +113,7 @@ function AdminCustomerDetail() {
     setShowAppointmentForm(false);
   };
 
+  // handle appointment form (cap nhat form tao lich moi)
   const handleAppointmentChange = (event) => {
     const { name, value } = event.target;
 
@@ -129,6 +134,7 @@ function AdminCustomerDetail() {
   };
 
   useEffect(() => {
+    // fetch available times (kiem tra gio con trong khi tao lich)
     const fetchAvailableAppointmentTimes = async () => {
       if (!showAppointmentForm) {
         return;
@@ -186,6 +192,7 @@ function AdminCustomerDetail() {
     fetchAvailableAppointmentTimes();
   }, [showAppointmentForm, appointmentForm.appointment_date, appointmentForm.dentist_id]);
 
+  // create appointment (admin tao lich moi cho khach)
   const handleCreateAppointment = async (event) => {
     event.preventDefault();
     setSavingAppointment(true);

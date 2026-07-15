@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 
+// dentist unavailable page (nha si bao lich ban/nghi)
 function DentistUnavailableTimes() {
   const [unavailableTimes, setUnavailableTimes] = useState([]);
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ function DentistUnavailableTimes() {
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
+  // fetch unavailable times (lay lich ban cua nha si)
   const fetchUnavailableTimes = async () => {
     try {
       setLoading(true);
@@ -41,6 +43,7 @@ function DentistUnavailableTimes() {
     fetchUnavailableTimes();
   }, []);
 
+  // handle form (cap nhat ngay gio ban)
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -50,6 +53,7 @@ function DentistUnavailableTimes() {
     });
   };
 
+  // submit unavailable time (gui thong bao lich ban cho admin)
   const handleSubmit = async (event) => {
     event.preventDefault();
     setMessage("");

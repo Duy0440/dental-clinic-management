@@ -11,6 +11,7 @@ const {
 
 const router = express.Router();
 
+// invoice routes (lap hoa don va quan ly hoa don)
 router.get("/", verifyToken, authorizeRoles("admin"), listInvoices);
 router.post("/", verifyToken, authorizeRoles("admin"), addInvoice);
 router.delete("/:invoiceId", verifyToken, authorizeRoles("admin"), removeInvoice);

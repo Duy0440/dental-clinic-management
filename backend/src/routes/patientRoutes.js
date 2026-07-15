@@ -12,6 +12,7 @@ const {
 
 const router = express.Router();
 
+// patient routes (ho so khach hang va tao tai khoan)
 router.get("/", verifyToken, authorizeRoles("admin", "dentist"), listPatients);
 
 router.get(
@@ -22,5 +23,11 @@ router.get(
 );
 
 router.post("/", verifyToken, authorizeRoles("admin"), addPatient);
-router.post("/:patientId/create-account", verifyToken, authorizeRoles("admin"), createAccountForPatient,);
+router.post(
+  "/:patientId/create-account",
+  verifyToken,
+  authorizeRoles("admin"),
+  createAccountForPatient,
+);
+
 module.exports = router;

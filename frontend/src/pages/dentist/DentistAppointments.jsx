@@ -23,6 +23,7 @@ const getTodayText = () => {
   return `${year}-${month}-${day}`;
 };
 
+// dentist appointments page (nha si xem lich va cap nhat ho so dieu tri)
 function DentistAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -46,6 +47,7 @@ function DentistAppointments() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  // fetch appointments (lay lich kham cua nha si dang nhap)
   const fetchAppointments = async () => {
     try {
       setLoading(true);
@@ -78,6 +80,7 @@ function DentistAppointments() {
     (appointment) => appointment.status === "Confirmed" && !appointment.has_medical_record,
   );
   const normalizedSearch = searchText.trim().toLowerCase();
+  // filter appointments (tim benh nhan va loc trang thai)
   const filteredAppointments = appointments.filter((appointment) => {
     const matchesSearch =
       !normalizedSearch ||
@@ -114,6 +117,7 @@ function DentistAppointments() {
     return time.slice(0, 5);
   };
 
+  // open record form (mo form cap nhat ket qua kham)
   const openMedicalRecordForm = (appointment) => {
     setSelectedAppointment(appointment);
     setFormData({
@@ -135,6 +139,7 @@ function DentistAppointments() {
     setReExamTimeMessage("Chọn ngày tái khám để kiểm tra giờ còn trống.");
   };
 
+  // handle record form (cap nhat chan doan, dieu tri, tai kham)
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -155,6 +160,7 @@ function DentistAppointments() {
   };
 
   useEffect(() => {
+    // fetch re-exam times (kiem tra gio tai kham con trong)
     const fetchReExaminationTimes = async () => {
       if (!selectedAppointment) {
         return;
@@ -214,6 +220,7 @@ function DentistAppointments() {
     fetchReExaminationTimes();
   }, [selectedAppointment, formData.re_examination_date]);
 
+  // create medical record (luu ket qua dieu tri)
   const handleCreateMedicalRecord = async (event) => {
     event.preventDefault();
     setMessage("");

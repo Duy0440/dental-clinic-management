@@ -7,6 +7,7 @@ const initialFormData = {
   is_active: true,
 };
 
+// admin services page (quan ly dich vu cho dat lich va bang gia)
 function AdminServices() {
   const [services, setServices] = useState([]);
   const [formData, setFormData] = useState(initialFormData);
@@ -18,6 +19,7 @@ function AdminServices() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  // fetch services (lay danh sach dich vu)
   const fetchServices = async () => {
     try {
       const response = await axiosClient.get("/services/admin");
@@ -35,6 +37,7 @@ function AdminServices() {
     fetchServices();
   }, []);
 
+  // search services (tim dich vu theo ten/nhom)
   const filteredServices = services.filter((service) => {
     const keyword = searchKeyword.toLowerCase();
 
@@ -59,6 +62,7 @@ function AdminServices() {
     });
   };
 
+  // edit service (dua du lieu len form)
   const handleEdit = (service) => {
     setEditingService(service);
     setFormData({
@@ -69,6 +73,7 @@ function AdminServices() {
     setShowForm(true);
   };
 
+  // submit service (them hoac cap nhat dich vu)
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -95,6 +100,7 @@ function AdminServices() {
     }
   };
 
+  // soft delete service (tam ngung dich vu)
   const handleDeactivate = async (service) => {
     const isConfirmed = window.confirm(
       `Tạm ẩn dịch vụ "${service.service_name}" khỏi trang đặt lịch?`,

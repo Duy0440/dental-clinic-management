@@ -1,3 +1,4 @@
+// price data (du lieu bang gia cong khai)
 export const priceGroups = [
   {
     title: "Nha khoa tổng quát",

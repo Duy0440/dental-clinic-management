@@ -34,6 +34,7 @@ import DentistMedicalRecords from "./pages/dentist/DentistMedicalRecords";
 import AdminServices from "./pages/admin/AdminServices";
 import AdminInvoices from "./pages/admin/AdminInvoices";
 
+// protected customer route (khach phai dang nhap moi xem du lieu ca nhan)
 function ProtectedCustomerRoute({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
@@ -48,6 +49,7 @@ function ProtectedCustomerRoute({ children }) {
   return children;
 }
 
+// app routes (khai bao route public, admin, nha si)
 function App() {
   return (
     <BrowserRouter>

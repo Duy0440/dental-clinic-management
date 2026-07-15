@@ -1,3 +1,4 @@
+// brand logo (logo dung chung cho website va dashboard)
 function BrandLogo({ className = "" }) {
   return (
     <span className={`brand-logo-mark ${className}`.trim()} aria-hidden="true">

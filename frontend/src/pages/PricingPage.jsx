@@ -2,6 +2,7 @@ import { priceGroups } from "../data/priceData";
 import BrandLogo from "../components/BrandLogo";
 import "../home-landing.css";
 
+// pricing page (bang gia cong khai)
 function PricingPage() {
   return (
     <main className="clinic-home-v2">

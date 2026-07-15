@@ -4,6 +4,7 @@ import BrandLogo from "./BrandLogo";
 
 const socials = ["f", "t", "▶", "◎", "Zalo"];
 
+// footer ui (thong tin phong kham va link nhanh)
 function FooterClinicClean() {
   return (
     <footer className="clinic-footer clinic-footer-clean">

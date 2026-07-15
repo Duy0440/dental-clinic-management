@@ -10,6 +10,7 @@ const {
 
 const router = express.Router();
 
+// invoice detail routes (chi tiet dich vu trong hoa don)
 router.get("/", verifyToken, authorizeRoles("admin"), listInvoiceDetails);
 router.post("/", verifyToken, authorizeRoles("admin"), addInvoiceDetail);
 

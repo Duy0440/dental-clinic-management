@@ -4,6 +4,7 @@ import axiosClient from "../api/axiosClient";
 import BrandLogo from "../components/BrandLogo";
 import "../admin.css";
 
+// admin menu alerts (sidebar co badge thong bao)
 const menuGroups = [
   {
     title: "Quản lý chính",
@@ -30,6 +31,7 @@ const menuGroups = [
   },
 ];
 
+// page info (tieu de theo tung trang admin)
 const pageInfo = {
   "/admin": {
     eyebrow: "Tổng quan",
@@ -73,6 +75,7 @@ const getStoredNumber = (key) => Number(localStorage.getItem(key) || 0);
 const getMaxId = (items = []) =>
   items.reduce((maxId, item) => Math.max(maxId, Number(item.id || 0)), 0);
 
+// count new items (dem thong bao moi theo id da xem)
 const countItemsAfterSeenId = (items = [], storageKey) => {
   const seenId = getStoredNumber(storageKey);
   return items.filter((item) => Number(item.id || 0) > seenId).length;
@@ -97,6 +100,7 @@ function AdminLayoutWithAlerts() {
   useEffect(() => {
     let isMounted = true;
 
+    // fetch alerts (lay lich hen moi va lich ban moi)
     const fetchSidebarAlerts = async () => {
       const [appointmentResponse, unavailableResponse] = await Promise.allSettled([
         axiosClient.get("/appointments"),
@@ -142,12 +146,14 @@ function AdminLayoutWithAlerts() {
     };
   }, [location.pathname]);
 
+  // logout admin (xoa phien dang nhap)
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login");
   };
 
+  // render badge (hien cham do/so thong bao)
   const renderBadge = (item) => {
     if (!item.badgeKey || sidebarAlerts[item.badgeKey] <= 0) return null;
 

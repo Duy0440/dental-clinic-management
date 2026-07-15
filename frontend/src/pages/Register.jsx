@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 import PasswordField from "../components/PasswordField";
 
+// register page (khach tao tai khoan)
 function Register() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -19,10 +20,12 @@ function Register() {
   const [isSuccess, setIsSuccess] = useState(false);
 
   const handleChange = (event) => {
+    // update form (nhap thong tin dang ky)
     setFormData({ ...formData, [event.target.name]: event.target.value });
   };
 
   const handleSubmit = async (event) => {
+    // submit register (tao user va patient)
     event.preventDefault();
     setMessage("");
     setIsSuccess(false);

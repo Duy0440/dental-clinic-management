@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { serviceCategories } from "../data/serviceInfo";
 
+// normalize text (tao search khong dau)
 const normalizeText = (value) =>
   String(value || "")
     .toLowerCase()
@@ -8,11 +9,13 @@ const normalizeText = (value) =>
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/đ/g, "d");
 
+// services info page (danh sach nhom dich vu)
 function ServicesInfo() {
   const [searchParams] = useSearchParams();
   const keyword = searchParams.get("keyword") || "";
   const normalizedKeyword = normalizeText(keyword);
 
+  // filter services (loc dich vu theo tu khoa)
   const filteredServices = normalizedKeyword
     ? serviceCategories.filter((service) =>
         normalizeText(`${service.title} ${service.eyebrow} ${service.summary} ${service.highlights.join(" ")}`).includes(

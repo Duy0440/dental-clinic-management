@@ -3,12 +3,14 @@ import BrandLogo from "../components/BrandLogo";
 import "../dentist.css";
 import "../mobile-overrides.css";
 
+// dentist layout (khung giao dien khu vuc nha si)
 function DentistLayout() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   const doctorName = user?.dentist_name || user?.full_name || user?.username || "nha sĩ";
 
+  // logout dentist (xoa phien dang nhap)
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");

@@ -11,6 +11,7 @@ const {
 
 const router = express.Router();
 
+// review routes (danh gia sau khi kham xong)
 router.get("/", verifyToken, authorizeRoles("admin"), listReviews);
 router.get("/mine", verifyToken, authorizeRoles("customer"), listMyReviews);
 router.post("/", verifyToken, authorizeRoles("customer"), addReview);

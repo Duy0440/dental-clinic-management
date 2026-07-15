@@ -13,6 +13,7 @@ const {
 
 const router = express.Router();
 
+// service routes (dich vu hien thi va admin quan ly)
 router.get("/", listServices);
 
 router.get(

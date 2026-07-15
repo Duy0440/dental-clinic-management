@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 
+// admin dentist detail (xem thong tin nha si, lich ban va lich da phan cong)
 function AdminDentistDetail() {
   const { dentistId } = useParams();
 
@@ -12,6 +13,7 @@ function AdminDentistDetail() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
+    // fetch dentist data (lay nha si, lich ban va lich hen lien quan)
     const fetchDentistData = async () => {
       try {
         const [dentistsResponse, unavailableResponse, appointmentsResponse] =
@@ -49,6 +51,7 @@ function AdminDentistDetail() {
     return time ? time.slice(0, 5) : "";
   };
 
+  // working status (trang thai nha si trong trang chi tiet)
   const getWorkingStatus = () => {
     if (dentist?.is_active === false || dentist?.user_is_active === false) {
       return {

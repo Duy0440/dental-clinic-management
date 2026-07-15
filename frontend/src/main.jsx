@@ -6,6 +6,7 @@ import App from "./App";
 import "./styles.css";
 import "./mobile-overrides.css";
 
+// app entry (gan React vao div root)
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <App />

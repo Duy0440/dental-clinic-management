@@ -12,6 +12,7 @@ const initialFormData = {
   password: "",
 };
 
+// admin dentists page (quan ly nha si, tai khoan va lich ban)
 function AdminDentists() {
   const [dentists, setDentists] = useState([]);
   const [unavailableNotifications, setUnavailableNotifications] = useState([]);
@@ -23,6 +24,7 @@ function AdminDentists() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  // fetch dentists (lay danh sach nha si)
   const fetchDentists = async () => {
     try {
       const response = await axiosClient.get("/dentists");
@@ -36,6 +38,7 @@ function AdminDentists() {
     }
   };
 
+  // fetch unavailable notifications (lich ban moi tu nha si)
   const fetchUnavailableNotifications = async () => {
     try {
       const response = await axiosClient.get("/dentist-unavailable-times/recent");
@@ -50,6 +53,7 @@ function AdminDentists() {
     fetchUnavailableNotifications();
   }, []);
 
+  // search dentist (tim theo ten, chuyen mon, sdt)
   const filteredDentists = dentists.filter((dentist) => {
     const keyword = searchKeyword.toLowerCase();
 
@@ -73,6 +77,7 @@ function AdminDentists() {
     setShowForm(false);
   };
 
+  // create dentist (them nha si va tai khoan neu co)
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -94,6 +99,7 @@ function AdminDentists() {
     }
   };
 
+  // change active status (tam ngung/kich hoat nha si)
   const handleChangeActiveStatus = async (dentist) => {
     const nextStatus = !dentist.is_active;
 

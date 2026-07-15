@@ -1,3 +1,4 @@
+// promotion data (uu dai hien thi tren trang chu va trang chi tiet)
 export const promotions = [
   {
     slug: "implant-he-rang-chac",
@@ -76,5 +77,6 @@ export const promotions = [
   },
 ];
 
+// find promotion (tim uu dai theo slug)
 export const findPromotionBySlug = (slug) =>
   promotions.find((promotion) => promotion.slug === slug);

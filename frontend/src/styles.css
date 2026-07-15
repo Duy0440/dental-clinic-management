@@ -4809,6 +4809,7 @@ img {
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 
 .service-info-actions {
@@ -4906,3 +4907,4 @@ img {
     border-radius: 24px !important;
   }
 }
+/* global UI (style dung chung toan frontend) */

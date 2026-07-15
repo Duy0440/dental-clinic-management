@@ -1,6 +1,4 @@
-﻿-- Dental Clinic Management - PostgreSQL schema
--- File nay chi tao cau truc bang, khong tao du lieu mau.
--- Neu muon reset toan bo database va tao tai khoan admin, chay file reset_clean.sql.
+﻿
 
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,

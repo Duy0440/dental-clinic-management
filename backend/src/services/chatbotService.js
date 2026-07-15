@@ -6,6 +6,7 @@ const SHORT_SAFETY_MESSAGE =
 
 const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 5000);
 
+// quick replies (goi y cau hoi mac dinh)
 const defaultSuggestions = [
   "Tôi bị đau răng thì nên làm gì?",
   "Implant DIO/SIC khác gì nhau?",
@@ -14,6 +15,7 @@ const defaultSuggestions = [
   "Giá điều trị phụ thuộc vào gì?",
 ];
 
+// suggestion groups (goi y theo chu de)
 const suggestionGroups = {
   implant: [
     "Implant có đau không?",
@@ -62,6 +64,12 @@ const suggestionGroups = {
     "Chữa tủy có đau không?",
     "Răng sau chữa tủy có cần bọc sứ không?",
     "Tôi muốn đặt lịch khám sớm",
+  ],
+  postRootCanalRestoration: [
+    "Răng sau chữa tủy nên trám hay bọc sứ?",
+    "Khi nào cần bọc sứ sau chữa tủy?",
+    "Răng chữa tủy có dễ vỡ không?",
+    "Tôi muốn đặt lịch kiểm tra",
   ],
   wisdomTooth: [
     "Răng khôn mọc lệch có cần nhổ không?",
@@ -209,6 +217,7 @@ const suggestionGroups = {
   ],
 };
 
+// normalize input (xu ly viet tat, khong dau, sai chinh ta co ban)
 const normalizeDentalInput = (text) => {
   const replacements = [
     [/\b(ko|kh|k)\b/g, "khong"],
@@ -272,6 +281,7 @@ const normalizeDentalInput = (text) => {
   return replacements.reduce((current, [pattern, replacement]) => current.replace(pattern, replacement), text);
 };
 
+// normalize text (dua ve dang de so khop tu khoa)
 const normalizeText = (text) =>
   normalizeDentalInput(String(text || "")
     .toLowerCase()
@@ -383,6 +393,29 @@ const hasPorcelainTerm = (text) =>
     "phuc hinh su",
   ]);
 
+const asksPostRootCanalRestoration = (text) =>
+  hasAny(text, [
+    "sau chua tuy",
+    "da chua tuy",
+    "chua tuy xong",
+    "lay tuy xong",
+    "rang chua tuy",
+    "rang da lay tuy",
+  ]) &&
+  hasAny(text, [
+    "boc su",
+    "rang su",
+    "boc rang",
+    "mao",
+    "mao su",
+    "chup rang",
+    "phuc hinh",
+    "tram",
+    "onlay",
+    "co can",
+    "nen khong",
+  ]);
+
 const isPriceQuestion = (text) =>
   hasAny(text, ["gia", "chi phi", "bao nhieu tien", "het bao nhieu", "ton bao nhieu", "bang gia", "khuyen mai", "uu dai"]) ||
   (text.includes("bao nhieu") && hasAny(text, ["tien", "vnd", "dong", "gia", "chi phi"]));
@@ -393,6 +426,7 @@ const getConversationText = (history = []) =>
 const isGreetingMessage = (text) =>
   /(^|\s)(xin chao|chao|hello|hi|alo|ban oi)(\s|$)/.test(text);
 
+// create answer (gan canh bao an toan)
 const createAnswer = (mainAnswer) => {
   if (mainAnswer.includes("Lưu ý:")) {
     return mainAnswer;
@@ -406,6 +440,7 @@ const createResult = (answer, suggestions = defaultSuggestions) => ({
   suggestions,
 });
 
+// internal knowledge base (bo tri thuc noi bo cho chatbot)
 const DENTAL_KNOWLEDGE_CONTEXT = `
 Thông tin nền của phòng khám:
 - Website cho phép khách đặt lịch online, có thể đặt lịch không cần tài khoản.
@@ -454,6 +489,7 @@ Kiến thức nha khoa cơ bản:
 - Nguyên tắc tư vấn: ưu tiên bảo tồn răng thật khi còn khả năng giữ; giải thích rõ lợi ích, rủi ro và lựa chọn ít xâm lấn trước khi nói đến phương án tốn kém.
 `;
 
+// detect topic (phan loai cau hoi nha khoa)
 const getTopicFromText = (text) => {
   if (
     hasAny(text, [
@@ -642,6 +678,10 @@ const getTopicFromText = (text) => {
 
   if (hasAny(text, ["laser", "lazer", "laze", "dieu tri bang laser", "dieu tri bang lazer"])) {
     return "laser";
+  }
+
+  if (asksPostRootCanalRestoration(text)) {
+    return "postRootCanalRestoration";
   }
 
   if (hasAny(text, ["viem tuy", "chua tuy", "lay tuy", "dieu tri tuy", "tuy rang"])) {
@@ -946,6 +986,7 @@ const getTopicFromText = (text) => {
   return "general";
 };
 
+// get topic (uu tien cau hien tai, neu mo ho thi xem lich su chat)
 const getTopic = (text, history = []) => {
   const currentTopic = getTopicFromText(text);
 
@@ -985,6 +1026,7 @@ const getTopic = (text, history = []) => {
   return getTopicFromText(getConversationText(history));
 };
 
+// rule based reply (tra loi bang bo tri thuc noi bo)
 const findRuleBasedReply = (message, history = []) => {
   const text = normalizeText(message);
   const topic = getTopic(text, history);
@@ -1191,6 +1233,13 @@ const findRuleBasedReply = (message, history = []) => {
     );
   }
 
+  if (topic === "postRootCanalRestoration" || (topic === "rootCanal" && asksPostRootCanalRestoration(text))) {
+    return createResult(
+      "Răng sau chữa tủy không phải lúc nào cũng bắt buộc bọc sứ, nhưng cần phục hồi thân răng đúng cách để răng bền hơn. Sau khi lấy tủy, răng thường giòn hơn vì đã mất phần mô tủy bên trong; nếu răng hàm chịu lực nhai nhiều, lỗ sâu lớn, vỡ nhiều thành răng hoặc miếng trám quá rộng thì nha sĩ thường cân nhắc bọc sứ hoặc onlay để bảo vệ răng.\n\nNếu răng còn nhiều mô thật, lỗ mở tủy nhỏ và khớp cắn không quá mạnh thì có trường hợp chỉ cần trám phục hồi là đủ. Cách quyết định đúng là khám trực tiếp, chụp phim nếu cần và xem lượng mô răng còn lại, vị trí răng, lực nhai và nguy cơ nứt vỡ.",
+      suggestionGroups.postRootCanalRestoration,
+    );
+  }
+
   if (topic === "rootCanal") {
     return createResult(
       "Chữa tủy thường được cân nhắc khi tủy răng bị viêm hoặc nhiễm khuẩn. Dấu hiệu hay gặp là đau tự phát, đau về đêm, đau kéo dài sau khi uống lạnh/nóng, răng sâu lớn, sưng nướu, có mủ hoặc răng từng chấn thương.\n\nKhông phải cứ đau răng là phải chữa tủy. Có trường hợp chỉ cần trám, điều trị nướu hoặc xử lý ê buốt. Nha sĩ cần khám và có thể chụp phim để xem tủy còn hồi phục được không trước khi quyết định.",
@@ -1381,6 +1430,7 @@ const stripSafetyNote = (answer = "") =>
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
+// build gemini prompt (dua context noi bo cho ai)
 const buildDentalPrompt = (message, history = [], context = {}) => {
   const conversationContext = formatHistory(history);
   const internalDraft = stripSafetyNote(context.internalAnswer || "");
@@ -1423,6 +1473,7 @@ ${message}
 `;
 };
 
+// call gemini (neu co api key thi dung ai de viet tu nhien hon)
 const getGeminiReply = async (message, history = [], context = {}) => {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
 
@@ -1466,6 +1517,7 @@ const getGeminiReply = async (message, history = [], context = {}) => {
   }
 };
 
+// public service (controller goi ham nay de lay cau tra loi)
 const generateDentalReply = async (message, history = []) => {
   const normalizedMessage = normalizeText(message);
   const detectedTopic = getTopic(normalizedMessage, history);

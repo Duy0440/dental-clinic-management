@@ -6,6 +6,7 @@ import Footer from "../components/FooterClinicClean";
 import FloatingSupport from "../components/FloatingSupportClinic";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 
+// public layout (khung trang khach hang: navbar, footer, support)
 function MainLayout() {
   const location = useLocation();
 

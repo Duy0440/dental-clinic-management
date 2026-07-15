@@ -8,6 +8,7 @@ const STATUS_LABELS = {
   Cancelled: "Đã hủy",
 };
 
+// admin appointments page (le tan quan ly va xac nhan lich hen)
 function AdminAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [dentists, setDentists] = useState([]);
@@ -24,6 +25,7 @@ function AdminAppointments() {
     clinic_note: "",
   });
 
+  // load appointments (tai lai danh sach lich hen)
   const loadAppointments = async () => {
     const response = await axiosClient.get("/appointments");
     setAppointments(response.data.data || []);
@@ -51,6 +53,7 @@ function AdminAppointments() {
     loadData();
   }, []);
 
+  // open manage form (mo popup xu ly lich)
   const openManageForm = (appointment) => {
     setSelectedAppointment(appointment);
     setErrorMessage("");
@@ -67,6 +70,7 @@ function AdminAppointments() {
     setSelectedAppointment(null);
   };
 
+  // handle form change (cap nhat nha si, trang thai, ghi chu)
   const handleChange = (event) => {
   const { name, value } = event.target;
 
@@ -102,6 +106,7 @@ function AdminAppointments() {
   });
   };
 
+  // update appointment (xac nhan/huy/phan cong nha si)
   const updateAppointment = async (forceAssign = false) => {
     const dentistId = formData.dentist_id ? Number(formData.dentist_id) : null;
 
@@ -141,6 +146,7 @@ function AdminAppointments() {
     window.dispatchEvent(new Event("admin-sidebar-alerts-refresh"));
   };
 
+  // submit appointment (luu thay doi lich hen)
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -187,6 +193,7 @@ function AdminAppointments() {
     }
   };
 
+  // filter appointments (loc lich theo trang thai)
   const filteredAppointments =
     statusFilter === "All"
       ? appointments

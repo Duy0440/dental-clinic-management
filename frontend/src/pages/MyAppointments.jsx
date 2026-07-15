@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 
+// status label (hien thi trang thai lich hen)
 const STATUS_LABELS = {
   Pending: "Chờ xác nhận",
   Confirmed: "Đã xác nhận",
@@ -33,6 +34,7 @@ function formatTime(timeString) {
   return timeString.slice(0, 5);
 }
 
+// my appointments page (khach xem lich hen va danh gia)
 function MyAppointments() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
@@ -46,6 +48,7 @@ function MyAppointments() {
   const [reviewMessage, setReviewMessage] = useState("");
 
   useEffect(() => {
+    // fetch customer data (lay lich hen va danh gia cua khach)
     const fetchCustomerData = async () => {
       try {
         const [appointmentResponse, reviewResponse] = await Promise.all([
@@ -72,6 +75,7 @@ function MyAppointments() {
   }, [user?.patient_id]);
 
   const handleCancelAppointment = async (appointmentId) => {
+    // cancel appointment (khach huy lich neu con cho phep)
     const confirmed = window.confirm(
       "Bạn có chắc chắn muốn hủy lịch hẹn này không?",
     );
@@ -112,6 +116,7 @@ function MyAppointments() {
   };
 
   const handleSubmitReview = async (event) => {
+    // submit review (danh gia sau khi hoan thanh lich)
     event.preventDefault();
 
     if (!selectedAppointment) {

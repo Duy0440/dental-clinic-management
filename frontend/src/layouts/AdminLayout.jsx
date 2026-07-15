@@ -3,6 +3,7 @@ import BrandLogo from "../components/BrandLogo";
 import "../admin.css";
 import "../mobile-overrides.css";
 
+// admin menu (sidebar trang quan tri)
 const menuGroups = [
   {
     title: "Quản lý chính",
@@ -23,6 +24,7 @@ const menuGroups = [
   },
 ];
 
+// page info (tieu de theo tung trang admin)
 const pageInfo = {
   "/admin": {
     eyebrow: "Tổng quan",
@@ -71,6 +73,7 @@ function AdminLayout() {
       .find(([path]) => location.pathname === path || location.pathname.startsWith(`${path}/`))?.[1] ||
     pageInfo["/admin"];
 
+  // logout admin (xoa localStorage va ve dang nhap)
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");

@@ -18,6 +18,7 @@ const reviewRoutes = require("./routes/reviewRoutes");
 
 const app = express();
 
+// config cors (cho phep frontend goi api)
 const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
   .split(",")
   .map((origin) => origin.trim())
@@ -36,15 +37,19 @@ app.use(
     credentials: true,
   }),
 );
+
+// middleware chung
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
+// health check (kiem tra api con song)
 app.get("/", (req, res) => {
   res.json({
     message: "Dental clinic management API is running",
   });
 });
 
+// mount routes (gom cac api theo tung nghiep vu)
 app.use("/api/auth", authRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/services", serviceRoutes);

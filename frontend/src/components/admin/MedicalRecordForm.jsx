@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 
+// today text (lay ngay hien tai cho input date)
 const getTodayText = () => {
   const today = new Date();
   const year = today.getFullYear();
@@ -16,6 +17,7 @@ function MedicalRecordForm({
   onClose,
   onCreated,
 }) {
+  // suggested appointment (chon san lich gan nhat de lap ho so)
   const suggestedAppointment = appointments.find((appointment) =>
     ["Confirmed", "Completed"].includes(appointment.status),
   );
@@ -40,6 +42,7 @@ function MedicalRecordForm({
   );
   const todayText = getTodayText();
 
+  // handle input (cap nhat form va reset gio tai kham khi doi ngay/nha si)
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -60,6 +63,7 @@ function MedicalRecordForm({
   };
 
   useEffect(() => {
+    // fetch available times (kiem tra gio tai kham con trong)
     const fetchReExaminationTimes = async () => {
       if (!formData.re_examination_date || !formData.dentist_id) {
         setAvailableReExamTimes([]);
@@ -115,6 +119,7 @@ function MedicalRecordForm({
     setAttachmentFile(event.target.files[0] || null);
   };
 
+  // upload attachment (tai anh/tai lieu dieu tri)
   const uploadAttachment = async (recordId) => {
     if (!attachmentFile) {
       return;
@@ -134,6 +139,7 @@ function MedicalRecordForm({
     );
   };
 
+  // submit record (tao ho so dieu tri va tai file neu co)
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);

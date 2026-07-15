@@ -2,6 +2,7 @@
 import axiosClient from "../api/axiosClient";
 import { getAssetUrl } from "../api/urlHelpers";
 
+// medical results page (khach xem ket qua dieu tri)
 function MedicalResults() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
@@ -11,6 +12,7 @@ function MedicalResults() {
   const [previewImage, setPreviewImage] = useState(null);
 
   useEffect(() => {
+    // fetch records (lay ho so dieu tri cua khach)
     const fetchMedicalResults = async () => {
       try {
         const response = await axiosClient.get(
@@ -41,6 +43,7 @@ function MedicalResults() {
   };
 
   const getFileUrl = (fileUrl) => {
+    // asset url (doi duong dan file upload)
     return getAssetUrl(fileUrl);
   };
 

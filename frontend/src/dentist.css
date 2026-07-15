@@ -10,7 +10,8 @@
 
 /* Dentist mobile workspace: appointments and records should feel app-like. */
 @media (max-width: 640px) {
-  .dentist-layout {
+/* dentist UI (khu vuc nha si xem lich, lich ban, ho so) */
+.dentist-layout {
     display: block;
     overflow-x: hidden;
   }

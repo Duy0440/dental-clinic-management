@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import "../about-clinic-public.css";
 import "../mobile-overrides.css";
 
+// about page data (noi dung gioi thieu phong kham)
 const missionCards = [
   {
     title: "Sứ mệnh",
@@ -111,6 +112,7 @@ const equipmentHighlights = [
   "Ghế điều trị bố trí gọn, hỗ trợ bác sĩ thao tác ổn định",
 ];
 
+// about page UI (trang gioi thieu phong kham)
 function AboutClinicPublic() {
   const location = useLocation();
 

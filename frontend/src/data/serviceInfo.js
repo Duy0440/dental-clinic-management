@@ -1,3 +1,4 @@
+// service data (noi dung cac trang dich vu nha khoa)
 export const serviceCategories = [
   {
     slug: "implant",
@@ -111,5 +112,6 @@ export const serviceCategories = [
   },
 ];
 
+// find service (tim dich vu theo slug)
 export const findServiceCategoryBySlug = (slug) =>
   serviceCategories.find((service) => service.slug === slug);

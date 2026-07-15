@@ -15,6 +15,7 @@ const createEmptyDetail = () => ({
   discount_amount: 0,
 });
 
+// admin invoices page (lap hoa don va in phieu thu)
 function AdminInvoices() {
   const [invoices, setInvoices] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -29,6 +30,7 @@ function AdminInvoices() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  // fetch invoice data (lay hoa don, khach hang, dich vu)
   const fetchData = async () => {
     try {
       const [invoiceResponse, customerResponse, serviceResponse] =
@@ -58,6 +60,7 @@ function AdminInvoices() {
     return `${Number(value || 0).toLocaleString("vi-VN")} VNĐ`;
   };
 
+  // calculate subtotal (tinh tien tung dong dich vu)
   const calculateDetailSubtotal = (detail) => {
     const quantity = Number(detail.quantity || 0);
     const unitPrice = Number(detail.unit_price || 0);
@@ -74,6 +77,7 @@ function AdminInvoices() {
   const selectedCustomer = customers.find(
     (customer) => Number(customer.id) === Number(invoiceForm.patient_id),
   );
+  // customer autocomplete (tim khach khi lap hoa don)
   const filteredCustomers = customers
     .filter((customer) => {
       if (!normalizedCustomerSearch) return true;
@@ -93,6 +97,7 @@ function AdminInvoices() {
     });
   };
 
+  // handle detail row (cap nhat dong dich vu trong hoa don)
   const handleDetailChange = (index, event) => {
     const { name, value } = event.target;
 
@@ -139,6 +144,7 @@ function AdminInvoices() {
     setShowCustomerResults(false);
   };
 
+  // submit invoice (tao hoa don kem chi tiet)
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -181,6 +187,7 @@ function AdminInvoices() {
     }
   };
 
+  // delete invoice (xoa hoa don)
   const deleteInvoice = async (invoice) => {
     const confirmed = window.confirm(
       `Xóa hóa đơn ${invoice.invoice_code || `HD${invoice.id}`}? Thao tác này dùng để dọn hóa đơn nhập sai hoặc dữ liệu test.`,
@@ -208,6 +215,7 @@ function AdminInvoices() {
     return detail.custom_description || detail.service_name || "Dịch vụ";
   };
 
+  // print invoice (mo cua so in phieu thu)
   const printInvoice = (invoice) => {
     const total = Number(invoice.total_amount || 0);
 

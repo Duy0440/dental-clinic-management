@@ -12,6 +12,7 @@ const {
 
 const router = express.Router();
 
+// dentist routes (danh sach nha si va trang thai hoat dong)
 router.get("/active", listActiveDentists);
 router.get("/", listDentists);
 router.post("/", verifyToken, authorizeRoles("admin"), addDentist);

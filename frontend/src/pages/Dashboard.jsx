@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 
+// status label (doi trang thai sang tieng viet)
 const STATUS_LABELS = {
   Pending: "Chờ xác nhận",
   Confirmed: "Đã xác nhận",
@@ -9,12 +10,14 @@ const STATUS_LABELS = {
   Cancelled: "Đã hủy",
 };
 
+// admin dashboard page (tong quan he thong)
 function Dashboard() {
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
+    // fetch dashboard summary (lay so lieu tong quan)
     const fetchDashboard = async () => {
       try {
         const dashboardResponse = await axiosClient.get("/dashboard/summary");

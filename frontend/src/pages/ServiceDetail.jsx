@@ -1,6 +1,7 @@
 import { Link, Navigate, useParams } from "react-router-dom";
 import { findServiceCategoryBySlug, serviceCategories } from "../data/serviceInfo";
 
+// service article content (noi dung chi tiet dich vu)
 const articleContent = {
   implant: {
     overview: [
@@ -104,6 +105,7 @@ const articleContent = {
   },
 };
 
+// service detail page (bai viet tung dich vu)
 function ServiceDetail() {
   const { slug } = useParams();
   const service = findServiceCategoryBySlug(slug);
@@ -112,6 +114,7 @@ function ServiceDetail() {
     return <Navigate to="/services" replace />;
   }
 
+  // related services (goi y dich vu lien quan)
   const relatedServices = serviceCategories.filter((item) => item.slug !== service.slug).slice(0, 3);
   const article = articleContent[service.slug];
 

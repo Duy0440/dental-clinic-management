@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 import PasswordField from "../components/PasswordField";
 
+// login page (dang nhap admin, nha si, khach hang)
 function Login() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -10,10 +11,12 @@ function Login() {
   const [isError, setIsError] = useState(false);
 
   const handleChange = (event) => {
+    // update form (nhap username/password)
     setFormData({ ...formData, [event.target.name]: event.target.value });
   };
 
   const handleSubmit = async (event) => {
+    // login (luu token va dieu huong theo role)
     event.preventDefault();
     setMessage("");
     setIsError(false);
@@ -33,8 +36,6 @@ function Login() {
         navigate("/dentist");
         return;
       }
-
-      navigate("/");
 
       navigate("/");
     } catch (error) {

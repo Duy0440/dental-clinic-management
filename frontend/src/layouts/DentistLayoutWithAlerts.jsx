@@ -4,6 +4,7 @@ import axiosClient from "../api/axiosClient";
 import BrandLogo from "../components/BrandLogo";
 import "../dentist.css";
 
+// alert helpers (dem thong bao moi cho nha si)
 const getStoredNumber = (key) => Number(localStorage.getItem(key) || 0);
 const getMaxId = (items = []) =>
   items.reduce((maxId, item) => Math.max(maxId, Number(item.id || 0)), 0);
@@ -27,6 +28,7 @@ function DentistLayoutWithAlerts() {
   useEffect(() => {
     let isMounted = true;
 
+    // fetch alerts (lich moi va ho so can cap nhat)
     const fetchSidebarAlerts = async () => {
       try {
         const response = await axiosClient.get("/appointments/dentist/my-schedule");
@@ -88,12 +90,14 @@ function DentistLayoutWithAlerts() {
     };
   }, [location.pathname]);
 
+  // logout dentist (xoa phien dang nhap)
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login");
   };
 
+  // render badge (hien so thong bao tren sidebar)
   const renderBadge = (count) => {
     if (!count) return null;
 

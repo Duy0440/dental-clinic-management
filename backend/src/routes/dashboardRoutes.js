@@ -10,6 +10,7 @@ const {
 
 const router = express.Router();
 
+// dashboard routes (luot truy cap va thong ke tong quan)
 router.post("/visit", savePageVisit);
 router.get("/summary", verifyToken, authorizeRoles("admin"), getSummary);
 
