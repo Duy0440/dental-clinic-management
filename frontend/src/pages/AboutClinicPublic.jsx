@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "../about-clinic-public.css";
 import "../mobile-overrides.css";
+import "../equipment-fix.css";
 
 // about page data (noi dung gioi thieu phong kham)
 const missionCards = [
@@ -283,11 +284,9 @@ function AboutClinicPublic() {
           <div className="about-public-equipment-list">
             {equipment.map((item) => (
               <article key={item.title}>
-                <img
-                  className={item.title.includes("RunTour") ? "is-chair-image" : ""}
-                  src={item.image}
-                  alt={item.title}
-                />
+                <figure className={`about-public-equipment-photo ${item.title.includes("RunTour") ? "is-chair-photo" : ""}`}>
+                  <img src={item.image} alt={item.title} />
+                </figure>
                 <div>
                   <span>{item.label}</span>
                   <h3>{item.title}</h3>

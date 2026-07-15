@@ -6,6 +6,7 @@ import { serviceCategories } from "../data/serviceInfo";
 import Booking from "./Booking";
 import "../home-landing.css";
 import "../mobile-overrides.css";
+import "../equipment-fix.css";
 
 // fallback services (dich vu hien khi api chua tai duoc)
 const fallbackServices = [
@@ -645,7 +646,7 @@ function HomePublic() {
 
           <div className="clinic-facilities-v2-media" aria-live="polite">
             <img
-              className={activeFacility.title.includes("RunTour") ? "is-chair-image" : ""}
+              className={activeFacility.title.includes("RunTour") ? "is-chair-slide" : ""}
               src={activeFacility.image}
               alt={activeFacility.title}
             />

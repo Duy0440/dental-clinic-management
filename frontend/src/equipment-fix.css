@@ -1,0 +1,121 @@
+/* equipment fix (can hinh thiet bi va caption) */
+.clinic-facilities-v2-media {
+  position: relative !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  aspect-ratio: 16 / 10 !important;
+  overflow: hidden !important;
+  border-radius: 30px !important;
+  background: #f8ead8 !important;
+}
+
+.clinic-facilities-v2-media img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  transform: none !important;
+  background: transparent !important;
+}
+
+.clinic-facilities-v2-media img.is-chair-slide {
+  object-position: 50% 50% !important;
+}
+
+.clinic-facilities-v2-media:hover img {
+  transform: none !important;
+}
+
+.clinic-facility-v2-caption {
+  right: 24px !important;
+  bottom: 22px !important;
+  left: 24px !important;
+  display: grid !important;
+  grid-template-columns: minmax(190px, 0.42fr) minmax(0, 1fr) !important;
+  gap: 18px !important;
+  align-items: center !important;
+  width: auto !important;
+  max-width: none !important;
+  padding: 18px 20px !important;
+  border-radius: 24px !important;
+}
+
+.clinic-facility-v2-caption h3 {
+  margin: 5px 0 0 !important;
+  font-size: clamp(1.25rem, 2vw, 1.55rem) !important;
+  line-height: 1.12 !important;
+}
+
+.clinic-facility-v2-caption p {
+  display: -webkit-box !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: #526176 !important;
+  font-size: 1rem !important;
+  line-height: 1.55 !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+}
+
+.about-public-equipment-list article {
+  overflow: hidden !important;
+}
+
+.about-public-equipment-photo {
+  display: block !important;
+  width: 100% !important;
+  height: 300px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background: #f8ead8 !important;
+}
+
+.about-public-equipment-photo img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  transform: none !important;
+  background: transparent !important;
+}
+
+.about-public-equipment-photo.is-chair-photo img {
+  object-position: 50% 50% !important;
+}
+
+@media (max-width: 768px) {
+  .clinic-facilities-v2-media {
+    aspect-ratio: 4 / 5 !important;
+    border-radius: 24px !important;
+  }
+
+  .clinic-facility-v2-caption {
+    right: 12px !important;
+    bottom: 12px !important;
+    left: 12px !important;
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .clinic-facility-v2-caption h3 {
+    font-size: 1.1rem !important;
+  }
+
+  .clinic-facility-v2-caption p {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .about-public-equipment-photo {
+    height: 250px !important;
+  }
+}

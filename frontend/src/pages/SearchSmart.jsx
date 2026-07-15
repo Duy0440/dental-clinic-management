@@ -325,14 +325,39 @@ const getExpandedTokens = (keyword) => {
 
 const buildSearchText = (...values) => values.flat().filter(Boolean).join(" ");
 
-// score result (cham diem ket qua phu hop)
-const scoreResult = (keyword, item) => {
-  const normalizedKeyword = normalizeText(keyword);
+const isDoctorIntent = (keyword) =>
+  hasAnyToken(keyword, ["bac si", "nha si", "doctor", "bs", "bsi", "dr"]);
+
+const isPromotionIntent = (keyword) =>
+  hasAnyToken(keyword, ["uu dai", "khuyen mai", "giam gia", "combo", "he", "mua he"]);
+
+const isPriceIntent = (keyword) =>
+  hasAnyToken(keyword, ["gia", "bang gia", "chi phi", "bao nhieu tien"]);
+
+const hasAnyToken = (text, tokens) => {
+  const normalizedText = normalizeText(text);
+  return tokens.some((token) => normalizedText.includes(normalizeText(token)));
+};
+
+const getDirectTokens = (keyword) =>
+  normalizeText(keyword)
+    .split(" ")
+    .filter((token) => token.length >= 2 && !stopWords.has(token));
+
+const getSearchTextParts = (item) => {
   const title = normalizeText(item.title);
   const description = normalizeText(item.description);
   const keywords = normalizeText(item.keywords?.join(" ") || "");
   const searchable = normalizeText(buildSearchText(item.type, item.title, item.description, item.keywords));
+  return { title, description, keywords, searchable };
+};
+
+// score result (cham diem ket qua phu hop)
+const scoreResult = (keyword, item) => {
+  const normalizedKeyword = normalizeText(keyword);
+  const { title, description, keywords, searchable } = getSearchTextParts(item);
   const tokens = getExpandedTokens(keyword);
+  const directTokens = getDirectTokens(keyword);
 
   if (!normalizedKeyword) return 0;
 
@@ -350,7 +375,42 @@ const scoreResult = (keyword, item) => {
     if (searchable.includes(token)) score += 8;
   });
 
+  const exactDirectMatches = directTokens.filter((token) =>
+    title.includes(token) || keywords.includes(token) || description.includes(token),
+  ).length;
+
+  if (directTokens.length > 0 && exactDirectMatches === 0) return 0;
+  if (directTokens.length === 1 && exactDirectMatches === 1 && score < 70) return 0;
+
   return score;
+};
+
+const canShowResultForQuery = (keyword, item) => {
+  const normalizedKeyword = normalizeText(keyword);
+  const directTokens = getDirectTokens(keyword);
+  const { title, keywords, searchable } = getSearchTextParts(item);
+
+  if (!normalizedKeyword || directTokens.length === 0) return false;
+
+  if (item.id?.startsWith("dentist-") && !isDoctorIntent(keyword)) return false;
+  if (item.id?.startsWith("promotion-") && !isPromotionIntent(keyword) && !title.includes(normalizedKeyword)) return false;
+  if (item.id?.startsWith("price-") && !isPriceIntent(keyword) && !keywords.includes(normalizedKeyword)) return false;
+
+  const directHitCount = directTokens.filter((token) => searchable.includes(token)).length;
+  const requiredHits = directTokens.length >= 3 ? 2 : 1;
+
+  return directHitCount >= requiredHits;
+};
+
+const limitSearchResults = (items) => {
+  const groupCounter = {};
+
+  return items.filter((item) => {
+    groupCounter[item.type] = groupCounter[item.type] || 0;
+    if (groupCounter[item.type] >= 4) return false;
+    groupCounter[item.type] += 1;
+    return true;
+  }).slice(0, 10);
 };
 
 const createPriceResults = () =>
@@ -479,14 +539,15 @@ function SearchSmart() {
 
   // matched results (sap xep ket qua theo diem)
   const matchedResults = useMemo(() => {
-    return allResults
+    const rankedResults = allResults
       .map((item) => ({
         ...item,
         score: scoreResult(keyword, item) + item.priority,
       }))
-      .filter((item) => item.score > 0)
-      .sort((first, second) => second.score - first.score)
-      .slice(0, 24);
+      .filter((item) => item.score >= 70 && canShowResultForQuery(keyword, item))
+      .sort((first, second) => second.score - first.score);
+
+    return limitSearchResults(rankedResults);
   }, [allResults, keyword]);
 
   const groupedResults = useMemo(() => {

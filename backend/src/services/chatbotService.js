@@ -23,6 +23,12 @@ const suggestionGroups = {
     "Mất răng lâu có làm implant được không?",
     "Giá implant phụ thuộc vào gì?",
   ],
+  implantAftercare: [
+    "Sau implant nên ăn gì?",
+    "Sau implant sưng bao lâu thì ổn?",
+    "Khi nào cần tái khám sau implant?",
+    "Tôi muốn đặt lịch kiểm tra implant",
+  ],
   pain: [
     "Đau răng về đêm có nguy hiểm không?",
     "Đau răng hàm dưới nên làm gì?",
@@ -58,6 +64,18 @@ const suggestionGroups = {
     "Inlay, onlay dùng khi nào?",
     "Mất răng nên làm cầu răng hay implant?",
     "Hàm tháo lắp phù hợp với ai?",
+  ],
+  bridge: [
+    "Cầu răng khác implant thế nào?",
+    "Làm cầu răng có phải mài răng không?",
+    "Cầu răng dùng được bao lâu?",
+    "Mất răng nên làm cầu hay implant?",
+  ],
+  conditionOverview: [
+    "Sâu răng khi nào cần trám?",
+    "Viêm nướu và nha chu khác gì nhau?",
+    "Ê buốt răng xử lý sao?",
+    "Hôi miệng có phải do răng miệng không?",
   ],
   rootCanal: [
     "Khi nào cần chữa tủy?",
@@ -489,6 +507,40 @@ Kiến thức nha khoa cơ bản:
 - Nguyên tắc tư vấn: ưu tiên bảo tồn răng thật khi còn khả năng giữ; giải thích rõ lợi ích, rủi ro và lựa chọn ít xâm lấn trước khi nói đến phương án tốn kém.
 `;
 
+const hasPostImplantCareIntent = (text) =>
+  hasAny(text, [
+    "cham soc sau implant",
+    "sau implant",
+    "sau khi implant",
+    "sau khi cay ghep",
+    "sau khi trong rang",
+    "dat tru xong",
+    "cay ghep xong",
+    "implant xong",
+  ]) ||
+  (hasAny(text, ["implant", "cay ghep", "trong rang"]) &&
+    hasAny(text, ["cham soc", "kieng", "an gi", "ve nha", "sung", "dau sau", "tai kham"]));
+
+const hasBridgeIntent = (text) =>
+  hasAny(text, ["cau rang", "cau rang su", "lam cau", "rang cau"]) &&
+  !hasAny(text, ["cau rang hay implant", "implant hay cau rang"]);
+
+const hasInlayOnlayIntent = (text) => hasAny(text, ["inlay", "onlay", "overlay"]);
+
+const hasConditionOverviewIntent = (text) => {
+  const conditionGroups = [
+    ["sau rang", "lo sau"],
+    ["viem nuou", "viem loi"],
+    ["nha chu", "viem nha chu"],
+    ["viem tuy", "chua tuy", "lay tuy"],
+    ["e buot", "buot rang", "nhay cam"],
+    ["hoi mieng"],
+    ["chay mau", "chay mau chan rang"],
+  ];
+
+  return conditionGroups.filter((keywords) => hasAny(text, keywords)).length >= 3;
+};
+
 // detect topic (phan loai cau hoi nha khoa)
 const getTopicFromText = (text) => {
   if (
@@ -522,6 +574,22 @@ const getTopicFromText = (text) => {
     ])
   ) {
     return "equipment";
+  }
+
+  if (hasPostImplantCareIntent(text)) {
+    return "implantAftercare";
+  }
+
+  if (hasConditionOverviewIntent(text)) {
+    return "conditionOverview";
+  }
+
+  if (hasBridgeIntent(text)) {
+    return "bridge";
+  }
+
+  if (hasInlayOnlayIntent(text)) {
+    return "inlayOnlay";
   }
 
   if (isPriceQuestion(text)) {
@@ -1041,6 +1109,34 @@ const findRuleBasedReply = (message, history = []) => {
   if (isGreetingMessage(text)) {
     return createResult(
       "Chào bạn, mình là trợ lý tư vấn nha khoa của Nha khoa V. Bạn cứ hỏi thoải mái như đang nhắn cho phòng khám nhé. Nếu bạn đang đau răng hoặc phân vân dịch vụ nào phù hợp, mình có thể giải thích trước để bạn dễ quyết định có nên đặt lịch không.",
+    );
+  }
+
+  if (topic === "conditionOverview") {
+    return createResult(
+      "Nhóm bạn hỏi gồm nhiều bệnh lý răng miệng khác nhau, nên mình tách ngắn gọn để dễ hiểu:\n\nSâu răng thường bắt đầu từ lỗ sâu hoặc ê buốt khi ăn lạnh/ngọt; nhẹ thì trám, nặng vào tủy có thể cần chữa tủy. Viêm nướu là nướu đỏ, sưng, dễ chảy máu; thường liên quan mảng bám/vôi răng. Nha chu là giai đoạn nặng hơn, có thể tụt nướu, tiêu xương, hôi miệng và răng lung lay. Viêm tủy hay gây đau tự phát, đau về đêm, đau kéo dài sau lạnh/nóng. Ê buốt có thể do mòn men, tụt nướu, sâu răng hoặc nứt răng. Hôi miệng thường gặp do vôi răng, viêm nướu, lưỡi bẩn, sâu răng hoặc khô miệng.\n\nNếu chỉ muốn phòng ngừa: chải răng đúng cách, làm sạch kẽ răng, cạo vôi định kỳ và khám khoảng 6 tháng/lần. Nếu đã đau nhiều, sưng, có mủ, sốt, răng lung lay hoặc chảy máu nướu kéo dài thì nên đặt lịch khám sớm.",
+      suggestionGroups.conditionOverview,
+    );
+  }
+
+  if (topic === "bridge") {
+    return createResult(
+      "Cầu răng sứ là phương án phục hồi khi mất một hoặc vài răng bằng cách dùng răng kế cận làm trụ, rồi gắn một dãy răng sứ nối qua vùng răng bị mất. Nói đơn giản: hai răng bên cạnh sẽ chịu lực cho răng giả ở giữa.\n\nĐiểm cần hiểu rõ là làm cầu răng thường phải mài răng kế cận, nên phù hợp hơn khi hai răng trụ đủ khỏe hoặc đã cần phục hồi. Ưu điểm là thời gian làm nhanh hơn implant và cảm giác cố định hơn hàm tháo lắp. Hạn chế là không thay thế chân răng đã mất, vùng xương dưới răng mất vẫn có thể tiêu theo thời gian và cần vệ sinh kỹ dưới nhịp cầu.\n\nNếu bạn mất răng lâu, răng trụ yếu, mất nhiều răng hoặc muốn tránh mài răng bên cạnh thì nên hỏi thêm về implant hoặc hàm tháo lắp tùy điều kiện xương, nướu và chi phí.",
+      suggestionGroups.bridge,
+    );
+  }
+
+  if (topic === "inlayOnlay") {
+    return createResult(
+      "Inlay/onlay là miếng phục hồi được làm bên ngoài rồi gắn vào phần răng bị sâu hoặc vỡ. Bạn có thể hiểu đơn giản là một dạng phục hồi chắc hơn trám thường, nhưng bảo tồn mô răng hơn so với bọc mão sứ toàn phần.\n\nInlay thường nằm trong lòng răng, phù hợp khi phần mất mô chưa phủ lên múi răng. Onlay che phủ thêm một hoặc nhiều múi răng, dùng khi răng vỡ/lỗ sâu lớn hơn nhưng chân răng và phần mô còn lại vẫn có khả năng giữ. Phương án này hay được cân nhắc cho răng hàm vì cần chịu lực nhai tốt.\n\nKhông phải răng sâu/vỡ nào cũng cần inlay/onlay. Nếu lỗ sâu nhỏ có thể chỉ cần trám; nếu răng vỡ quá lớn, nứt sâu hoặc sau chữa tủy với mô răng còn ít thì nha sĩ có thể cân nhắc onlay hoặc mão sứ. Cần khám và chụp phim nếu cần để chọn cách ít xâm lấn nhất.",
+      suggestionGroups.restoration,
+    );
+  }
+
+  if (topic === "implantAftercare") {
+    return createResult(
+      "Sau khi đặt implant, việc chăm sóc quan trọng nhất là giữ vùng phẫu thuật sạch nhưng không tác động mạnh. Trong 24 giờ đầu, bạn thường cần cắn gạc đúng hướng dẫn, không súc miệng mạnh, không khạc nhổ liên tục, không hút thuốc và tránh nhai bên mới đặt trụ.\n\nVài ngày đầu có thể hơi sưng, căng hoặc ê. Bạn nên ăn mềm, uống nước vừa phải, vệ sinh răng miệng nhẹ nhàng và dùng thuốc đúng toa nếu có. Nếu sưng tăng nhiều, đau dữ dội, chảy máu kéo dài, sốt, có mủ hoặc trụ/vùng phục hình có cảm giác bất thường thì phải liên hệ phòng khám để kiểm tra.\n\nVề lâu dài, implant vẫn cần vệ sinh kỹ như răng thật: chải răng, làm sạch kẽ, tái khám đúng hẹn và kiểm soát viêm nướu quanh implant.",
+      suggestionGroups.implantAftercare,
     );
   }
 
