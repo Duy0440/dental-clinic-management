@@ -11,6 +11,8 @@
 
 .clinic-facilities-v2-media img {
   display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
   min-height: 0 !important;
@@ -30,6 +32,8 @@
 }
 
 .clinic-facility-v2-caption {
+  position: absolute !important;
+  z-index: 3 !important;
   right: 24px !important;
   bottom: 22px !important;
   left: 24px !important;
@@ -66,8 +70,10 @@
 
 .about-public-equipment-photo {
   display: block !important;
+  position: relative !important;
   width: 100% !important;
-  height: 300px !important;
+  height: auto !important;
+  aspect-ratio: 16 / 10 !important;
   margin: 0 !important;
   overflow: hidden !important;
   background: #f8ead8 !important;
@@ -75,6 +81,8 @@
 
 .about-public-equipment-photo img {
   display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
   min-height: 0 !important;
@@ -116,6 +124,7 @@
 
 @media (max-width: 640px) {
   .about-public-equipment-photo {
-    height: 250px !important;
+    height: auto !important;
+    aspect-ratio: 4 / 3 !important;
   }
 }

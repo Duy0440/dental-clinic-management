@@ -5,6 +5,7 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import App from "./App";
 import "./styles.css";
 import "./mobile-overrides.css";
+import "./equipment-fix.css";
 
 // app entry (gan React vao div root)
 ReactDOM.createRoot(document.getElementById("root")).render(
