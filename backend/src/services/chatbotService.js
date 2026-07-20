@@ -481,7 +481,7 @@ Kiến thức nha khoa cơ bản:
 - Laser nha khoa: là công cụ hỗ trợ trong một số điều trị mô mềm/nướu, không phải “thần dược” thay thế khám, chụp phim hay tay nghề bác sĩ.
 - Chữa tủy: dùng khi tủy răng viêm/nhiễm khuẩn; sau chữa tủy răng có thể yếu hơn và cần phục hồi thân răng.
 - Đau răng: có thể do sâu răng, viêm nướu, viêm tủy, áp xe, răng khôn hoặc chấn thương; cần khám để xác định nguyên nhân.
-- Cạo vôi răng: giúp làm sạch mảng bám/vôi răng, giảm viêm nướu, chảy máu chân răng và hôi miệng.
+- Cạo vôi răng: giúp làm sạch mảng bám/vôi răng, giảm viêm nướu, nướu dễ chảy máu khi đánh răng và hôi miệng.
 - Niềng răng: điều chỉnh răng lệch, hô, móm, sai khớp cắn; cần chụp phim và lập kế hoạch điều trị.
 - Nhổ răng/răng khôn: cần kiểm tra và có thể cần chụp phim trước; sau nhổ phải chăm sóc đúng hướng dẫn.
 - Răng khôn mọc lệch/mọc ngầm có thể gây đau, viêm lợi trùm, sâu răng bên cạnh hoặc kẹt thức ăn; không phải răng khôn nào cũng phải nhổ, cần khám và chụp phim.
@@ -1254,7 +1254,7 @@ const findRuleBasedReply = (message, history = []) => {
 
   if (topic === "serviceOverview") {
     return createResult(
-      "Phòng khám hiện có các nhóm dịch vụ chính như khám và tư vấn tổng quát, cạo vôi răng, trám răng, chữa tủy, nhổ răng/răng khôn, trồng răng Implant, niềng răng, răng sứ - thẩm mỹ và nha khoa trẻ em.\n\nNếu bạn chưa biết mình cần dịch vụ nào, bạn chỉ cần mô tả vấn đề đang gặp: đau răng, gãy răng, răng lung lay, hô/móm, mất răng, răng xỉn màu hoặc chảy máu chân răng. Chatbot sẽ giải thích hướng xử lý cơ bản, còn phương án chính xác sẽ do nha sĩ kiểm tra trực tiếp sau khi khám.",
+      "Phòng khám hiện có các nhóm dịch vụ chính như khám và tư vấn tổng quát, cạo vôi răng, trám răng, chữa tủy, nhổ răng/răng khôn, trồng răng Implant, niềng răng, răng sứ - thẩm mỹ và nha khoa trẻ em.\n\nNếu bạn chưa biết mình cần dịch vụ nào, bạn chỉ cần mô tả vấn đề đang gặp: đau răng, gãy răng, răng lung lay, hô/móm, mất răng, răng xỉn màu hoặc nướu dễ chảy máu khi đánh răng. Chatbot sẽ giải thích hướng xử lý cơ bản, còn phương án chính xác sẽ do nha sĩ kiểm tra trực tiếp sau khi khám.",
       suggestionGroups.serviceOverview,
     );
   }
@@ -1425,7 +1425,7 @@ const findRuleBasedReply = (message, history = []) => {
 
   if (topic === "bleedingGum") {
     return createResult(
-      "Đánh răng bị chảy máu chân răng thường gặp khi nướu đang viêm, có nhiều mảng bám/vôi răng, chải răng quá mạnh hoặc dùng bàn chải quá cứng. Nếu tình trạng lặp lại nhiều lần, kèm sưng nướu, hôi miệng, đau khi nhai hoặc răng lung lay thì không nên xem nhẹ vì có thể liên quan viêm nướu hoặc nha chu.\n\nTrước mắt bạn nên chải răng nhẹ bằng bàn chải mềm, dùng chỉ nha khoa đúng cách và không tự ngưng vệ sinh vùng đó vì càng để mảng bám lâu nướu càng dễ viêm. Bạn nên đặt lịch kiểm tra để nha sĩ xem có cần cạo vôi răng, vệ sinh nướu hoặc điều trị nha chu không.",
+      "Nướu chảy máu khi đánh răng thường gặp khi nướu đang viêm, có nhiều mảng bám/vôi răng, chải răng quá mạnh hoặc dùng bàn chải quá cứng. Nếu tình trạng lặp lại nhiều lần, kèm sưng nướu, hôi miệng, đau khi nhai hoặc răng lung lay thì không nên xem nhẹ vì có thể liên quan viêm nướu hoặc nha chu.\n\nTrước mắt bạn nên chải răng nhẹ bằng bàn chải mềm, dùng chỉ nha khoa đúng cách và không tự ngưng vệ sinh vùng đó vì càng để mảng bám lâu nướu càng dễ viêm. Bạn nên đặt lịch kiểm tra để nha sĩ xem có cần cạo vôi răng, vệ sinh nướu hoặc điều trị nha chu không.",
       suggestionGroups.bleedingGum,
     );
   }
@@ -1487,7 +1487,7 @@ const findRuleBasedReply = (message, history = []) => {
 
   if (topic === "generalCare" || hasAny(text, ["cao voi", "lay cao rang", "ve sinh rang", "hoi mieng", "chay mau chan rang"])) {
     return createResult(
-      "Cạo vôi răng giúp loại bỏ mảng bám và vôi răng, hỗ trợ giảm viêm nướu, hôi miệng và chảy máu chân răng. Thông thường nên kiểm tra răng miệng định kỳ khoảng 6 tháng/lần, nhưng tần suất có thể thay đổi tùy tình trạng từng người.",
+      "Cạo vôi răng giúp loại bỏ mảng bám và vôi răng, hỗ trợ giảm viêm nướu, hôi miệng và tình trạng nướu dễ chảy máu khi đánh răng. Thông thường nên kiểm tra răng miệng định kỳ khoảng 6 tháng/lần, nhưng tần suất có thể thay đổi tùy tình trạng từng người.",
       suggestionGroups.generalCare,
     );
   }

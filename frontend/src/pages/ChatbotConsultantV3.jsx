@@ -6,7 +6,7 @@ const defaultSuggestions = [
   "Tôi bị đau răng quá",
   "Răng tôi bị gãy rồi",
   "Răng lung lay sắp rớt",
-  "Chảy máu chân răng là sao?",
+  "Nướu bị chảy máu là sao?",
   "Hôi miệng xử lý thế nào?",
   "Tôi muốn đặt lịch khám",
 ];
@@ -15,7 +15,7 @@ const quickTopics = [
   { title: "Đau răng", text: "Tôi bị đau răng quá, giờ nên làm gì?" },
   { title: "Gãy / mẻ răng", text: "Răng tôi bị gãy một miếng, có cần đi khám ngay không?" },
   { title: "Răng lung lay", text: "Răng của tôi bị lung lay sắp rớt ra" },
-  { title: "Chảy máu nướu", text: "Đánh răng bị chảy máu chân răng là bị gì?" },
+  { title: "Chảy máu nướu", text: "Đánh răng bị chảy máu nướu là bị gì?" },
   { title: "Dịch vụ", text: "Phòng khám có những dịch vụ nha khoa nào?" },
 ];
 
@@ -129,7 +129,7 @@ function ChatbotConsultantV3() {
       {
         role: "bot",
         text:
-          "Mình đã làm mới cuộc trò chuyện. Bạn mô tả vấn đề răng miệng bằng lời đơn giản thôi, ví dụ: đau răng, gãy răng, sưng nướu, chảy máu chân răng hoặc muốn hỏi giá dịch vụ.",
+          "Mình đã làm mới cuộc trò chuyện. Bạn mô tả vấn đề răng miệng bằng lời đơn giản thôi, ví dụ: đau răng, gãy răng, sưng nướu, nướu dễ chảy máu hoặc muốn hỏi giá dịch vụ.",
         source: "intro",
       },
     ]);

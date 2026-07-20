@@ -174,8 +174,8 @@ const cleanKnowledgeResults = [
   {
     id: "knowledge-gum-clean",
     type: "Kiến thức nha khoa",
-    title: "Viêm nướu, nha chu và chảy máu chân răng",
-    description: "Tra cứu nguyên nhân sưng nướu, chảy máu chân răng, hôi miệng và cạo vôi.",
+    title: "Viêm nướu, nha chu và chảy máu nướu",
+    description: "Tra cứu nguyên nhân sưng nướu, nướu chảy máu khi đánh răng, hôi miệng và cạo vôi.",
     link: "/chatbot",
     action: "Hỏi chatbot",
     keywords: ["viem nuou", "nha chu", "sung nuou", "chay mau chan rang", "hoi mieng", "cao voi"],
@@ -222,8 +222,8 @@ const publicKnowledgeResults = [
   {
     id: "knowledge-gum-public",
     type: "Kiến thức nha khoa",
-    title: "Viêm nướu, nha chu và chảy máu chân răng",
-    description: "Tra cứu nguyên nhân sưng nướu, chảy máu chân răng, hôi miệng và cạo vôi.",
+    title: "Viêm nướu, nha chu và chảy máu nướu",
+    description: "Tra cứu nguyên nhân sưng nướu, nướu chảy máu khi đánh răng, hôi miệng và cạo vôi.",
     link: "/chatbot",
     action: "Hỏi chatbot",
     keywords: ["viem nuou", "nha chu", "sung nuou", "chay mau chan rang", "hoi mieng", "cao voi"],
