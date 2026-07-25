@@ -106,6 +106,20 @@ function MedicalResults() {
                     </p>
                   </div>
 
+                  {record.treatment_plan && (
+                    <div className="mb-3">
+                      <strong>Kế hoạch điều trị</strong>
+                      <p className="text-secondary mb-0 mt-1">{record.treatment_plan}</p>
+                    </div>
+                  )}
+
+                  {record.prescription && (
+                    <div className="mb-3">
+                      <strong>Hướng dẫn / đơn thuốc</strong>
+                      <p className="text-secondary mb-0 mt-1">{record.prescription}</p>
+                    </div>
+                  )}
+
                   <div className="mb-3">
                     <strong>Ghi chú chuyên môn</strong>
                     <p className="text-secondary mb-0 mt-1">

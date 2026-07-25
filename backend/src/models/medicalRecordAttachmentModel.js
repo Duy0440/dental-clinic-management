@@ -1,7 +1,7 @@
 const pool = require("../config/db");
 
 // create attachment (luu file dinh kem ho so)
-const createMedicalRecordAttachment = async (attachmentData) => {
+const createMedicalRecordAttachment = async (attachmentData, db = pool) => {
   const {
     medical_record_id,
     file_name,
@@ -37,7 +37,7 @@ const createMedicalRecordAttachment = async (attachmentData) => {
     uploaded_by_user_id,
   ];
 
-  const result = await pool.query(query, values);
+  const result = await db.query(query, values);
   return result.rows[0];
 };
 

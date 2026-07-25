@@ -12,6 +12,8 @@ function DentistMedicalRecords() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [message, setMessage] = useState("");
+  const [confirmingId, setConfirmingId] = useState(null);
 
   useEffect(() => {
     // fetch records (lay danh sach ho so dieu tri)
@@ -42,6 +44,39 @@ function DentistMedicalRecords() {
     return ` lúc ${time.slice(0, 5)}`;
   };
 
+  const getStatusLabel = (status) => {
+    const labels = {
+      Draft: "Bản nháp",
+      PendingConfirmation: "Chờ xác nhận",
+      Confirmed: "Đã xác nhận",
+    };
+
+    return labels[status] || "Chờ xác nhận";
+  };
+
+  // confirm record (nha si xac nhan ho so do le tan lap)
+  const handleConfirm = async (recordId) => {
+    try {
+      setConfirmingId(recordId);
+      setMessage("");
+      setErrorMessage("");
+
+      const response = await axiosClient.post(`/medical-records/${recordId}/confirm`);
+      const confirmedRecord = response.data.data;
+
+      setRecords((current) => current.map((record) => (
+        record.id === confirmedRecord.id ? confirmedRecord : record
+      )));
+      setMessage("Đã xác nhận hồ sơ và hoàn tất lịch khám.");
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message || "Không thể xác nhận hồ sơ điều trị.",
+      );
+    } finally {
+      setConfirmingId(null);
+    }
+  };
+
   return (
     <div className="dentist-page dentist-records-page">
       <div className="dentist-page-header">
@@ -54,6 +89,7 @@ function DentistMedicalRecords() {
 
       {loading && <p className="dentist-muted-text">Đang tải hồ sơ điều trị...</p>}
       {!loading && errorMessage && <p className="admin-error-message">{errorMessage}</p>}
+      {!loading && message && <p className="admin-success-message">{message}</p>}
 
       {!loading && !errorMessage && records.length === 0 && (
         <div className="dentist-empty-state">
@@ -71,7 +107,12 @@ function DentistMedicalRecords() {
                   <span>Hồ sơ #{record.id}</span>
                   <h3>{record.patient_name}</h3>
                 </div>
-                <strong>{record.dentist_name}</strong>
+                <div className="dentist-record-owner">
+                  <strong>{record.dentist_name}</strong>
+                  <span className={`dentist-record-status ${record.status || "PendingConfirmation"}`}>
+                    {getStatusLabel(record.status)}
+                  </span>
+                </div>
               </div>
 
               <div className="dentist-record-section">
@@ -96,6 +137,17 @@ function DentistMedicalRecords() {
                   {formatTime(record.re_examination_time)}
                 </strong>
               </div>
+
+              {record.status !== "Confirmed" && (
+                <button
+                  type="button"
+                  className="dentist-record-confirm-button"
+                  onClick={() => handleConfirm(record.id)}
+                  disabled={confirmingId === record.id}
+                >
+                  {confirmingId === record.id ? "Đang xác nhận..." : "Xác nhận hồ sơ"}
+                </button>
+              )}
 
               {record.attachments?.length > 0 && (
                 <div className="dentist-record-section">

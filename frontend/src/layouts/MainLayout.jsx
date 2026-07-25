@@ -35,6 +35,18 @@ function MainLayout() {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [location.pathname, location.search, location.hash]);
 
+  useEffect(() => {
+    // warm up booking API (goi nen de form dat lich mo nhanh hon tren Render Free)
+    const timer = window.setTimeout(() => {
+      Promise.allSettled([
+        axiosClient.get("/dentists/active"),
+        axiosClient.get("/services"),
+      ]);
+    }, 800);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
     <>
       <Navbar />

@@ -2,6 +2,9 @@
 import { Link } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 
+const BOOKING_CACHE_KEY = "nhakhoav_booking_options";
+const BOOKING_CACHE_TTL = 5 * 60 * 1000;
+
 // today min date (khong cho dat lich ngay qua khu)
 const getTodayText = () => {
   const today = new Date();
@@ -9,6 +12,37 @@ const getTodayText = () => {
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+};
+
+// read cache (doc nhanh nha si/dich vu da tai gan day)
+const getBookingCache = () => {
+  try {
+    const raw = sessionStorage.getItem(BOOKING_CACHE_KEY);
+    if (!raw) return null;
+
+    const cache = JSON.parse(raw);
+    if (Date.now() - cache.savedAt > BOOKING_CACHE_TTL) {
+      sessionStorage.removeItem(BOOKING_CACHE_KEY);
+      return null;
+    }
+
+    return cache;
+  } catch {
+    sessionStorage.removeItem(BOOKING_CACHE_KEY);
+    return null;
+  }
+};
+
+// save cache (luu tam de mo form dat lich nhanh hon)
+const setBookingCache = (dentists, services) => {
+  sessionStorage.setItem(
+    BOOKING_CACHE_KEY,
+    JSON.stringify({
+      dentists,
+      services,
+      savedAt: Date.now(),
+    }),
+  );
 };
 
 // booking page (khach dat lich kham online)
@@ -37,16 +71,30 @@ function Booking() {
   useEffect(() => {
     // fetch booking data (lay nha si va dich vu)
     const fetchBookingData = async () => {
+      const cache = getBookingCache();
+
+      if (cache) {
+        setDentists(cache.dentists || []);
+        setServices(cache.services || []);
+        setLoading(false);
+      }
+
       try {
         const [dentistResponse, serviceResponse] = await Promise.all([
           axiosClient.get("/dentists/active"),
           axiosClient.get("/services"),
         ]);
 
-        setDentists(dentistResponse.data.data || []);
-        setServices(serviceResponse.data.data || []);
+        const nextDentists = dentistResponse.data.data || [];
+        const nextServices = serviceResponse.data.data || [];
+
+        setDentists(nextDentists);
+        setServices(nextServices);
+        setBookingCache(nextDentists, nextServices);
       } catch (error) {
-        setMessage("Không thể tải dữ liệu đặt lịch");
+        if (!cache) {
+          setMessage("Không thể tải dữ liệu đặt lịch");
+        }
       } finally {
         setLoading(false);
       }

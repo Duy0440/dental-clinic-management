@@ -746,6 +746,78 @@
   font-size: 0.92rem;
 }
 
+.dentist-tooth-chart {
+  margin: 4px 0 18px;
+  padding: 16px;
+  border: 1px solid #fed7aa;
+  border-radius: 18px;
+  background: #fffaf5;
+}
+
+.dentist-tooth-chart-header label {
+  margin: 0;
+}
+
+.dentist-tooth-chart-header p {
+  margin: 4px 0 12px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.dentist-tooth-chart-form {
+  display: grid;
+  grid-template-columns: 0.9fr 1.2fr 1.5fr auto;
+  gap: 8px;
+  align-items: start;
+}
+
+.dentist-tooth-chart-form select,
+.dentist-tooth-chart-form input {
+  margin-bottom: 0;
+}
+
+.dentist-tooth-chart-form button,
+.dentist-tooth-chart-item button {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #c86d11;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dentist-tooth-chart-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dentist-tooth-chart-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff;
+  color: #334155;
+}
+
+.dentist-tooth-chart-item small {
+  grid-column: 1;
+  color: #64748b;
+}
+
+.dentist-tooth-chart-item button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding: 7px 10px;
+  background: #fff0e6;
+  color: #b45309;
+}
+
 .dentist-unavailable-item {
   border: 1px solid #f3dcc8;
   border-radius: 18px;
@@ -807,6 +879,26 @@
   text-align: right;
 }
 
+.dentist-record-owner {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.dentist-record-status {
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.dentist-record-status.Confirmed {
+  background: #dcfce7;
+  color: #166534;
+}
+
 .dentist-record-section {
   border-top: 1px solid #edf2f7;
   padding-top: 14px;
@@ -838,6 +930,24 @@
 
 .dentist-record-footer strong {
   color: #0f172a;
+}
+
+.dentist-record-confirm-button {
+  width: 100%;
+  margin-top: 14px;
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 14px;
+  background: #e97817;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dentist-record-confirm-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .dentist-attachment-list {
@@ -1132,5 +1242,19 @@
     border: 1px solid #e5e7eb !important;
     border-radius: 18px !important;
     background: #fff !important;
+  }
+
+  .dentist-tooth-chart-form {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dentist-tooth-chart-form button {
+    min-height: 42px;
+  }
+
+  .dentist-tooth-chart-item {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
   }
 }

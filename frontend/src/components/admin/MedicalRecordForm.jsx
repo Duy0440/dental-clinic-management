@@ -1,187 +1,86 @@
 import { useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 
-// today text (lay ngay hien tai cho input date)
-const getTodayText = () => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+const getTodayText = () => new Date().toISOString().slice(0, 10);
 
-function MedicalRecordForm({
-  customerId,
-  appointments,
-  dentists,
-  onClose,
-  onCreated,
-}) {
-  // suggested appointment (chon san lich gan nhat de lap ho so)
-  const suggestedAppointment = appointments.find((appointment) =>
-    ["Confirmed", "Completed"].includes(appointment.status),
-  );
-
+// form benh an cho le tan/admin, nha si se xac nhan sau
+function MedicalRecordForm({ customerId, appointments, dentists, onClose, onCreated }) {
+  const suggestedAppointment = appointments.find((item) => ["Confirmed", "Completed"].includes(item.status));
   const [formData, setFormData] = useState({
     appointment_id: suggestedAppointment?.id || "",
     dentist_id: suggestedAppointment?.dentist_id || "",
+    chief_complaint: "",
+    medical_history: "",
+    allergies: "",
+    clinical_examination: "",
     diagnosis: "",
     treatment: "",
+    treatment_plan: "",
+    prescription: "",
     note: "",
     re_examination_date: "",
     re_examination_time: "",
   });
-
   const [attachmentFile, setAttachmentFile] = useState(null);
+  const [availableTimes, setAvailableTimes] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [availableReExamTimes, setAvailableReExamTimes] = useState([]);
-  const [loadingReExamTimes, setLoadingReExamTimes] = useState(false);
-  const [reExamTimeMessage, setReExamTimeMessage] = useState(
-    "Chọn ngày tái khám để kiểm tra giờ còn trống.",
-  );
-  const todayText = getTodayText();
+  const [message, setMessage] = useState("");
 
-  // handle input (cap nhat form va reset gio tai kham khi doi ngay/nha si)
   const handleChange = (event) => {
     const { name, value } = event.target;
-
-    setFormData((current) => {
-      if (name === "re_examination_date" || name === "dentist_id") {
-        return {
-          ...current,
-          [name]: value,
-          re_examination_time: "",
-        };
-      }
-
-      return {
-        ...current,
-        [name]: value,
-      };
-    });
+    setFormData((current) => ({
+      ...current,
+      [name]: value,
+      ...(name === "dentist_id" || name === "re_examination_date" ? { re_examination_time: "" } : {}),
+    }));
   };
 
   useEffect(() => {
-    // fetch available times (kiem tra gio tai kham con trong)
-    const fetchReExaminationTimes = async () => {
-      if (!formData.re_examination_date || !formData.dentist_id) {
-        setAvailableReExamTimes([]);
-        setReExamTimeMessage("Chọn nha sĩ và ngày tái khám để kiểm tra giờ còn trống.");
+    const loadTimes = async () => {
+      if (!formData.dentist_id || !formData.re_examination_date) {
+        setAvailableTimes([]);
         return;
       }
-
-      setLoadingReExamTimes(true);
-
       try {
-        const params = new URLSearchParams({
-          date: formData.re_examination_date,
-          dentist_id: formData.dentist_id,
+        const response = await axiosClient.get("/appointments/available-times", {
+          params: { dentist_id: formData.dentist_id, date: formData.re_examination_date },
         });
-        const response = await axiosClient.get(
-          `/appointments/available-times?${params.toString()}`,
-        );
-        const times = response.data.data?.available_times || [];
-        const apiMessage = response.data.data?.message;
-
-        setAvailableReExamTimes(times);
-        setReExamTimeMessage(
-          apiMessage ||
-            (times.length
-              ? `Còn ${times.length} khung giờ có thể đề xuất tái khám.`
-              : "Ngày này đã hết giờ phù hợp, vui lòng chọn ngày khác."),
-        );
-        setFormData((current) =>
-          current.re_examination_time && !times.includes(current.re_examination_time)
-            ? { ...current, re_examination_time: "" }
-            : current,
-        );
+        setAvailableTimes(response.data.data?.available_times || []);
       } catch (error) {
-        setAvailableReExamTimes([]);
-        setReExamTimeMessage(
-          error.response?.data?.message ||
-            "Không thể kiểm tra giờ tái khám, vui lòng thử lại.",
-        );
-        setFormData((current) =>
-          current.re_examination_time
-            ? { ...current, re_examination_time: "" }
-            : current,
-        );
-      } finally {
-        setLoadingReExamTimes(false);
+        setAvailableTimes([]);
       }
     };
+    loadTimes();
+  }, [formData.dentist_id, formData.re_examination_date]);
 
-    fetchReExaminationTimes();
-  }, [formData.re_examination_date, formData.dentist_id]);
-
-  const handleFileChange = (event) => {
-    setAttachmentFile(event.target.files[0] || null);
-  };
-
-  // upload attachment (tai anh/tai lieu dieu tri)
-  const uploadAttachment = async (recordId) => {
-    if (!attachmentFile) {
-      return;
-    }
-
-    const uploadData = new FormData();
-    uploadData.append("file", attachmentFile);
-
-    await axiosClient.post(
-      `/medical-records/${recordId}/attachments`,
-      uploadData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      },
-    );
-  };
-
-  // submit record (tao ho so dieu tri va tai file neu co)
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setSaving(true);
-    setErrorMessage("");
-
+    setMessage("");
+    if (!formData.dentist_id) {
+      setMessage("Vui long chon nha si phu trach.");
+      return;
+    }
+    if (formData.re_examination_date && !formData.re_examination_time) {
+      setMessage("Vui long chon gio tai kham con trong.");
+      return;
+    }
     try {
-      if (
-        formData.re_examination_date &&
-        !availableReExamTimes.includes(formData.re_examination_time)
-      ) {
-        setErrorMessage(
-          availableReExamTimes.length
-            ? "Giờ tái khám này không còn trống. Vui lòng chọn một giờ còn trống."
-            : "Ngày tái khám này đã hết giờ phù hợp. Vui lòng chọn ngày khác.",
-        );
-        setSaving(false);
-        return;
-      }
-
+      setSaving(true);
       const response = await axiosClient.post("/medical-records", {
+        ...formData,
         patient_id: Number(customerId),
-        appointment_id: formData.appointment_id
-          ? Number(formData.appointment_id)
-          : null,
+        appointment_id: formData.appointment_id ? Number(formData.appointment_id) : null,
         dentist_id: Number(formData.dentist_id),
-        diagnosis: formData.diagnosis,
-        treatment: formData.treatment,
-        note: formData.note,
-        re_examination_date: formData.re_examination_date || null,
-        re_examination_time: formData.re_examination_time || null,
-        attachment_url: null,
+        status: "PendingConfirmation",
       });
-
-      const newRecord = response.data.data;
-
-      await uploadAttachment(newRecord.id);
+      if (attachmentFile) {
+        const uploadData = new FormData();
+        uploadData.append("file", attachmentFile);
+        await axiosClient.post(`/medical-records/${response.data.data.id}/attachments`, uploadData);
+      }
       await onCreated();
     } catch (error) {
-      setErrorMessage(
-        error.response?.data?.message ||
-          "Không thể lưu kết quả điều trị.",
-      );
+      setMessage(error.response?.data?.message || "Khong the luu benh an.");
     } finally {
       setSaving(false);
     }
@@ -189,189 +88,38 @@ function MedicalRecordForm({
 
   return (
     <div className="admin-modal-overlay">
-      <div className="admin-modal">
+      <div className="admin-modal admin-medical-record-modal">
         <div className="admin-modal-header">
-          <div>
-            <h3>Thêm kết quả điều trị</h3>
-            <p>Lưu chẩn đoán, hướng điều trị và file hình ảnh nếu có.</p>
-          </div>
-
-          <button type="button" onClick={onClose}>
-            ×
-          </button>
+          <div><h3>Tao benh an dieu tri</h3><p>Thong tin nay se duoc nha si kiem tra va xac nhan truoc khi hien thi cho khach.</p></div>
+          <button type="button" onClick={onClose}>x</button>
         </div>
-
         <form onSubmit={handleSubmit}>
-          <label>
-            Lịch khám liên quan
-            <select
-              name="appointment_id"
-              value={formData.appointment_id}
-              onChange={handleChange}
-            >
-              <option value="">Không gắn với lịch hẹn</option>
-
-              {appointments.map((appointment) => (
-                <option key={appointment.id} value={appointment.id}>
-                  #{appointment.id} - {appointment.service_name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Nha sĩ chịu trách nhiệm
-            <select
-              required
-              name="dentist_id"
-              value={formData.dentist_id}
-              onChange={handleChange}
-            >
-              <option value="">Chọn nha sĩ</option>
-
-              {dentists.map((dentist) => (
-                <option key={dentist.id} value={dentist.id}>
-                  {dentist.full_name} - {dentist.specialty}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Chẩn đoán
-            <textarea
-              required
-              rows="3"
-              name="diagnosis"
-              value={formData.diagnosis}
-              onChange={handleChange}
-              placeholder="Ví dụ: sâu răng hàm dưới, viêm nướu nhẹ..."
-            />
-          </label>
-
-          <label>
-            Nội dung điều trị
-            <textarea
-              required
-              rows="3"
-              name="treatment"
-              value={formData.treatment}
-              onChange={handleChange}
-              placeholder="Ví dụ: vệ sinh răng, trám răng, kê thuốc..."
-            />
-          </label>
-
-          <label>
-            Ghi chú chuyên môn
-            <textarea
-              rows="3"
-              name="note"
-              value={formData.note}
-              onChange={handleChange}
-              placeholder="Ghi chú thêm cho lần tái khám hoặc theo dõi."
-            />
-          </label>
-
           <div className="admin-form-row">
-            <label>
-              Ngày tái khám đề xuất
-              <input
-                type="date"
-                name="re_examination_date"
-                value={formData.re_examination_date}
-                min={todayText}
-                onChange={handleChange}
-              />
-            </label>
-
-            <label>
-              Giờ tái khám đề xuất
-              <select
-                name="re_examination_time"
-                value={formData.re_examination_time}
-                onChange={handleChange}
-                disabled={
-                  !formData.re_examination_date ||
-                  !formData.dentist_id ||
-                  loadingReExamTimes ||
-                  availableReExamTimes.length === 0
-                }
-              >
-                <option value="">
-                  {loadingReExamTimes
-                    ? "Äang kiá»ƒm tra giá» trá»‘ng..."
-                    : "Chá»n giá» tÃ¡i khÃ¡m"}
-                </option>
-                {availableReExamTimes.map((time) => (
-                  <option key={time} value={time}>
-                    {time}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <label>Lich kham lien quan<select name="appointment_id" value={formData.appointment_id} onChange={handleChange}><option value="">Khong gan lich hen</option>{appointments.map((item) => <option key={item.id} value={item.id}>#{item.id} - {item.service_name}</option>)}</select></label>
+            <label>Nha si phu trach<select required name="dentist_id" value={formData.dentist_id} onChange={handleChange}><option value="">Chon nha si</option>{dentists.map((item) => <option key={item.id} value={item.id}>{item.full_name} - {item.specialty}</option>)}</select></label>
           </div>
-
-          <div className="booking-time-panel admin-booking-time-panel">
-            <div className="booking-time-panel-header">
-              <strong>Khung giờ tái khám còn trống</strong>
-              <span>Theo nha sĩ chịu trách nhiệm</span>
-            </div>
-            <p
-              className={`booking-time-message ${
-                availableReExamTimes.length ? "is-ok" : "is-warning"
-              }`}
-            >
-              {reExamTimeMessage}
-            </p>
-            {availableReExamTimes.length > 0 && (
-              <div className="booking-time-grid">
-                {availableReExamTimes.map((time) => (
-                  <button
-                    key={time}
-                    type="button"
-                    className={`booking-time-chip ${
-                      formData.re_examination_time === time ? "active" : ""
-                    }`}
-                    onClick={() =>
-                      setFormData((current) => ({
-                        ...current,
-                        re_examination_time: time,
-                      }))
-                    }
-                  >
-                    {time}
-                  </button>
-                ))}
-              </div>
-            )}
+          <label>Ly do kham<textarea name="chief_complaint" value={formData.chief_complaint} onChange={handleChange} rows="2" placeholder="Vi du: dau rang ham duoi, e buot khi an lanh..." /></label>
+          <div className="admin-form-row">
+            <label>Tien su benh<textarea name="medical_history" value={formData.medical_history} onChange={handleChange} rows="2" placeholder="Benh nen, thuoc dang dung neu co" /></label>
+            <label>Di ung<textarea name="allergies" value={formData.allergies} onChange={handleChange} rows="2" placeholder="Di ung thuoc hoac vat lieu neu co" /></label>
           </div>
-
-          <label>
-            Hình ảnh hoặc file đính kèm
-            <input
-              type="file"
-              accept="image/png,image/jpeg,application/pdf"
-              onChange={handleFileChange}
-            />
-          </label>
-
-          <p className="admin-form-hint">
-            Có thể đính kèm ảnh răng, phim chụp hoặc file PDF kết quả.
-          </p>
-
-          {errorMessage && (
-            <p className="admin-error-message">{errorMessage}</p>
-          )}
-
-          <div className="admin-modal-actions">
-            <button type="button" onClick={onClose}>
-              Đóng
-            </button>
-
-            <button type="submit" disabled={saving}>
-              {saving ? "Đang lưu..." : "Lưu kết quả"}
-            </button>
+          <label>Kham lam sang<textarea name="clinical_examination" value={formData.clinical_examination} onChange={handleChange} rows="2" placeholder="Tinh trang quan sat duoc khi tham kham" /></label>
+          <div className="admin-form-row">
+            <label>Chan doan<textarea name="diagnosis" value={formData.diagnosis} onChange={handleChange} rows="3" placeholder="Chan doan ban dau" /></label>
+            <label>Noi dung dieu tri<textarea name="treatment" value={formData.treatment} onChange={handleChange} rows="3" placeholder="Cac buoc da thuc hien" /></label>
           </div>
+          <div className="admin-form-row">
+            <label>Ke hoach dieu tri<textarea name="treatment_plan" value={formData.treatment_plan} onChange={handleChange} rows="2" placeholder="Ke hoach cho lan tiep theo" /></label>
+            <label>Don thuoc/huong dan<textarea name="prescription" value={formData.prescription} onChange={handleChange} rows="2" placeholder="Thuoc va huong dan cham soc neu co" /></label>
+          </div>
+          <label>Ghi chu chuyen mon<textarea name="note" value={formData.note} onChange={handleChange} rows="2" /></label>
+          <div className="admin-form-row">
+            <label>Ngay tai kham<input type="date" name="re_examination_date" min={getTodayText()} value={formData.re_examination_date} onChange={handleChange} /></label>
+            <label>Gio tai kham<select name="re_examination_time" value={formData.re_examination_time} onChange={handleChange} disabled={!formData.re_examination_date}><option value="">Chon gio</option>{availableTimes.map((time) => <option key={time} value={time}>{time}</option>)}</select></label>
+          </div>
+          <label>Tai lieu dinh kem<input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onChange={(event) => setAttachmentFile(event.target.files[0] || null)} /></label>
+          {message && <p className="admin-error-message">{message}</p>}
+          <div className="admin-modal-actions"><button type="button" onClick={onClose}>Dong</button><button type="submit" disabled={saving}>{saving ? "Dang luu..." : "Luu va gui nha si xac nhan"}</button></div>
         </form>
       </div>
     </div>

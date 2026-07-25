@@ -15,6 +15,25 @@ const STATUS_CLASSES = {
   Cancelled: "cancelled",
 };
 
+const TOOTH_CONDITIONS = {
+  normal: "Binh thuong",
+  caries: "Sau rang",
+  filled: "Da tram",
+  root_canal: "Da chua tuy",
+  crown: "Boc rang su",
+  implant: "Implant",
+  missing: "Mat rang",
+  extraction_indicated: "Chi dinh nho",
+  impacted: "Rang moc ngam",
+  periodontal_issue: "Van de nha chu",
+  other: "Khac",
+};
+
+const TOOTH_NUMBERS = [
+  18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28,
+  48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38,
+];
+
 const getTodayText = () => {
   const today = new Date();
   const year = today.getFullYear();
@@ -33,6 +52,12 @@ function DentistAppointments() {
     note: "",
     re_examination_date: "",
     re_examination_time: "",
+  });
+  const [dentalChart, setDentalChart] = useState([]);
+  const [toothInput, setToothInput] = useState({
+    tooth_number: "",
+    condition: "caries",
+    note: "",
   });
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [searchText, setSearchText] = useState("");
@@ -128,6 +153,8 @@ function DentistAppointments() {
       re_examination_time: "",
     });
     setAttachmentFile(null);
+    setDentalChart([]);
+    setToothInput({ tooth_number: "", condition: "caries", note: "" });
     setMessage("");
     setErrorMessage("");
   };
@@ -137,6 +164,22 @@ function DentistAppointments() {
     setAttachmentFile(null);
     setAvailableReExamTimes([]);
     setReExamTimeMessage("Chọn ngày tái khám để kiểm tra giờ còn trống.");
+    setDentalChart([]);
+  };
+
+  // them trang thai rang vao ho so cua ca dieu tri
+  const addToothChart = () => {
+    if (!toothInput.tooth_number) {
+      setErrorMessage("Vui long chon so rang truoc khi them vao so do rang.");
+      return;
+    }
+
+    setDentalChart((current) => [
+      ...current.filter((item) => item.tooth_number !== Number(toothInput.tooth_number)),
+      { ...toothInput, tooth_number: Number(toothInput.tooth_number) },
+    ]);
+    setToothInput({ tooth_number: "", condition: "caries", note: "" });
+    setErrorMessage("");
   };
 
   // handle record form (cap nhat chan doan, dieu tri, tai kham)
@@ -249,11 +292,14 @@ function DentistAppointments() {
         appointment_id: selectedAppointment.id,
         patient_id: selectedAppointment.patient_id,
         dentist_id: selectedAppointment.dentist_id,
+        chief_complaint: selectedAppointment.note || "",
         diagnosis: formData.diagnosis,
         treatment: formData.treatment,
         note: formData.note,
+        dental_chart: dentalChart,
         re_examination_date: formData.re_examination_date || null,
         re_examination_time: formData.re_examination_time || null,
+        status: "Confirmed",
       });
 
       const newRecord = response.data.data;
@@ -543,6 +589,80 @@ function DentistAppointments() {
                     >
                       {time}
                     </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="dentist-tooth-chart">
+              <div className="dentist-tooth-chart-header">
+                <div>
+                  <label>Sơ đồ răng</label>
+                  <p>Ghi nhận các răng cần theo dõi trong ca điều trị này.</p>
+                </div>
+              </div>
+
+              <div className="dentist-tooth-chart-form">
+                <select
+                  value={toothInput.tooth_number}
+                  onChange={(event) =>
+                    setToothInput((current) => ({
+                      ...current,
+                      tooth_number: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="">Chọn số răng</option>
+                  {TOOTH_NUMBERS.map((toothNumber) => (
+                    <option key={toothNumber} value={toothNumber}>
+                      Răng {toothNumber}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={toothInput.condition}
+                  onChange={(event) =>
+                    setToothInput((current) => ({
+                      ...current,
+                      condition: event.target.value,
+                    }))
+                  }
+                >
+                  {Object.entries(TOOTH_CONDITIONS).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+
+                <input
+                  type="text"
+                  value={toothInput.note}
+                  onChange={(event) =>
+                    setToothInput((current) => ({ ...current, note: event.target.value }))
+                  }
+                  placeholder="Ghi chú ngắn (nếu có)"
+                />
+
+                <button type="button" onClick={addToothChart}>Thêm răng</button>
+              </div>
+
+              {dentalChart.length > 0 && (
+                <div className="dentist-tooth-chart-list">
+                  {dentalChart.map((item) => (
+                    <div key={item.tooth_number} className="dentist-tooth-chart-item">
+                      <span><strong>Răng {item.tooth_number}</strong> - {TOOTH_CONDITIONS[item.condition]}</span>
+                      {item.note && <small>{item.note}</small>}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setDentalChart((current) =>
+                            current.filter((tooth) => tooth.tooth_number !== item.tooth_number),
+                          )
+                        }
+                      >
+                        Xóa
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}

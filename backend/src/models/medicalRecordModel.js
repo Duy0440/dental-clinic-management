@@ -1,274 +1,372 @@
-﻿const pool = require("../config/db");
+const pool = require("../config/db");
 
-// record list (lay tat ca ho so dieu tri)
-const getAllMedicalRecords = async () => {
-  const query = `
-    SELECT
-      mr.id,
-      mr.appointment_id,
-      mr.patient_id,
-      mr.dentist_id,
-      mr.diagnosis,
-      mr.treatment,
-      mr.note,
-      TO_CHAR(
-        mr.re_examination_date,
-        'YYYY-MM-DD'
-      ) AS re_examination_date,
-      TO_CHAR(
-        mr.re_examination_date,
-        'DD/MM/YYYY'
-      ) AS re_examination_date_display,
-      mr.re_examination_time,
-      mr.attachment_url,
-      mr.entered_by_user_id,
-      mr.created_at,
-
-      COALESCE(
-        (
-          SELECT json_agg(
-            json_build_object(
-              'id', mra.id,
-              'file_name', mra.file_name,
-              'file_url', mra.file_url,
-              'file_type', mra.file_type,
-              'created_at', mra.created_at
-            )
+const recordSelect = `
+  SELECT
+    mr.*,
+    TO_CHAR(mr.re_examination_date, 'YYYY-MM-DD') AS re_examination_date,
+    TO_CHAR(mr.re_examination_date, 'DD/MM/YYYY') AS re_examination_date_display,
+    p.full_name AS patient_name,
+    p.phone AS patient_phone,
+    p.user_id AS patient_user_id,
+    d.full_name AS dentist_name,
+    d.user_id AS dentist_user_id,
+    u.username AS entered_by_username,
+    confirmer.username AS confirmed_by_username,
+    COALESCE(
+      (
+        SELECT json_agg(
+          json_build_object(
+            'id', mra.id,
+            'file_name', mra.file_name,
+            'file_url', mra.file_url,
+            'file_type', mra.file_type,
+            'created_at', mra.created_at
           )
-          FROM medical_record_attachments mra
-          WHERE mra.medical_record_id = mr.id
-        ),
-        '[]'::json
-      ) AS attachments,
-      p.full_name AS patient_name,
-      d.full_name AS dentist_name,
-      u.username AS entered_by_username
-    FROM medical_records mr
-    JOIN patients p ON mr.patient_id = p.id
-    JOIN dentists d ON mr.dentist_id = d.id
-    LEFT JOIN users u ON mr.entered_by_user_id = u.id
-    ORDER BY mr.id DESC
-  `;
+          ORDER BY mra.id DESC
+        )
+        FROM medical_record_attachments mra
+        WHERE mra.medical_record_id = mr.id
+      ),
+      '[]'::json
+    ) AS attachments,
+    COALESCE(
+      (
+        SELECT json_agg(
+          json_build_object(
+            'id', dce.id,
+            'tooth_number', dce.tooth_number,
+            'condition_code', dce.condition,
+            'treatment_note', dce.treatment_note,
+            'note', dce.note
+          )
+          ORDER BY dce.tooth_number
+        )
+        FROM dental_chart_entries dce
+        WHERE dce.medical_record_id = mr.id
+      ),
+      '[]'::json
+    ) AS teeth
+  FROM medical_records mr
+  JOIN patients p ON p.id = mr.patient_id
+  JOIN dentists d ON d.id = mr.dentist_id
+  LEFT JOIN users u ON u.id = mr.entered_by_user_id
+  LEFT JOIN users confirmer ON confirmer.id = mr.confirmed_by_user_id
+`;
 
-  const result = await pool.query(query);
-  return result.rows;
+// transaction (gom cac thay doi cua mot ho so)
+const withMedicalRecordTransaction = async (callback) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+    const result = await callback(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
-// patient records (lay ket qua dieu tri cua khach)
-const getMedicalRecordsByPatientId = async (patientId) => {
-  const query = `
-    SELECT
-      mr.id,
-      mr.appointment_id,
-      mr.patient_id,
-      mr.dentist_id,
-      mr.diagnosis,
-      mr.treatment,
-      mr.note,
-      TO_CHAR(
-        mr.re_examination_date,
-        'YYYY-MM-DD'
-      ) AS re_examination_date,
-      TO_CHAR(
-        mr.re_examination_date,
-        'DD/MM/YYYY'
-      ) AS re_examination_date_display,
-      mr.re_examination_time,
-      mr.attachment_url,
-      mr.entered_by_user_id,
-      mr.created_at,
+// record list (loc ho so theo vai tro va tu khoa)
+const getMedicalRecords = async (filters = {}) => {
+  const values = [];
+  const where = [];
 
-      COALESCE(
-        (
-          SELECT json_agg(
-            json_build_object(
-              'id', mra.id,
-              'file_name', mra.file_name,
-              'file_url', mra.file_url,
-              'file_type', mra.file_type,
-              'created_at', mra.created_at
-            )
-          )
-          FROM medical_record_attachments mra
-          WHERE mra.medical_record_id = mr.id
-        ),
-        '[]'::json
-      ) AS attachments,
-      d.full_name AS dentist_name,
-      u.username AS entered_by_username
-    FROM medical_records mr
-    JOIN dentists d ON mr.dentist_id = d.id
-    LEFT JOIN users u ON mr.entered_by_user_id = u.id
-    WHERE mr.patient_id = $1
-    ORDER BY mr.id DESC
-  `;
+  const addFilter = (sql, value) => {
+    values.push(value);
+    where.push(sql.replace("?", `$${values.length}`));
+  };
 
-  const result = await pool.query(query, [patientId]);
-  return result.rows;
-};
+  if (filters.dentistId) {
+    addFilter("mr.dentist_id = ?", filters.dentistId);
+  }
 
-// create record (them ket qua dieu tri)
-const createMedicalRecord = async (recordData) => {
-  const {
-    appointment_id,
-    patient_id,
-    dentist_id,
-    diagnosis,
-    treatment,
-    note,
-    re_examination_date,
-    re_examination_time,
-    attachment_url,
-    entered_by_user_id,
-  } = recordData;
+  if (filters.patientId) {
+    addFilter("mr.patient_id = ?", filters.patientId);
+  }
+
+  if (filters.appointmentId) {
+    addFilter("mr.appointment_id = ?", filters.appointmentId);
+  }
+
+  if (filters.status) {
+    addFilter("mr.status = ?", filters.status);
+  }
+
+  if (filters.search?.trim()) {
+    values.push(`%${filters.search.trim()}%`);
+    const placeholder = `$${values.length}`;
+    where.push(
+      `(p.full_name ILIKE ${placeholder}
+        OR p.phone ILIKE ${placeholder}
+        OR d.full_name ILIKE ${placeholder})`,
+    );
+  }
 
   const query = `
-    INSERT INTO medical_records (
-      appointment_id,
-      patient_id,
-      dentist_id,
-      diagnosis,
-      treatment,
-      note,
-      re_examination_date,
-      re_examination_time,
-      attachment_url,
-      entered_by_user_id
-    )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-    RETURNING
-      id,
-      appointment_id,
-      patient_id,
-      dentist_id,
-      diagnosis,
-      treatment,
-      note,
-      TO_CHAR(
-        re_examination_date,
-        'YYYY-MM-DD'
-      ) AS re_examination_date,
-      TO_CHAR(
-        re_examination_date,
-        'DD/MM/YYYY'
-      ) AS re_examination_date_display,
-      re_examination_time,
-      attachment_url,
-      entered_by_user_id,
-      created_at
+    ${recordSelect}
+    ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+    ORDER BY mr.created_at DESC, mr.id DESC
   `;
-
-  const values = [
-    appointment_id || null,
-    patient_id,
-    dentist_id,
-    diagnosis || null,
-    treatment || null,
-    note || null,
-    re_examination_date || null,
-    re_examination_time || null,
-    attachment_url || null,
-    entered_by_user_id,
-  ];
 
   const result = await pool.query(query, values);
+  return result.rows;
+};
+
+// record detail (lay day du mot ho so)
+const getMedicalRecordById = async (recordId, db = pool) => {
+  const result = await db.query(
+    `${recordSelect} WHERE mr.id = $1`,
+    [recordId],
+  );
   return result.rows[0];
 };
 
-// check refs (kiem tra appointment, patient, dentist)
+// patient records (lay ho so theo khach hang)
+const getMedicalRecordsByPatientId = async (
+  patientId,
+  options = {},
+) => {
+  return getMedicalRecords({
+    patientId,
+    dentistId: options.dentistId,
+    status: options.confirmedOnly ? "Confirmed" : options.status,
+  });
+};
+
+// create record (tao ho so dieu tri)
+const createMedicalRecord = async (data, db = pool) => {
+  const fields = [
+    "appointment_id",
+    "patient_id",
+    "dentist_id",
+    "chief_complaint",
+    "medical_history",
+    "allergies",
+    "clinical_examination",
+    "diagnosis",
+    "treatment",
+    "treatment_plan",
+    "prescription",
+    "note",
+    "re_examination_date",
+    "re_examination_time",
+    "attachment_url",
+    "entered_by_user_id",
+    "status",
+  ];
+  const values = fields.map((field) => data[field] ?? null);
+  const placeholders = fields.map((_, index) => `$${index + 1}`);
+
+  const result = await db.query(
+    `
+      INSERT INTO medical_records (${fields.join(", ")})
+      VALUES (${placeholders.join(", ")})
+      RETURNING *
+    `,
+    values,
+  );
+
+  return result.rows[0];
+};
+
+// update record (cap nhat noi dung khi chua xac nhan)
+const updateMedicalRecord = async (recordId, data, db = pool) => {
+  const result = await db.query(
+    `
+      UPDATE medical_records
+      SET
+        patient_id = $2,
+        dentist_id = $3,
+        chief_complaint = $4,
+        medical_history = $5,
+        allergies = $6,
+        clinical_examination = $7,
+        diagnosis = $8,
+        treatment = $9,
+        treatment_plan = $10,
+        prescription = $11,
+        note = $12,
+        re_examination_date = $13,
+        re_examination_time = $14,
+        attachment_url = $15,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING *
+    `,
+    [
+      recordId,
+      data.patient_id,
+      data.dentist_id,
+      data.chief_complaint || null,
+      data.medical_history || null,
+      data.allergies || null,
+      data.clinical_examination || null,
+      data.diagnosis || null,
+      data.treatment || null,
+      data.treatment_plan || null,
+      data.prescription || null,
+      data.note || null,
+      data.re_examination_date || null,
+      data.re_examination_time || null,
+      data.attachment_url || null,
+    ],
+  );
+
+  return result.rows[0];
+};
+
+// status update (gui duyet hoac xac nhan)
+const updateMedicalRecordStatus = async (
+  recordId,
+  status,
+  confirmedByUserId,
+  db = pool,
+) => {
+  const result = await db.query(
+    `
+      UPDATE medical_records
+      SET
+        status = $2,
+        confirmed_by_user_id = CASE WHEN $2 = 'Confirmed' THEN $3 ELSE NULL END,
+        confirmed_at = CASE WHEN $2 = 'Confirmed' THEN CURRENT_TIMESTAMP ELSE NULL END,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING *
+    `,
+    [recordId, status, confirmedByUserId || null],
+  );
+  return result.rows[0];
+};
+
+// check refs (kiem tra khach, nha si va lich hen)
 const checkMedicalRecordReferences = async (
   patientId,
   dentistId,
   appointmentId,
+  db = pool,
 ) => {
-  const patientQuery = `
-    SELECT id
-    FROM patients
-    WHERE id = $1
-  `;
+  const [patientResult, dentistResult] = await Promise.all([
+    db.query("SELECT id, user_id FROM patients WHERE id = $1", [patientId]),
+    db.query(
+      `
+        SELECT d.id, d.user_id, d.is_active, COALESCE(u.is_active, TRUE) AS user_is_active
+        FROM dentists d
+        LEFT JOIN users u ON u.id = d.user_id
+        WHERE d.id = $1
+      `,
+      [dentistId],
+    ),
+  ]);
 
-  const dentistQuery = `
-    SELECT id
-    FROM dentists
-    WHERE id = $1
-  `;
-
-  const patientResult = await pool.query(patientQuery, [patientId]);
-  const dentistResult = await pool.query(dentistQuery, [dentistId]);
-
-  let appointmentExists = true;
-
+  let appointment = null;
   if (appointmentId) {
-    const appointmentQuery = `
-      SELECT id
-      FROM appointments
-      WHERE id = $1
-        AND patient_id = $2
-    `;
-
-    const appointmentResult = await pool.query(appointmentQuery, [
-      appointmentId,
-      patientId,
-    ]);
-
-    appointmentExists = appointmentResult.rows.length > 0;
+    const appointmentResult = await db.query(
+      `
+        SELECT id, patient_id, dentist_id, status
+        FROM appointments
+        WHERE id = $1
+      `,
+      [appointmentId],
+    );
+    appointment = appointmentResult.rows[0] || null;
   }
 
   return {
-    patientExists: patientResult.rows.length > 0,
-    dentistExists: dentistResult.rows.length > 0,
-    appointmentExists,
+    patient: patientResult.rows[0] || null,
+    dentist: dentistResult.rows[0] || null,
+    appointment,
   };
 };
 
-// find by appointment (tim ho so theo lich hen)
-const findMedicalRecordByAppointmentId = async (appointmentId) => {
-  if (!appointmentId) {
-    return null;
-  }
-
-  const query = `
-    SELECT id
-    FROM medical_records
-    WHERE appointment_id = $1
-  `;
-
-  const result = await pool.query(query, [appointmentId]);
-  return result.rows[0];
+// find by appointment (chan mot lich co hai ho so)
+const findMedicalRecordByAppointmentId = async (
+  appointmentId,
+  db = pool,
+) => {
+  if (!appointmentId) return null;
+  const result = await db.query(
+    "SELECT id, status FROM medical_records WHERE appointment_id = $1",
+    [appointmentId],
+  );
+  return result.rows[0] || null;
 };
 
 // re-exam conflict (kiem tra trung lich tai kham)
 const checkReExaminationConflict = async (
   dentistId,
-  reExaminationDate,
-  reExaminationTime,
+  date,
+  time,
+  excludeRecordId,
+  db = pool,
 ) => {
-  if (!dentistId || !reExaminationDate || !reExaminationTime) {
-    return false;
-  }
+  if (!dentistId || !date || !time) return false;
 
-  const query = `
-    SELECT id
-    FROM medical_records
-    WHERE dentist_id = $1
-      AND re_examination_date = $2
-      AND re_examination_time = $3
-  `;
+  const result = await db.query(
+    `
+      SELECT id
+      FROM medical_records
+      WHERE dentist_id = $1
+        AND re_examination_date = $2
+        AND re_examination_time = $3
+        AND ($4::integer IS NULL OR id <> $4)
+    `,
+    [dentistId, date, time, excludeRecordId || null],
+  );
+  return result.rowCount > 0;
+};
 
-  const result = await pool.query(query, [
-    dentistId,
-    reExaminationDate,
-    reExaminationTime,
-  ]);
+// complete appointment (chi chay sau khi nha si xac nhan)
+const completeAppointment = async (appointmentId, db = pool) => {
+  if (!appointmentId) return null;
+  const result = await db.query(
+    `
+      UPDATE appointments
+      SET status = 'Completed'
+      WHERE id = $1
+      RETURNING *
+    `,
+    [appointmentId],
+  );
+  return result.rows[0] || null;
+};
 
-  return result.rows.length > 0;
+// assign dentist (gan nha si cho lich chua phan cong)
+const assignAppointmentDentist = async (
+  appointmentId,
+  dentistId,
+  db = pool,
+) => {
+  if (!appointmentId) return null;
+
+  const result = await db.query(
+    `
+      UPDATE appointments
+      SET dentist_id = $2
+      WHERE id = $1
+        AND dentist_id IS NULL
+      RETURNING *
+    `,
+    [appointmentId, dentistId],
+  );
+
+  return result.rows[0] || null;
 };
 
 module.exports = {
-  getAllMedicalRecords,
+  withMedicalRecordTransaction,
+  getMedicalRecords,
+  getMedicalRecordById,
   getMedicalRecordsByPatientId,
   createMedicalRecord,
+  updateMedicalRecord,
+  updateMedicalRecordStatus,
   checkMedicalRecordReferences,
   findMedicalRecordByAppointmentId,
   checkReExaminationConflict,
+  completeAppointment,
+  assignAppointmentDentist,
 };
