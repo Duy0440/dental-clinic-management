@@ -42,7 +42,7 @@ function ProtectedCustomerRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (user.role !== "customer" || !user.patient_id) {
+  if (user.role !== "customer") {
     return <Navigate to="/" replace />;
   }
 

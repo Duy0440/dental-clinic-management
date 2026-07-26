@@ -3,6 +3,7 @@ const {
   listPatients,
   addPatient,
   getPatientDetail,
+  getMyPatientProfile,
   createAccountForPatient,
 } = require("../controllers/patientController");
 const {
@@ -14,6 +15,7 @@ const router = express.Router();
 
 // patient routes (ho so khach hang va tao tai khoan)
 router.get("/", verifyToken, authorizeRoles("admin", "dentist"), listPatients);
+router.get("/me", verifyToken, authorizeRoles("customer"), getMyPatientProfile);
 
 router.get(
   "/:patientId",

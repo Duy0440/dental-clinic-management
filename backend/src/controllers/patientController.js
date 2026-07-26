@@ -92,6 +92,29 @@ const getPatientDetail = async (req, res) => {
   }
 };
 
+// my profile (lay ho so khach hang cua tai khoan dang nhap)
+const getMyPatientProfile = async (req, res) => {
+  try {
+    const patient = await findPatientByUserId(req.user.id);
+
+    if (!patient) {
+      return res.status(404).json({
+        message: "Customer profile not found",
+      });
+    }
+
+    res.status(200).json({
+      message: "Customer profile fetched successfully",
+      data: patient,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
 // create account (tạo tài khoản cho khách)
 const createAccountForPatient = async (req, res) => {
   try {
@@ -157,5 +180,6 @@ module.exports = {
   listPatients,
   addPatient,
   getPatientDetail,
+  getMyPatientProfile,
   createAccountForPatient,
 };

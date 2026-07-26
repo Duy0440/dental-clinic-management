@@ -3,6 +3,7 @@ const MORNING_START = 8 * 60;
 const MORNING_END = 12 * 60;
 const AFTERNOON_START = 13 * 60 + 30;
 const ONLINE_BOOKING_END = 18 * 60;
+const VIETNAM_TIME_OFFSET_MINUTES = 7 * 60;
 
 const padTime = (value) => String(value).padStart(2, "0");
 
@@ -14,12 +15,21 @@ const minutesToTime = (minutes) => {
 
 const normalizeTime = (value) => (value ? String(value).slice(0, 5) : null);
 
+const getVietnamNow = () => {
+  return new Date(Date.now() + VIETNAM_TIME_OFFSET_MINUTES * 60 * 1000);
+};
+
 const getTodayText = () => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = padTime(today.getMonth() + 1);
-  const day = padTime(today.getDate());
+  const today = getVietnamNow();
+  const year = today.getUTCFullYear();
+  const month = padTime(today.getUTCMonth() + 1);
+  const day = padTime(today.getUTCDate());
   return `${year}-${month}-${day}`;
+};
+
+const getCurrentTimeText = () => {
+  const now = getVietnamNow();
+  return `${padTime(now.getUTCHours())}:${padTime(now.getUTCMinutes())}`;
 };
 
 const parseDateText = (dateText) => {
@@ -35,6 +45,17 @@ const parseDateText = (dateText) => {
 const isPastClinicDate = (dateText) => {
   if (!dateText) return false;
   return String(dateText).slice(0, 10) < getTodayText();
+};
+
+const isTodayClinicDate = (dateText) => {
+  return String(dateText || "").slice(0, 10) === getTodayText();
+};
+
+const isPastClinicDateTime = (dateText, timeValue) => {
+  const normalizedTime = normalizeTime(timeValue);
+  if (!dateText || !normalizedTime) return false;
+  return isPastClinicDate(dateText) ||
+    (isTodayClinicDate(dateText) && normalizedTime <= getCurrentTimeText());
 };
 
 const getClinicDayInfo = (dateText) => {
@@ -90,10 +111,17 @@ const getClinicBookingTimeOptions = (dateText) => {
     return [];
   }
 
-  return [
+  const timeOptions = [
     ...buildRange(MORNING_START, MORNING_END),
     ...buildRange(AFTERNOON_START, ONLINE_BOOKING_END),
   ];
+
+  if (isTodayClinicDate(dateText)) {
+    const currentTime = getCurrentTimeText();
+    return timeOptions.filter((time) => time > currentTime);
+  }
+
+  return timeOptions;
 };
 
 const isClinicBookingTime = (dateText, timeValue) => {
@@ -107,5 +135,6 @@ module.exports = {
   getTodayText,
   isClinicBookingTime,
   isPastClinicDate,
+  isPastClinicDateTime,
   normalizeTime,
 };

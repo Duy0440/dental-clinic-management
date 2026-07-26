@@ -35,6 +35,7 @@ const {
   getClinicDayInfo,
   isClinicBookingTime,
   isPastClinicDate,
+  isPastClinicDateTime,
   normalizeTime,
 } = require("../utils/clinicSchedule");
 
@@ -308,6 +309,12 @@ const addAppointment = async (req, res) => {
     if (isPastClinicDate(appointment_date)) {
       return res.status(400).json({
         message: "Không thể đặt lịch cho ngày đã qua.",
+      });
+    }
+
+    if (isPastClinicDateTime(appointment_date, normalizedAppointmentTime)) {
+      return res.status(400).json({
+        message: "Không thể đặt lịch cho khung giờ đã qua. Bạn vui lòng chọn giờ còn trống phía sau thời điểm hiện tại.",
       });
     }
 

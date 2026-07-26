@@ -8,6 +8,7 @@ function MedicalResults() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   const [records, setRecords] = useState([]);
+  const [patientId, setPatientId] = useState(user?.patient_id || null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
@@ -15,8 +16,32 @@ function MedicalResults() {
   useEffect(() => {
     const fetchMedicalResults = async () => {
       try {
+        let activePatientId = patientId;
+
+        if (!activePatientId) {
+          const profileResponse = await axiosClient.get("/patients/me");
+          const patientProfile = profileResponse.data.data;
+          activePatientId = patientProfile?.id;
+
+          if (activePatientId) {
+            setPatientId(activePatientId);
+            localStorage.setItem(
+              "user",
+              JSON.stringify({
+                ...user,
+                patient_id: activePatientId,
+              }),
+            );
+          }
+        }
+
+        if (!activePatientId) {
+          setMessage("Tài khoản chưa có hồ sơ khách hàng.");
+          return;
+        }
+
         const response = await axiosClient.get(
-          `/medical-records/patient/${user.patient_id}`,
+          `/medical-records/patient/${activePatientId}`,
         );
 
         setRecords(response.data.data || []);
@@ -29,14 +54,9 @@ function MedicalResults() {
       }
     };
 
-    if (user?.patient_id) {
-      fetchMedicalResults();
-      return;
-    }
+    fetchMedicalResults();
 
-    setLoading(false);
-    setMessage("Tài khoản chưa có hồ sơ khách hàng.");
-  }, [user?.patient_id]);
+  }, [patientId, user?.id]);
 
   const formatTime = (time) => {
     return time ? String(time).slice(0, 5) : "";

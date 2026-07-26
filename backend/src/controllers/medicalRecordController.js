@@ -30,6 +30,7 @@ const {
   getClinicDayInfo,
   isClinicBookingTime,
   isPastClinicDate,
+  isPastClinicDateTime,
   normalizeTime,
 } = require("../utils/clinicSchedule");
 
@@ -125,6 +126,9 @@ const validateReExamination = async (data, recordId) => {
   }
   if (!data.re_examination_date) return {};
   if (isPastClinicDate(data.re_examination_date)) return { message: "Re-examination date cannot be in the past" };
+  if (isPastClinicDateTime(data.re_examination_date, data.re_examination_time)) {
+    return { message: "Re-examination time cannot be in the past" };
+  }
   if (!isClinicBookingTime(data.re_examination_date, data.re_examination_time)) {
     const day = getClinicDayInfo(data.re_examination_date);
     return { message: day.isClosed ? day.message : "Re-examination time must be within clinic booking hours" };
@@ -340,7 +344,10 @@ const confirmMedicalRecord = async (req, res) => {
     });
     return res.json({ message: "Medical record confirmed", data });
   } catch (error) {
-    return res.status(500).json({ message: "Cannot confirm medical record" });
+    console.error("confirmMedicalRecord failed:", error);
+    return res.status(500).json({
+      message: error.message || "Cannot confirm medical record",
+    });
   }
 };
 
