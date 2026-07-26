@@ -5,10 +5,6 @@ const SHORT_SAFETY_MESSAGE =
   "Lưu ý: Nội dung này chỉ để tham khảo, không thay thế chẩn đoán trực tiếp của nha sĩ.";
 
 const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 5000);
-const {
-  retrievePublicContext,
-  toPublicSource,
-} = require("./publicRetrievalService");
 
 // quick replies (goi y cau hoi mac dinh)
 const defaultSuggestions = [
@@ -319,70 +315,6 @@ const hasAny = (text, keywords) => keywords.some((keyword) => text.includes(keyw
 const hasWordAny = (text, keywords) =>
   keywords.some((keyword) => new RegExp(`(^|\\s)${keyword}(\\s|$)`).test(text));
 
-const detectProtectedIntent = (text) => ({
-  asksForPrice: isPriceQuestion(text),
-  asksForPrompt: hasAny(text, [
-    "bo qua quy tac",
-    "bo qua huong dan",
-    "system prompt",
-    "developer message",
-    "api key",
-    "khoa api",
-    "tiet lo prompt",
-    "xem prompt",
-  ]),
-  asksForFabrication: hasAny(text, [
-    "tu bia",
-    "bia gia",
-    "tu dat gia",
-    "gia dinh gia",
-    "khong can du lieu",
-  ]),
-  asksForMedication: hasAny(text, [
-    "ke don",
-    "lieu dung",
-    "lieu uong",
-    "uong thuoc gi",
-    "cho toi thuoc",
-    "thuoc nao",
-    "khang sinh gi",
-  ]),
-  asksForDiagnosis: hasAny(text, [
-    "chac chan",
-    "chan doan",
-    "co phai viem tuy",
-    "bi benh gi",
-    "ket luan",
-    "doc phim",
-    "x quang",
-  ]),
-  asksForHours: hasAny(text, [
-    "gio lam viec",
-    "lam viec may gio",
-    "may gio mo cua",
-    "may gio dong cua",
-    "mo cua",
-  ]),
-  asksForContact: hasAny(text, [
-    "dia chi",
-    "hotline",
-    "so dien thoai",
-    "email",
-    "lien he",
-  ]),
-  asksForDentist: hasAny(text, [
-    "bac si",
-    "nha si",
-    "bsi",
-    "chuyen mon",
-  ]),
-  asksForServiceList: hasAny(text, [
-    "dich vu nao",
-    "co dich vu gi",
-    "dich vu nha khoa",
-  ]),
-});
-
 const hasSymptomQuestionIntent = (text) =>
   hasAny(text, [
     "toi bi",
@@ -521,157 +453,10 @@ const createAnswer = (mainAnswer) => {
   return `${mainAnswer}\n\n${SHORT_SAFETY_MESSAGE}`;
 };
 
-const createResult = (answer, suggestions = defaultSuggestions, matched = true) => ({
+const createResult = (answer, suggestions = defaultSuggestions) => ({
   answer: createAnswer(answer),
   suggestions,
-  matched,
 });
-
-const createChatbotResponse = ({
-  answer,
-  suggestions = defaultSuggestions,
-  context = [],
-  confidence = "high",
-  provider = "internal_knowledge",
-}) => ({
-  answer,
-  sources: context.map(toPublicSource),
-  confidence,
-  provider,
-  suggestions,
-});
-
-const findContext = (context, type, id) =>
-  context.find((item) => item.type === type && (!id || item.id === id));
-
-const buildProtectedResponse = (intent, fallbackResult) => {
-  if (intent.asksForPrompt) {
-    return createChatbotResponse({
-      answer:
-        "Mình không thể cung cấp system prompt, API key hoặc bỏ qua các quy tắc an toàn. Mình vẫn có thể hỗ trợ bạn về kiến thức nha khoa và thông tin công khai của phòng khám.",
-      suggestions: fallbackResult.suggestions,
-      provider: "safety_rules",
-    });
-  }
-
-  if (intent.asksForMedication) {
-    return createChatbotResponse({
-      answer: createAnswer(
-        "Mình không thể kê thuốc kháng sinh, chỉ định tên thuốc hoặc liều uống cá nhân qua chatbot. Việc dùng thuốc cần dựa trên thăm khám, tiền sử bệnh, dị ứng và các thuốc bạn đang sử dụng. Bạn nên liên hệ nha sĩ hoặc đặt lịch khám để được hướng dẫn an toàn.",
-      ),
-      suggestions: fallbackResult.suggestions,
-      provider: "safety_rules",
-    });
-  }
-
-  if (intent.asksForDiagnosis) {
-    return createChatbotResponse({
-      answer: createAnswer(
-        "Không thể khẳng định viêm tủy chỉ từ mô tả trực tuyến. Đau răng có thể liên quan sâu răng, viêm nướu, viêm tủy, răng nứt, răng khôn hoặc nhiễm trùng; nha sĩ cần khám trực tiếp và đôi khi chụp phim mới có thể kết luận. Nếu đau nhiều, đau về đêm, sưng, sốt hoặc có mủ, bạn nên đi khám sớm.",
-      ),
-      suggestions: fallbackResult.suggestions,
-      provider: "safety_rules",
-    });
-  }
-
-  return null;
-};
-
-const buildClinicResponse = (context, intent, fallbackResult) => {
-  const service = context.find((item) => item.type === "service");
-
-  if (intent.asksForFabrication || intent.asksForPrice) {
-    if (!service) {
-      return createChatbotResponse({
-        answer:
-          "Mình không có giá chính thức đã được cập nhật cho dịch vụ bạn hỏi nên không thể tự tạo con số. Bạn nên liên hệ phòng khám hoặc đặt lịch tư vấn để nhận báo giá phù hợp với tình trạng thực tế.",
-        suggestions: fallbackResult.suggestions,
-        confidence: "low",
-        provider: "clinic_data",
-      });
-    }
-
-    const price = service.metadata?.price;
-    const hasPublishedPrice =
-      Number.isFinite(Number(price)) && Number(price) > 0;
-    const priceAnswer = hasPublishedPrice
-      ? `Giá đang ghi nhận trong hệ thống cho dịch vụ ${service.title} là ${new Intl.NumberFormat("vi-VN").format(Number(price))} VNĐ. Chi phí thực tế cần được phòng khám xác nhận theo tình trạng và kế hoạch điều trị.`
-      : `Dịch vụ ${service.title} có trong hệ thống, nhưng giá hiện chưa được cập nhật trong dữ liệu công khai. Mình không tự suy đoán giá; bạn nên liên hệ phòng khám hoặc đặt lịch tư vấn để nhận thông tin chính xác.`;
-
-    return createChatbotResponse({
-      answer: intent.asksForFabrication
-        ? `Mình không thể tự bịa giá. ${priceAnswer}`
-        : priceAnswer,
-      suggestions: fallbackResult.suggestions,
-      context: [service],
-      provider: "clinic_data",
-    });
-  }
-
-  if (intent.asksForHours) {
-    const hours = findContext(context, "clinic", "clinic-hours");
-    return hours
-      ? createChatbotResponse({
-          answer: hours.content,
-          suggestions: fallbackResult.suggestions,
-          context: [hours],
-          provider: "clinic_data",
-        })
-      : createChatbotResponse({
-          answer:
-            "Mình chưa có thông tin giờ làm việc chính thức đã được cập nhật. Bạn nên liên hệ phòng khám để xác nhận trước khi đến.",
-          suggestions: fallbackResult.suggestions,
-          confidence: "low",
-          provider: "clinic_data",
-        });
-  }
-
-  if (intent.asksForContact) {
-    const contact = findContext(context, "clinic", "clinic-contact");
-    return contact
-      ? createChatbotResponse({
-          answer: contact.content,
-          suggestions: fallbackResult.suggestions,
-          context: [contact],
-          provider: "clinic_data",
-        })
-      : null;
-  }
-
-  if (intent.asksForDentist) {
-    const dentist = context.find((item) => item.type === "dentist");
-    return dentist
-      ? createChatbotResponse({
-          answer: `${dentist.title}: ${dentist.content}`,
-          suggestions: fallbackResult.suggestions,
-          context: [dentist],
-          provider: "clinic_data",
-        })
-      : createChatbotResponse({
-          answer:
-            "Mình chưa tìm thấy nha sĩ phù hợp trong dữ liệu công khai hiện tại. Bạn vui lòng kiểm tra lại tên hoặc liên hệ phòng khám để được hỗ trợ.",
-          suggestions: fallbackResult.suggestions,
-          confidence: "low",
-          provider: "clinic_data",
-        });
-  }
-
-  if (intent.asksForServiceList) {
-    const services = context.filter((item) => item.type === "service");
-    return services.length
-      ? createChatbotResponse({
-          answer: `Các dịch vụ đang hoạt động phù hợp với câu hỏi gồm: ${services
-            .map((item) => item.title)
-            .join(", ")}.`,
-          suggestions: fallbackResult.suggestions,
-          context: services,
-          provider: "clinic_data",
-        })
-      : null;
-  }
-
-  return null;
-};
 
 // internal knowledge base (bo tri thuc noi bo cho chatbot)
 const DENTAL_KNOWLEDGE_CONTEXT = `
@@ -776,8 +561,6 @@ const getTopicFromText = (text) => {
       "scan",
       "shining",
       "shinning",
-      "may quet",
-      "quet trong mieng",
       "lay dau ky thuat so",
       "lay dau so",
       "noi hap",
@@ -1329,13 +1112,6 @@ const findRuleBasedReply = (message, history = []) => {
     );
   }
 
-  if (hasAny(text, ["cao voi", "lay cao rang"])) {
-    return createResult(
-      "Cạo vôi răng giúp loại bỏ mảng bám và vôi răng đã cứng hóa ở bề mặt răng và dưới viền nướu. Việc này hỗ trợ giảm viêm nướu, hôi miệng và tình trạng nướu dễ chảy máu. Nha sĩ cần kiểm tra tình trạng răng nướu để tư vấn tần suất phù hợp cho từng người.",
-      suggestionGroups.generalCare,
-    );
-  }
-
   if (topic === "conditionOverview") {
     return createResult(
       "Nhóm bạn hỏi gồm nhiều bệnh lý răng miệng khác nhau, nên mình tách ngắn gọn để dễ hiểu:\n\nSâu răng thường bắt đầu từ lỗ sâu hoặc ê buốt khi ăn lạnh/ngọt; nhẹ thì trám, nặng vào tủy có thể cần chữa tủy. Viêm nướu là nướu đỏ, sưng, dễ chảy máu; thường liên quan mảng bám/vôi răng. Nha chu là giai đoạn nặng hơn, có thể tụt nướu, tiêu xương, hôi miệng và răng lung lay. Viêm tủy hay gây đau tự phát, đau về đêm, đau kéo dài sau lạnh/nóng. Ê buốt có thể do mòn men, tụt nướu, sâu răng hoặc nứt răng. Hôi miệng thường gặp do vôi răng, viêm nướu, lưỡi bẩn, sâu răng hoặc khô miệng.\n\nNếu chỉ muốn phòng ngừa: chải răng đúng cách, làm sạch kẽ răng, cạo vôi định kỳ và khám khoảng 6 tháng/lần. Nếu đã đau nhiều, sưng, có mủ, sốt, răng lung lay hoặc chảy máu nướu kéo dài thì nên đặt lịch khám sớm.",
@@ -1491,7 +1267,7 @@ const findRuleBasedReply = (message, history = []) => {
       );
     }
 
-    if (hasAny(text, ["scan", "shining", "shinning", "may quet", "quet trong mieng", "lay dau ky thuat so", "lay dau so"])) {
+    if (hasAny(text, ["scan", "shining", "shinning", "lay dau ky thuat so", "lay dau so"])) {
       return createResult(
         "Máy scan Shinning 3D dùng để lấy dấu răng kỹ thuật số bằng camera trong miệng, thay cho cách lấy dấu cao su truyền thống trong nhiều trường hợp. Dữ liệu scan giúp bác sĩ và khách hàng xem hình dạng răng trực quan hơn, hỗ trợ tư vấn răng sứ, veneer, chỉnh nha, implant và phục hình.\n\nĐiểm lợi cho khách là giảm cảm giác khó chịu khi lấy dấu, dễ theo dõi hình ảnh trên màn hình và thuận tiện khi trao đổi phương án điều trị. Tuy nhiên, scan vẫn cần đi cùng khám lâm sàng và chỉ định của nha sĩ.",
         suggestionGroups.equipment,
@@ -1731,8 +1507,6 @@ const findRuleBasedReply = (message, history = []) => {
 
   return createResult(
     "Mình chưa nắm hết ý bạn. Bạn nói rõ hơn một chút được không: bạn đang hỏi về triệu chứng đau/ê, dịch vụ điều trị, chi phí hay muốn so sánh phương án nào?\n\nNếu đang khó chịu ở răng, bạn mô tả giúp mình vị trí răng, đau bao lâu và có sưng/chảy máu/sốt không nhé. Mình sẽ giải thích hướng xử lý cơ bản trước khi bạn đặt lịch khám.",
-    defaultSuggestions,
-    false,
   );
 };
 
@@ -1844,42 +1618,13 @@ const generateDentalReply = async (message, history = []) => {
   const normalizedMessage = normalizeText(message);
   const detectedTopic = getTopic(normalizedMessage, history);
   const fallbackResult = findRuleBasedReply(message, history);
-  const protectedIntent = detectProtectedIntent(normalizedMessage);
-  const protectedResponse = buildProtectedResponse(
-    protectedIntent,
-    fallbackResult,
-  );
 
-  if (protectedResponse) {
-    return protectedResponse;
-  }
-
-  const needsClinicData =
-    protectedIntent.asksForPrice ||
-    protectedIntent.asksForFabrication ||
-    protectedIntent.asksForHours ||
-    protectedIntent.asksForContact ||
-    protectedIntent.asksForDentist ||
-    protectedIntent.asksForServiceList;
-
-  if (needsClinicData) {
-    const context = await retrievePublicContext(message, 5);
-    const clinicResponse = buildClinicResponse(
-      context,
-      protectedIntent,
-      fallbackResult,
-    );
-
-    if (clinicResponse) {
-      return clinicResponse;
-    }
-  }
-
-  if (!normalizedMessage || isGreetingMessage(normalizedMessage) || fallbackResult.matched) {
-    return createChatbotResponse({
+  if (!normalizedMessage || isGreetingMessage(normalizedMessage)) {
+    return {
       answer: fallbackResult.answer,
+      source: "rule_based",
       suggestions: fallbackResult.suggestions,
-    });
+    };
   }
 
   try {
@@ -1889,25 +1634,24 @@ const generateDentalReply = async (message, history = []) => {
     });
 
     if (geminiReply) {
-      return createChatbotResponse({
+      return {
         answer: createAnswer(geminiReply),
+        source: "gemini",
         suggestions: fallbackResult.suggestions,
-        confidence: "medium",
-        provider: "gemini",
-      });
+      };
     }
   } catch (error) {
     // Nếu AI API lỗi, hệ thống vẫn dùng bộ tri thức nội bộ để demo không bị đứng.
   }
 
-  return createChatbotResponse({
+  return {
     answer: fallbackResult.answer,
+    source: "rule_based",
     suggestions: fallbackResult.suggestions,
-    confidence: "low",
-    provider: "fallback",
-  });
+  };
 };
 
 module.exports = {
   generateDentalReply,
 };
+

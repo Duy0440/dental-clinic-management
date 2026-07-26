@@ -1,9 +1,9 @@
-const express = require("express");
+﻿const express = require("express");
 const { getChatbotReply } = require("../controllers/chatbotController");
-const { createPublicRateLimit } = require("../middlewares/publicRateLimit");
 
 const router = express.Router();
 
-router.post("/", createPublicRateLimit({ limit: 15 }), getChatbotReply);
+// chatbot routes (nhan cau hoi va tra loi tu van)
+router.post("/", getChatbotReply);
 
 module.exports = router;

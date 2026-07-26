@@ -1,26 +1,29 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 
+// quick suggestions (cau hoi goi y ban dau)
 const defaultSuggestions = [
-  "Niềng răng giá bao nhiêu?",
-  "Cạo vôi bao nhiêu tiền?",
-  "Phòng khám làm việc mấy giờ?",
+  "Tôi bị đau răng quá",
+  "Răng tôi bị gãy rồi",
+  "Răng lung lay sắp rớt",
+  "Nướu bị chảy máu là sao?",
+  "Hôi miệng xử lý thế nào?",
   "Tôi muốn đặt lịch khám",
 ];
 
 const quickTopics = [
-  { title: "Giá dịch vụ", text: "Niềng răng giá bao nhiêu?" },
-  { title: "Giờ làm việc", text: "Phòng khám làm việc mấy giờ?" },
-  { title: "Đội ngũ nha sĩ", text: "Bác sĩ Trần Văn A chuyên môn gì?" },
-  { title: "Đau răng", text: "Tôi bị đau răng, chắc chắn viêm tủy đúng không?" },
-  { title: "Cạo vôi", text: "Cạo vôi răng là gì?" },
+  { title: "Đau răng", text: "Tôi bị đau răng quá, giờ nên làm gì?" },
+  { title: "Gãy / mẻ răng", text: "Răng tôi bị gãy một miếng, có cần đi khám ngay không?" },
+  { title: "Răng lung lay", text: "Răng của tôi bị lung lay sắp rớt ra" },
+  { title: "Chảy máu nướu", text: "Đánh răng bị chảy máu nướu là bị gì?" },
+  { title: "Dịch vụ", text: "Phòng khám có những dịch vụ nha khoa nào?" },
 ];
 
-const confidenceLabels = {
-  high: "Thông tin trực tiếp từ nguồn",
-  medium: "Tổng hợp từ nguồn liên quan",
-  low: "Chưa đủ dữ liệu kiểm chứng",
+const sourceLabels = {
+  error: "Hệ thống",
+  gemini: "AI tư vấn",
+  intro: "Tin nhắn chào",
+  rule_based: "Tư vấn nội bộ",
 };
 
 const getCurrentUser = () => {
@@ -31,24 +34,27 @@ const getCurrentUser = () => {
   }
 };
 
-const introMessage = {
-  role: "bot",
-  text:
-    "Chào bạn, tôi là trợ lý thông tin của Nha khoa V. Tôi sẽ tra cứu dữ liệu đã được kiểm chứng trước khi trả lời về dịch vụ, nha sĩ, giờ làm việc và kiến thức nha khoa cơ bản.",
-  sources: [],
-  confidence: "high",
-};
-
+// chatbot page (tu van nha khoa va goi api chatbot)
 function ChatbotConsultantV3() {
   const user = useMemo(getCurrentUser, []);
   const messagesRef = useRef(null);
+  const inputRef = useRef(null);
   const [message, setMessage] = useState("");
   const [suggestions, setSuggestions] = useState(defaultSuggestions);
-  const [conversation, setConversation] = useState([introMessage]);
+  const [conversation, setConversation] = useState([
+    {
+      role: "bot",
+      text:
+        "Chào bạn, mình là trợ lý tư vấn của Nha khoa V. Bạn cứ nhắn như đang hỏi lễ tân nha: đau răng, gãy răng, lung lay, hôi miệng, niềng răng, implant hay cần đặt lịch đều được.",
+      source: "intro",
+    },
+  ]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // auto scroll (cuon xuong tin moi)
     const messagesElement = messagesRef.current;
+
     if (!messagesElement) return;
 
     messagesElement.scrollTo({
@@ -58,17 +64,13 @@ function ChatbotConsultantV3() {
   }, [conversation, loading]);
 
   const sendQuestion = async (questionText) => {
+    // send question (gui cau hoi, nhan cau tra loi)
     const finalQuestion = String(questionText || message).trim();
+
     if (!finalQuestion || loading) return;
 
-    const history = conversation
-      .slice(-6)
-      .map(({ role, text }) => ({ role, text }));
-
-    setConversation((current) => [
-      ...current,
-      { role: "user", text: finalQuestion },
-    ]);
+    const history = conversation.slice(-8);
+    setConversation((current) => [...current, { role: "user", text: finalQuestion }]);
     setMessage("");
     setLoading(true);
 
@@ -78,20 +80,19 @@ function ChatbotConsultantV3() {
         user_id: user?.id || null,
         history,
       });
-      const data = response.data?.data || {};
+
+      const data = response.data.data || {};
 
       setConversation((current) => [
         ...current,
         {
           role: "bot",
-          text: data.answer,
-          sources: Array.isArray(data.sources) ? data.sources : [],
-          confidence: data.confidence || "low",
-          feedback: null,
+          text: data.reply || "Mình đã nhận câu hỏi của bạn.",
+          source: data.source || "rule_based",
         },
       ]);
 
-      if (Array.isArray(data.suggestions) && data.suggestions.length) {
+      if (data.suggestions?.length) {
         setSuggestions(data.suggestions);
       }
     } catch (error) {
@@ -101,24 +102,13 @@ function ChatbotConsultantV3() {
           role: "bot",
           text:
             error.response?.data?.message ||
-            "Chatbot đang tạm gián đoạn. Vui lòng thử lại.",
-          sources: [],
-          confidence: "low",
-          retryQuestion: finalQuestion,
-          isError: true,
+            "Chatbot đang tạm lỗi. Bạn thử gửi lại câu hỏi hoặc đặt lịch để phòng khám hỗ trợ trực tiếp nhé.",
+          source: "error",
         },
       ]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const updateFeedback = (messageIndex, feedback) => {
-    setConversation((current) =>
-      current.map((item, index) =>
-        index === messageIndex ? { ...item, feedback } : item,
-      ),
-    );
   };
 
   const handleSubmit = (event) => {
@@ -134,7 +124,15 @@ function ChatbotConsultantV3() {
   };
 
   const resetConversation = () => {
-    setConversation([introMessage]);
+    // reset chat (lam moi hoi dap)
+    setConversation([
+      {
+        role: "bot",
+        text:
+          "Mình đã làm mới cuộc trò chuyện. Bạn mô tả vấn đề răng miệng bằng lời đơn giản thôi, ví dụ: đau răng, gãy răng, sưng nướu, nướu dễ chảy máu hoặc muốn hỏi giá dịch vụ.",
+        source: "intro",
+      },
+    ]);
     setSuggestions(defaultSuggestions);
     setMessage("");
   };
@@ -143,11 +141,11 @@ function ChatbotConsultantV3() {
     <section className="ai-chat-page ai-chat-v3-page">
       <div className="container">
         <div className="ai-chat-v3-hero">
-          <span>Trợ lý tra cứu có nguồn</span>
-          <h1>Hỏi đáp nha khoa trực tuyến</h1>
+          <span>Hỗ trợ khách hàng</span>
+          <h1>Tư vấn nha khoa trực tuyến</h1>
           <p>
-            Câu trả lời được giới hạn trong dữ liệu phòng khám và nội dung đã kiểm
-            duyệt. Chatbot không chẩn đoán, kê thuốc hoặc thay thế nha sĩ.
+            Khách hàng có thể hỏi nhanh về triệu chứng, dịch vụ, chi phí tham khảo và cách đặt lịch.
+            Nội dung tư vấn chỉ mang tính tham khảo, không thay thế chẩn đoán trực tiếp của nha sĩ.
           </p>
         </div>
 
@@ -155,11 +153,11 @@ function ChatbotConsultantV3() {
           <aside className="ai-chat-v3-side">
             <div className="ai-chat-v3-brand">
               <div className="ai-chat-v3-orb" aria-hidden="true">
-                <span />
+                <span></span>
               </div>
               <div>
                 <strong>Nha khoa V Assistant</strong>
-                <small>Gợi ý câu hỏi đã có nguồn</small>
+                <small>Gợi ý câu hỏi phổ biến</small>
               </div>
             </div>
 
@@ -181,8 +179,8 @@ function ChatbotConsultantV3() {
           <main className="ai-chat-v3-card">
             <div className="ai-chat-v3-header">
               <div>
-                <span className="ai-live-dot" />
-                <strong>Sẵn sàng tra cứu</strong>
+                <span className="ai-live-dot"></span>
+                <strong>Đang sẵn sàng tư vấn</strong>
               </div>
               <button type="button" onClick={resetConversation}>
                 Làm mới
@@ -191,81 +189,26 @@ function ChatbotConsultantV3() {
 
             <div className="ai-chat-v3-messages" ref={messagesRef}>
               {conversation.map((item, index) => (
-                <article
-                  className={`ai-chat-v3-message ${item.role}`}
-                  key={`${item.role}-${index}`}
-                >
-                  <div className="ai-chat-v3-avatar">
-                    {item.role === "bot" ? "AI" : "KH"}
-                  </div>
+                <article className={`ai-chat-v3-message ${item.role}`} key={`${item.role}-${index}`}>
+                  <div className="ai-chat-v3-avatar">{item.role === "bot" ? "AI" : "KH"}</div>
                   <div className="ai-chat-v3-bubble">
-                    {String(item.text || "").split("\n\n").map((paragraph) => (
+                    {item.text.split("\n\n").map((paragraph) => (
                       <p key={paragraph}>{paragraph}</p>
                     ))}
-
-                    {item.role === "bot" && item.sources?.length > 0 && (
-                      <div className="ai-chat-v3-sources">
-                        <strong>Nguồn đã dùng</strong>
-                        <div>
-                          {item.sources.map((source) => (
-                            <Link to={source.url || "/"} key={source.id}>
-                              {source.title}
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {item.role === "bot" && !item.isError && index > 0 && (
-                      <div className="ai-chat-v3-meta">
-                        <small>
-                          {confidenceLabels[item.confidence] || confidenceLabels.low}
-                        </small>
-                        <div className="ai-chat-v3-feedback" aria-label="Đánh giá câu trả lời">
-                          {item.feedback ? (
-                            <span>Cảm ơn phản hồi của bạn.</span>
-                          ) : (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => updateFeedback(index, "helpful")}
-                              >
-                                Hữu ích
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => updateFeedback(index, "inaccurate")}
-                              >
-                                Chưa chính xác
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {item.retryQuestion && (
-                      <button
-                        className="ai-chat-v3-retry"
-                        type="button"
-                        onClick={() => sendQuestion(item.retryQuestion)}
-                        disabled={loading}
-                      >
-                        Thử lại
-                      </button>
+                    {item.role === "bot" && item.source === "error" && (
+                      <small>{sourceLabels[item.source] || sourceLabels.rule_based}</small>
                     )}
                   </div>
                 </article>
               ))}
 
               {loading && (
-                <article className="ai-chat-v3-message bot" role="status">
+                <article className="ai-chat-v3-message bot">
                   <div className="ai-chat-v3-avatar">AI</div>
                   <div className="ai-chat-v3-bubble ai-chat-v3-typing">
-                    <span />
-                    <span />
-                    <span />
-                    <strong>Đang tìm thông tin...</strong>
+                    <span></span>
+                    <span></span>
+                    <span></span>
                   </div>
                 </article>
               )}
@@ -286,21 +229,17 @@ function ChatbotConsultantV3() {
 
             <form className="ai-chat-v3-input" onSubmit={handleSubmit}>
               <textarea
+                ref={inputRef}
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Nhập câu hỏi về dịch vụ, nha sĩ hoặc thông tin phòng khám..."
+                placeholder="Nhập câu hỏi... Ví dụ: răng em bị gãy, đau răng quá, hôi miệng, muốn hỏi giá implant"
                 rows="2"
-                maxLength="800"
               />
               <button type="submit" disabled={loading || !message.trim()}>
                 Gửi
               </button>
             </form>
-            <p className="ai-chat-v3-disclaimer">
-              Thông tin chỉ mang tính tham khảo, không thay thế chẩn đoán hoặc chỉ
-              định trực tiếp của nha sĩ.
-            </p>
           </main>
         </div>
       </div>
