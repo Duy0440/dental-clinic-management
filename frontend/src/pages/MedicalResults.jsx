@@ -71,8 +71,8 @@ function MedicalResults() {
   };
 
   return (
-    <div className="container py-5">
-      <div className="mb-4">
+    <div className="medical-results-page container py-5">
+      <div className="medical-results-hero mb-4">
         <h2 className="mb-1">Kết quả điều trị</h2>
         <p className="text-secondary mb-0">
           Xem lại chẩn đoán, nội dung điều trị và khuyến nghị tái khám từ phòng
@@ -96,9 +96,9 @@ function MedicalResults() {
         <div className="row g-4">
           {records.map((record) => (
             <div className="col-12" key={record.id}>
-              <article className="card border-0 shadow-sm rounded-4">
-                <div className="card-body p-4">
-                  <div className="d-flex justify-content-between gap-3 mb-4 flex-wrap">
+              <article className="medical-result-card card border-0 shadow-sm rounded-4">
+                <div className="medical-result-card-body card-body p-4">
+                  <div className="medical-result-header d-flex justify-content-between gap-3 mb-4 flex-wrap">
                     <div>
                       <p className="text-secondary small mb-1">
                         Kết quả #{record.id}
@@ -176,14 +176,14 @@ function MedicalResults() {
                     </div>
                   </div>
 
-                  <div className="my-4">
+                  <div className="medical-result-chart my-4">
                     <DentalChart
                       mode="view"
                       teeth={extractMedicalRecordTeeth(record)}
                     />
                   </div>
 
-                  <div className="border rounded-4 p-3 bg-light-subtle">
+                  <div className="medical-result-followup border rounded-4 p-3 bg-light-subtle">
                     <strong>Tái khám đề xuất</strong>
                     <p className="mb-0 mt-1">
                       {record.re_examination_date_display ||

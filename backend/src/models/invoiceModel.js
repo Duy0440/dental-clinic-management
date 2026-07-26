@@ -1,210 +1,352 @@
-﻿const pool = require("../config/db");
+const pool = require("../config/db");
 
-// invoice list (lay danh sach hoa don)
-const getAllInvoices = async () => {
-  const query = `
-    SELECT
-      i.id,
-      i.patient_id,
-      i.appointment_id,
-      i.invoice_code,
-      i.total_amount,
-      i.paid_amount,
-      i.payment_status,
-      i.payment_method,
-      i.issued_by,
-      i.created_at,
-      p.full_name AS patient_name,
-      p.phone AS patient_phone,
-      COALESCE(
-        JSON_AGG(
-          JSON_BUILD_OBJECT(
+const PAYMENT_STATUSES = ["Unpaid", "PartiallyPaid", "Paid", "Cancelled"];
+const PAYMENT_METHODS = ["Tiền mặt", "Chuyển khoản"];
+
+const money = (value) => Number(value || 0);
+
+const calculateStatus = (paidAmount, totalAmount, currentStatus) => {
+  if (currentStatus === "Cancelled") return "Cancelled";
+  if (paidAmount <= 0) return "Unpaid";
+  if (paidAmount >= totalAmount) return "Paid";
+  return "PartiallyPaid";
+};
+
+const invoiceSelect = `
+  SELECT
+    i.id,
+    i.patient_id,
+    i.appointment_id,
+    i.invoice_code,
+    i.subtotal,
+    i.discount_amount,
+    i.discount_reason,
+    i.total_amount,
+    i.paid_amount,
+    i.remaining_amount,
+    i.payment_status,
+    i.payment_method,
+    i.issued_by,
+    i.cancelled_at,
+    i.cancelled_by_user_id,
+    i.updated_at,
+    i.created_at,
+    p.full_name AS patient_name,
+    p.phone AS patient_phone,
+    issuer.username AS issued_by_username,
+    canceller.username AS cancelled_by_username,
+    COALESCE(
+      (
+        SELECT json_agg(
+          json_build_object(
             'id', idt.id,
             'service_id', idt.service_id,
             'service_name', s.service_name,
+            'treatment_group', COALESCE(idt.treatment_group, s.service_name),
             'custom_description', idt.custom_description,
             'quantity', idt.quantity,
             'unit_price', idt.unit_price,
             'discount_amount', idt.discount_amount,
             'subtotal', idt.subtotal
           )
-        ) FILTER (WHERE idt.id IS NOT NULL),
-        '[]'::json
-      ) AS details
-    FROM invoices i
-    JOIN patients p ON i.patient_id = p.id
-    LEFT JOIN invoice_details idt ON idt.invoice_id = i.id
-    LEFT JOIN services s ON idt.service_id = s.id
-    GROUP BY
-      i.id,
-      i.patient_id,
-      i.appointment_id,
-      i.invoice_code,
-      i.total_amount,
-      i.paid_amount,
-      i.payment_status,
-      i.payment_method,
-      i.issued_by,
-      i.created_at,
-      p.full_name,
-      p.phone
-    ORDER BY i.id DESC
-  `;
+          ORDER BY idt.id
+        )
+        FROM invoice_details idt
+        LEFT JOIN services s ON s.id = idt.service_id
+        WHERE idt.invoice_id = i.id
+      ),
+      '[]'::json
+    ) AS details,
+    COALESCE(
+      (
+        SELECT json_agg(
+          json_build_object(
+            'id', pay.id,
+            'payment_number', pay.payment_number,
+            'amount', pay.amount,
+            'payment_method', pay.payment_method,
+            'payment_date', TO_CHAR(pay.payment_date, 'YYYY-MM-DD'),
+            'payment_date_display', TO_CHAR(pay.payment_date, 'DD/MM/YYYY'),
+            'appointment_id', pay.appointment_id,
+            'note', pay.note,
+            'created_by_user_id', pay.created_by_user_id,
+            'created_by_username', pay.created_by_username,
+            'created_at', pay.created_at,
+            'cumulative_paid', pay.cumulative_paid,
+            'remaining_after', GREATEST(i.total_amount - pay.cumulative_paid, 0)
+          )
+          ORDER BY pay.id
+        )
+        FROM (
+          SELECT
+            pmt.*,
+            u.username AS created_by_username,
+            ROW_NUMBER() OVER (PARTITION BY pmt.invoice_id ORDER BY pmt.payment_date, pmt.id) AS payment_number,
+            SUM(pmt.amount) OVER (PARTITION BY pmt.invoice_id ORDER BY pmt.payment_date, pmt.id) AS cumulative_paid
+          FROM payments pmt
+          LEFT JOIN users u ON u.id = pmt.created_by_user_id
+          WHERE pmt.invoice_id = i.id
+        ) pay
+      ),
+      '[]'::json
+    ) AS payments
+  FROM invoices i
+  JOIN patients p ON p.id = i.patient_id
+  LEFT JOIN users issuer ON issuer.id = i.issued_by
+  LEFT JOIN users canceller ON canceller.id = i.cancelled_by_user_id
+`;
 
-  const result = await pool.query(query);
+const buildInvoiceFilters = (filters = {}) => {
+  const values = [];
+  const where = [];
+
+  const addFilter = (sql, value) => {
+    values.push(value);
+    where.push(sql.replace("?", `$${values.length}`));
+  };
+
+  if (filters.patientId) addFilter("i.patient_id = ?", filters.patientId);
+  if (filters.status) addFilter("i.payment_status = ?", filters.status);
+
+  if (filters.search?.trim()) {
+    values.push(`%${filters.search.trim()}%`);
+    const placeholder = `$${values.length}`;
+    where.push(
+      `(i.invoice_code ILIKE ${placeholder}
+        OR p.full_name ILIKE ${placeholder}
+        OR p.phone ILIKE ${placeholder})`,
+    );
+  }
+
+  return { values, where };
+};
+
+const getInvoices = async (filters = {}) => {
+  const { values, where } = buildInvoiceFilters(filters);
+  const result = await pool.query(
+    `
+      ${invoiceSelect}
+      ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+      ORDER BY i.id DESC
+    `,
+    values,
+  );
   return result.rows;
 };
 
-// find invoice (tim hoa don theo ma)
-const findInvoiceByCode = async (invoiceCode) => {
-  const query = `
-    SELECT id
-    FROM invoices
-    WHERE invoice_code = $1
-  `;
-
-  const result = await pool.query(query, [invoiceCode]);
-  return result.rows[0];
+const getInvoiceById = async (invoiceId, db = pool) => {
+  const result = await db.query(`${invoiceSelect} WHERE i.id = $1`, [invoiceId]);
+  return result.rows[0] || null;
 };
 
-// check refs (kiem tra khach hang va lich hen)
-const checkInvoiceReferences = async (patientId, appointmentId) => {
-  const patientQuery = "SELECT id FROM patients WHERE id = $1";
-  const patientResult = await pool.query(patientQuery, [patientId]);
+const findInvoiceByCode = async (invoiceCode) => {
+  const result = await pool.query("SELECT id FROM invoices WHERE invoice_code = $1", [
+    invoiceCode,
+  ]);
+  return result.rows[0] || null;
+};
+
+const checkInvoiceReferences = async (patientId, appointmentId, db = pool) => {
+  const patientResult = await db.query("SELECT id FROM patients WHERE id = $1", [
+    patientId,
+  ]);
 
   let appointmentExists = true;
-
   if (appointmentId) {
-    const appointmentQuery = "SELECT id FROM appointments WHERE id = $1";
-    const appointmentResult = await pool.query(appointmentQuery, [appointmentId]);
-    appointmentExists = appointmentResult.rows.length > 0;
+    const appointmentResult = await db.query(
+      "SELECT id FROM appointments WHERE id = $1 AND patient_id = $2",
+      [appointmentId, patientId],
+    );
+    appointmentExists = appointmentResult.rowCount > 0;
   }
 
   return {
-    patientExists: patientResult.rows.length > 0,
+    patientExists: patientResult.rowCount > 0,
     appointmentExists,
   };
 };
 
-// transaction (tao hoa don va chi tiet cung luc)
-const createInvoiceWithDetails = async (invoiceData) => {
-  const {
-    patient_id,
-    appointment_id,
-    invoice_code,
-    payment_method,
-    issued_by,
-    details,
-  } = invoiceData;
+const normalizeDetails = (details = []) => {
+  return details.map((item) => {
+    const quantity = money(item.quantity || 1);
+    const unitPrice = money(item.unit_price);
+    const subtotal = quantity * unitPrice;
 
+    return {
+      service_id: item.service_id ? Number(item.service_id) : null,
+      treatment_group: item.treatment_group || null,
+      custom_description: item.custom_description?.trim() || null,
+      quantity,
+      unit_price: unitPrice,
+      discount_amount: 0,
+      subtotal,
+    };
+  });
+};
+
+const insertInvoiceDetail = async (invoiceId, detail, db) => {
+  const result = await db.query(
+    `
+      INSERT INTO invoice_details (
+        invoice_id,
+        service_id,
+        treatment_group,
+        custom_description,
+        quantity,
+        unit_price,
+        discount_amount,
+        subtotal
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `,
+    [
+      invoiceId,
+      detail.service_id,
+      detail.treatment_group,
+      detail.custom_description,
+      detail.quantity,
+      detail.unit_price,
+      detail.discount_amount,
+      detail.subtotal,
+    ],
+  );
+  return result.rows[0];
+};
+
+const insertPayment = async (paymentData, db) => {
+  const result = await db.query(
+    `
+      INSERT INTO payments (
+        invoice_id,
+        amount,
+        payment_method,
+        payment_date,
+        appointment_id,
+        note,
+        created_by_user_id
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `,
+    [
+      paymentData.invoice_id,
+      paymentData.amount,
+      paymentData.payment_method,
+      paymentData.payment_date,
+      paymentData.appointment_id || null,
+      paymentData.note || null,
+      paymentData.created_by_user_id || null,
+    ],
+  );
+  return result.rows[0];
+};
+
+const updateInvoiceTotals = async (invoiceId, db) => {
+  const paymentResult = await db.query(
+    "SELECT COALESCE(SUM(amount), 0) AS paid_amount FROM payments WHERE invoice_id = $1",
+    [invoiceId],
+  );
+  const invoiceResult = await db.query(
+    "SELECT total_amount, payment_status FROM invoices WHERE id = $1 FOR UPDATE",
+    [invoiceId],
+  );
+  const invoice = invoiceResult.rows[0];
+  const paidAmount = money(paymentResult.rows[0]?.paid_amount);
+  const totalAmount = money(invoice.total_amount);
+  const remainingAmount = Math.max(totalAmount - paidAmount, 0);
+  const nextStatus = calculateStatus(
+    paidAmount,
+    totalAmount,
+    invoice.payment_status,
+  );
+
+  await db.query(
+    `
+      UPDATE invoices
+      SET
+        paid_amount = $2,
+        remaining_amount = $3,
+        payment_status = $4,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `,
+    [invoiceId, paidAmount, remainingAmount, nextStatus],
+  );
+
+  return getInvoiceById(invoiceId, db);
+};
+
+const createInvoiceWithDetails = async (invoiceData) => {
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
-    const normalizedDetails = details.map((item) => {
-      const quantity = Number(item.quantity || 1);
-      const unitPrice = Number(item.unit_price || 0);
-      const discountAmount = Number(item.discount_amount || 0);
-      const subtotal = quantity * unitPrice - discountAmount;
+    const details = normalizeDetails(invoiceData.details);
+    const subtotal = details.reduce((total, item) => total + item.subtotal, 0);
+    const discountAmount = money(invoiceData.discount_amount);
+    const totalAmount = Math.max(subtotal - discountAmount, 0);
+    const firstPaymentAmount = money(invoiceData.first_payment_amount);
+    const initialStatus = calculateStatus(firstPaymentAmount, totalAmount);
 
-      return {
-        service_id: item.service_id ? Number(item.service_id) : null,
-        custom_description: item.custom_description || null,
-        quantity,
-        unit_price: unitPrice,
-        discount_amount: discountAmount,
-        subtotal: subtotal > 0 ? subtotal : 0,
-      };
-    });
-
-    const totalAmount = normalizedDetails.reduce(
-      (total, item) => total + item.subtotal,
-      0,
+    const invoiceResult = await client.query(
+      `
+        INSERT INTO invoices (
+          patient_id,
+          appointment_id,
+          invoice_code,
+          subtotal,
+          discount_amount,
+          discount_reason,
+          total_amount,
+          paid_amount,
+          remaining_amount,
+          payment_status,
+          payment_method,
+          issued_by
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $7, $8, $9, $10)
+        RETURNING *
+      `,
+      [
+        invoiceData.patient_id,
+        invoiceData.appointment_id || null,
+        invoiceData.invoice_code,
+        subtotal,
+        discountAmount,
+        invoiceData.discount_reason || null,
+        totalAmount,
+        initialStatus,
+        invoiceData.first_payment_method || null,
+        invoiceData.issued_by || null,
+      ],
     );
 
-    const invoiceQuery = `
-      INSERT INTO invoices (
-        patient_id,
-        appointment_id,
-        invoice_code,
-        total_amount,
-        paid_amount,
-        payment_status,
-        payment_method,
-        issued_by
-      )
-      VALUES ($1, $2, $3, $4, $5, 'Paid', $6, $7)
-      RETURNING
-        id,
-        patient_id,
-        appointment_id,
-        invoice_code,
-        total_amount,
-        paid_amount,
-        payment_status,
-        payment_method,
-        issued_by,
-        created_at
-    `;
-
-    const invoiceValues = [
-      patient_id,
-      appointment_id || null,
-      invoice_code,
-      totalAmount,
-      totalAmount,
-      payment_method || "Tiền mặt",
-      issued_by || null,
-    ];
-
-    const invoiceResult = await client.query(invoiceQuery, invoiceValues);
     const invoice = invoiceResult.rows[0];
-    const createdDetails = [];
 
-    for (const detail of normalizedDetails) {
-      const detailQuery = `
-        INSERT INTO invoice_details (
-          invoice_id,
-          service_id,
-          custom_description,
-          quantity,
-          unit_price,
-          discount_amount,
-          subtotal
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING
-          id,
-          invoice_id,
-          service_id,
-          custom_description,
-          quantity,
-          unit_price,
-          discount_amount,
-          subtotal
-      `;
-
-      const detailValues = [
-        invoice.id,
-        detail.service_id,
-        detail.custom_description,
-        detail.quantity,
-        detail.unit_price,
-        detail.discount_amount,
-        detail.subtotal,
-      ];
-
-      const detailResult = await client.query(detailQuery, detailValues);
-      createdDetails.push(detailResult.rows[0]);
+    for (const detail of details) {
+      await insertInvoiceDetail(invoice.id, detail, client);
     }
 
-    await client.query("COMMIT");
+    if (firstPaymentAmount > 0) {
+      await insertPayment(
+        {
+          invoice_id: invoice.id,
+          amount: firstPaymentAmount,
+          payment_method: invoiceData.first_payment_method,
+          payment_date: invoiceData.first_payment_date,
+          appointment_id: invoiceData.appointment_id,
+          note: invoiceData.note,
+          created_by_user_id: invoiceData.issued_by,
+        },
+        client,
+      );
+    }
 
-    return {
-      ...invoice,
-      details: createdDetails,
-    };
+    const result = await updateInvoiceTotals(invoice.id, client);
+    await client.query("COMMIT");
+    return result;
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
@@ -213,33 +355,81 @@ const createInvoiceWithDetails = async (invoiceData) => {
   }
 };
 
-// delete invoice (xoa hoa don theo id)
-const deleteInvoiceById = async (invoiceId) => {
+const addPaymentToInvoice = async (invoiceId, paymentData) => {
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
-    await client.query("DELETE FROM invoice_details WHERE invoice_id = $1", [invoiceId]);
 
-    const result = await client.query(
-      "DELETE FROM invoices WHERE id = $1 RETURNING id",
+    const invoiceResult = await client.query(
+      "SELECT id, total_amount, paid_amount, remaining_amount, payment_status FROM invoices WHERE id = $1 FOR UPDATE",
       [invoiceId],
     );
+    const invoice = invoiceResult.rows[0];
+    if (!invoice) {
+      const error = new Error("PAYMENT_RECORD_NOT_FOUND");
+      error.statusCode = 404;
+      throw error;
+    }
 
+    if (["Paid", "Cancelled"].includes(invoice.payment_status)) {
+      const error = new Error("PAYMENT_RECORD_LOCKED");
+      error.statusCode = 409;
+      throw error;
+    }
+
+    const amount = money(paymentData.amount);
+    if (amount <= 0 || amount > money(invoice.remaining_amount)) {
+      const error = new Error("INVALID_PAYMENT_AMOUNT");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    await insertPayment(
+      {
+        ...paymentData,
+        invoice_id: invoiceId,
+      },
+      client,
+    );
+
+    const result = await updateInvoiceTotals(invoiceId, client);
     await client.query("COMMIT");
-    return result.rows[0];
+    return result;
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();
   }
+};
+
+const cancelInvoiceById = async (invoiceId, userId) => {
+  const result = await pool.query(
+    `
+      UPDATE invoices
+      SET
+        payment_status = 'Cancelled',
+        cancelled_at = CURRENT_TIMESTAMP,
+        cancelled_by_user_id = $2,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+        AND payment_status <> 'Cancelled'
+      RETURNING id
+    `,
+    [invoiceId, userId || null],
+  );
+  return result.rows[0] || null;
 };
 
 module.exports = {
-  getAllInvoices,
+  PAYMENT_METHODS,
+  PAYMENT_STATUSES,
+  getInvoices,
+  getInvoiceById,
   findInvoiceByCode,
   checkInvoiceReferences,
   createInvoiceWithDetails,
-  deleteInvoiceById,
+  addPaymentToInvoice,
+  cancelInvoiceById,
 };

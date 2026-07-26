@@ -38,10 +38,10 @@ const getDashboardSummary = async () => {
         (SELECT COUNT(*) FROM appointments WHERE status = 'Confirmed') AS confirmed_appointment_count,
         (SELECT COUNT(*) FROM appointments WHERE status = 'Completed') AS completed_appointment_count,
         (SELECT COUNT(*) FROM invoices) AS invoice_count,
-        (SELECT COUNT(*) FROM invoices WHERE payment_status IN ('Unpaid', 'Partial')) AS open_invoice_count,
+        (SELECT COUNT(*) FROM invoices WHERE payment_status IN ('Unpaid', 'Partial', 'PartiallyPaid')) AS open_invoice_count,
         (SELECT COUNT(*) FROM medical_records WHERE DATE(created_at) = CURRENT_DATE) AS today_record_count,
-        (SELECT COALESCE(SUM(paid_amount), 0) FROM invoices WHERE DATE(created_at) = CURRENT_DATE) AS today_revenue,
-        (SELECT COALESCE(SUM(paid_amount), 0) FROM invoices WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)) AS month_revenue,
+        (SELECT COALESCE(SUM(paid_amount), 0) FROM invoices WHERE DATE(created_at) = CURRENT_DATE AND payment_status <> 'Cancelled') AS today_revenue,
+        (SELECT COALESCE(SUM(paid_amount), 0) FROM invoices WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE) AND payment_status <> 'Cancelled') AS month_revenue,
         (SELECT COUNT(*) FROM page_visits WHERE DATE(created_at) = CURRENT_DATE) AS today_visit_count,
         (SELECT COUNT(*) FROM page_visits WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)) AS month_visit_count
     `),
@@ -76,7 +76,9 @@ const getDashboardSummary = async () => {
         CURRENT_DATE,
         INTERVAL '1 day'
       ) AS days(day)
-      LEFT JOIN invoices i ON DATE(i.created_at) = days.day
+      LEFT JOIN invoices i
+        ON DATE(i.created_at) = days.day
+       AND i.payment_status <> 'Cancelled'
       GROUP BY days.day
       ORDER BY days.day ASC
     `),
@@ -95,6 +97,7 @@ const getDashboardSummary = async () => {
           SELECT SUM(i.paid_amount)
           FROM invoices i
           WHERE DATE_TRUNC('month', i.created_at) = month_start
+            AND i.payment_status <> 'Cancelled'
         ), 0) AS revenue,
         COALESCE((
           SELECT COUNT(*)

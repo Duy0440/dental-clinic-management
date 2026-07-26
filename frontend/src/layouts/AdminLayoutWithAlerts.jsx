@@ -26,7 +26,7 @@ const menuGroups = [
         badgeTitle: "Có lịch bận mới từ nha sĩ",
       },
       { to: "/admin/services", label: "Dịch vụ", icon: "DV" },
-      { to: "/admin/invoices", label: "Hóa đơn", icon: "HD" },
+      { to: "/admin/invoices", label: "Thanh toán", icon: "TT" },
     ],
   },
 ];
@@ -64,9 +64,9 @@ const pageInfo = {
     description: "Cập nhật nhóm dịch vụ để khách hàng chọn khi đặt lịch và tìm hiểu trên website.",
   },
   "/admin/invoices": {
-    eyebrow: "Hóa đơn",
-    title: "Quản lý hóa đơn",
-    description: "Lập hóa đơn theo giá thực tế sau tư vấn, theo dõi thanh toán từng phần và in phiếu thu.",
+    eyebrow: "Thanh toán",
+    title: "Quản lý thanh toán",
+    description: "Theo dõi tổng chi phí điều trị, các lần khách hàng thanh toán và số tiền còn lại.",
   },
 };
 

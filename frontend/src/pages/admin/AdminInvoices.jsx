@@ -1,51 +1,86 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 
-const initialInvoiceForm = {
+const todayText = () => new Date().toISOString().slice(0, 10);
+
+const initialPaymentForm = {
+  amount: "",
+  payment_method: "Tiền mặt",
+  payment_date: todayText(),
+  appointment_id: "",
+  note: "",
+};
+
+const initialPaymentProfileForm = {
   patient_id: "",
   appointment_id: "",
-  payment_method: "Tiền mặt",
+  discount_amount: 0,
+  discount_reason: "",
+  first_payment_amount: 0,
+  first_payment_method: "Tiền mặt",
+  first_payment_date: todayText(),
+  note: "",
 };
 
 const createEmptyDetail = () => ({
   service_id: "",
+  treatment_group: "",
   custom_description: "",
   quantity: 1,
   unit_price: "",
-  discount_amount: 0,
 });
 
-// admin invoices page (lap hoa don va in phieu thu)
+const statusLabels = {
+  Unpaid: "Chưa thanh toán",
+  PartiallyPaid: "Còn công nợ",
+  Paid: "Đã thanh toán",
+  Cancelled: "Đã hủy",
+};
+
+const statusClasses = {
+  Unpaid: "cancelled",
+  PartiallyPaid: "pending",
+  Paid: "confirmed",
+  Cancelled: "cancelled",
+};
+
 function AdminInvoices() {
   const [invoices, setInvoices] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [services, setServices] = useState([]);
-  const [invoiceForm, setInvoiceForm] = useState(initialInvoiceForm);
+  const [appointments, setAppointments] = useState([]);
+  const [formData, setFormData] = useState(initialPaymentProfileForm);
   const [details, setDetails] = useState([createEmptyDetail()]);
+  const [paymentForm, setPaymentForm] = useState(initialPaymentForm);
+  const [filters, setFilters] = useState({ search: "", status: "" });
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerResults, setShowCustomerResults] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [paymentInvoice, setPaymentInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [exportingId, setExportingId] = useState(null);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  // fetch invoice data (lay hoa don, khach hang, dich vu)
   const fetchData = async () => {
     try {
-      const [invoiceResponse, customerResponse, serviceResponse] =
+      const [invoiceResponse, customerResponse, serviceResponse, appointmentResponse] =
         await Promise.all([
           axiosClient.get("/invoices"),
           axiosClient.get("/patients"),
           axiosClient.get("/services/admin"),
+          axiosClient.get("/appointments"),
         ]);
 
       setInvoices(invoiceResponse.data.data || []);
       setCustomers(customerResponse.data.data || []);
       setServices(serviceResponse.data.data || []);
+      setAppointments(appointmentResponse.data.data || []);
     } catch (error) {
       setErrorMessage(
-        error.response?.data?.message || "Không thể tải dữ liệu hóa đơn.",
+        error.response?.data?.message || "Không thể tải dữ liệu thanh toán.",
       );
     } finally {
       setLoading(false);
@@ -56,28 +91,84 @@ function AdminInvoices() {
     fetchData();
   }, []);
 
-  const formatMoney = (value) => {
-    return `${Number(value || 0).toLocaleString("vi-VN")} VNĐ`;
-  };
+  const formatMoney = (value) =>
+    `${Number(value || 0).toLocaleString("vi-VN")} VNĐ`;
 
-  // calculate subtotal (tinh tien tung dong dich vu)
+  const getDetailName = (detail) =>
+    detail.custom_description ||
+    detail.treatment_group ||
+    detail.service_name ||
+    "Nội dung điều trị";
+
   const calculateDetailSubtotal = (detail) => {
     const quantity = Number(detail.quantity || 0);
     const unitPrice = Number(detail.unit_price || 0);
-    const discountAmount = Number(detail.discount_amount || 0);
-    const subtotal = quantity * unitPrice - discountAmount;
-
-    return subtotal > 0 ? subtotal : 0;
+    return Math.max(quantity * unitPrice, 0);
   };
 
-  const totalAmount = details.reduce((total, detail) => {
-    return total + calculateDetailSubtotal(detail);
-  }, 0);
-  const normalizedCustomerSearch = customerSearch.trim().toLowerCase();
-  const selectedCustomer = customers.find(
-    (customer) => Number(customer.id) === Number(invoiceForm.patient_id),
+  const subtotal = details.reduce(
+    (total, detail) => total + calculateDetailSubtotal(detail),
+    0,
   );
-  // customer autocomplete (tim khach khi lap hoa don)
+  const discountAmount = Number(formData.discount_amount || 0);
+  const totalAmount = Math.max(subtotal - discountAmount, 0);
+  const firstPaymentAmount = Number(formData.first_payment_amount || 0);
+  const firstRemainingAmount = Math.max(totalAmount - firstPaymentAmount, 0);
+  const normalizedInvoiceSearch = filters.search.trim().toLowerCase();
+
+  const paymentStats = useMemo(() => {
+    const stats = {
+      total: invoices.length,
+      unpaid: 0,
+      partial: 0,
+      paid: 0,
+      cancelled: 0,
+      revenue: 0,
+      remaining: 0,
+    };
+
+    invoices.forEach((invoice) => {
+      if (invoice.payment_status === "Unpaid") stats.unpaid += 1;
+      if (invoice.payment_status === "PartiallyPaid") stats.partial += 1;
+      if (invoice.payment_status === "Paid") stats.paid += 1;
+      if (invoice.payment_status === "Cancelled") stats.cancelled += 1;
+
+      if (invoice.payment_status !== "Cancelled") {
+        stats.revenue += Number(invoice.paid_amount || 0);
+        stats.remaining += Number(invoice.remaining_amount || 0);
+      }
+    });
+
+    return stats;
+  }, [invoices]);
+
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter((invoice) => {
+      const matchesStatus = !filters.status || invoice.payment_status === filters.status;
+      const searchableText = [
+        invoice.invoice_code,
+        invoice.patient_name,
+        invoice.patient_phone,
+        invoice.created_by_username,
+        ...(invoice.details || []).map(getDetailName),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return matchesStatus && (!normalizedInvoiceSearch || searchableText.includes(normalizedInvoiceSearch));
+    });
+  }, [filters.status, invoices, normalizedInvoiceSearch]);
+
+  const selectedCustomer = customers.find(
+    (customer) => Number(customer.id) === Number(formData.patient_id),
+  );
+  const customerAppointments = appointments.filter(
+    (appointment) =>
+      Number(appointment.patient_id) ===
+      Number(formData.patient_id || paymentInvoice?.patient_id),
+  );
+  const normalizedCustomerSearch = customerSearch.trim().toLowerCase();
   const filteredCustomers = customers
     .filter((customer) => {
       if (!normalizedCustomerSearch) return true;
@@ -90,299 +181,300 @@ function AdminInvoices() {
     })
     .slice(0, 8);
 
-  const handleInvoiceChange = (event) => {
-    setInvoiceForm({
-      ...invoiceForm,
-      [event.target.name]: event.target.value,
-    });
-  };
-
-  // handle detail row (cap nhat dong dich vu trong hoa don)
-  const handleDetailChange = (index, event) => {
-    const { name, value } = event.target;
-
-    setDetails(
-      details.map((detail, detailIndex) => {
-        if (detailIndex !== index) {
-          return detail;
-        }
-
-        return {
-          ...detail,
-          [name]: value,
-        };
-      }),
-    );
-  };
-
-  const addDetailRow = () => {
-    setDetails([...details, createEmptyDetail()]);
-  };
-
-  const removeDetailRow = (index) => {
-    if (details.length === 1) {
-      return;
-    }
-
-    setDetails(details.filter((_, detailIndex) => detailIndex !== index));
-  };
+  const paymentPreview = useMemo(() => {
+    if (!paymentInvoice) return null;
+    const amount = Number(paymentForm.amount || 0);
+    return {
+      paidAfter: Number(paymentInvoice.paid_amount || 0) + amount,
+      remainingAfter: Math.max(
+        Number(paymentInvoice.remaining_amount || 0) - amount,
+        0,
+      ),
+    };
+  }, [paymentForm.amount, paymentInvoice]);
+  const paymentAmount = Number(paymentForm.amount || 0);
+  const paymentAmountError = paymentInvoice
+    ? paymentAmount <= 0
+      ? "Số tiền thanh toán phải lớn hơn 0."
+      : paymentAmount > Number(paymentInvoice.remaining_amount || 0)
+        ? "Số tiền thanh toán không được vượt quá số tiền còn lại."
+        : ""
+    : "";
 
   const resetForm = () => {
-    setInvoiceForm(initialInvoiceForm);
+    setFormData(initialPaymentProfileForm);
     setDetails([createEmptyDetail()]);
     setCustomerSearch("");
     setShowCustomerResults(false);
     setShowForm(false);
   };
 
+  const resetPaymentForm = () => {
+    setPaymentForm(initialPaymentForm);
+    setPaymentInvoice(null);
+  };
+
   const chooseCustomer = (customer) => {
-    setInvoiceForm({
-      ...invoiceForm,
+    setFormData((current) => ({
+      ...current,
       patient_id: String(customer.id),
-    });
+      appointment_id: "",
+    }));
     setCustomerSearch(`${customer.full_name} - ${customer.phone || "Chưa có SĐT"}`);
     setShowCustomerResults(false);
   };
 
-  // submit invoice (tao hoa don kem chi tiet)
+  const handleDetailChange = (index, event) => {
+    const { name, value } = event.target;
+
+    setDetails((currentDetails) =>
+      currentDetails.map((detail, detailIndex) =>
+        detailIndex === index
+          ? {
+              ...detail,
+              [name]: value,
+              ...(name === "service_id"
+                ? {
+                    treatment_group:
+                      services.find((service) => String(service.id) === value)
+                        ?.service_name || "",
+                  }
+                : {}),
+            }
+          : detail,
+      ),
+    );
+  };
+
+  const addDetailRow = () => setDetails((current) => [...current, createEmptyDetail()]);
+
+  const removeDetailRow = (index) => {
+    if (details.length === 1) return;
+    setDetails((current) => current.filter((_, detailIndex) => detailIndex !== index));
+  };
+
+  const validateProfile = () => {
+    if (!formData.patient_id) return "Vui lòng chọn khách hàng từ danh sách gợi ý.";
+    if (subtotal <= 0) return "Tạm tính phải lớn hơn 0.";
+    if (discountAmount < 0) return "Giảm giá không được âm.";
+    if (discountAmount > subtotal) return "Giảm giá không được lớn hơn tạm tính.";
+    if (firstPaymentAmount < 0) return "Thanh toán lần đầu không được âm.";
+    if (firstPaymentAmount > totalAmount) {
+      return "Thanh toán lần đầu không được lớn hơn thành tiền.";
+    }
+    return "";
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);
     setMessage("");
     setErrorMessage("");
 
-    if (!invoiceForm.patient_id) {
+    const validation = validateProfile();
+    if (validation) {
       setSaving(false);
-      setErrorMessage("Vui lòng chọn khách hàng từ danh sách gợi ý.");
+      setErrorMessage(validation);
       return;
     }
 
     try {
-      const payload = {
-        patient_id: Number(invoiceForm.patient_id),
-        appointment_id: invoiceForm.appointment_id
-          ? Number(invoiceForm.appointment_id)
+      await axiosClient.post("/invoices", {
+        patient_id: Number(formData.patient_id),
+        appointment_id: formData.appointment_id
+          ? Number(formData.appointment_id)
           : null,
-        payment_method: invoiceForm.payment_method,
+        discount_amount: discountAmount,
+        discount_reason: formData.discount_reason,
+        first_payment_amount: firstPaymentAmount,
+        first_payment_method: formData.first_payment_method,
+        first_payment_date: formData.first_payment_date,
+        note: formData.note,
         details: details.map((detail) => ({
           service_id: detail.service_id ? Number(detail.service_id) : null,
+          treatment_group: detail.treatment_group,
           custom_description: detail.custom_description,
           quantity: Number(detail.quantity || 1),
           unit_price: Number(detail.unit_price || 0),
-          discount_amount: Number(detail.discount_amount || 0),
         })),
-      };
+      });
 
-      await axiosClient.post("/invoices", payload);
-
-      setMessage("Lập hóa đơn thành công.");
+      setMessage("Đã tạo hồ sơ thanh toán.");
       resetForm();
       await fetchData();
     } catch (error) {
       setErrorMessage(
-        error.response?.data?.message || "Không thể lập hóa đơn.",
+        error.response?.data?.message || "Không thể tạo hồ sơ thanh toán.",
       );
     } finally {
       setSaving(false);
     }
   };
 
-  // delete invoice (xoa hoa don)
-  const deleteInvoice = async (invoice) => {
-    const confirmed = window.confirm(
-      `Xóa hóa đơn ${invoice.invoice_code || `HD${invoice.id}`}? Thao tác này dùng để dọn hóa đơn nhập sai hoặc dữ liệu test.`,
-    );
+  const openPaymentModal = (invoice) => {
+    setPaymentInvoice(invoice);
+    setPaymentForm({
+      ...initialPaymentForm,
+      payment_date: todayText(),
+      amount: invoice.remaining_amount || "",
+    });
+  };
 
-    if (!confirmed) {
+  const submitPayment = async (event) => {
+    event.preventDefault();
+    if (!paymentInvoice) return;
+
+    if (paymentAmountError) {
+      setErrorMessage(paymentAmountError);
       return;
     }
 
-    setMessage("");
-    setErrorMessage("");
-
     try {
-      await axiosClient.delete(`/invoices/${invoice.id}`);
-      setMessage("Đã xóa hóa đơn.");
+      setSaving(true);
+      setMessage("");
+      setErrorMessage("");
+
+      const response = await axiosClient.post(
+        `/invoices/${paymentInvoice.id}/payments`,
+        {
+          amount: paymentAmount,
+          payment_method: paymentForm.payment_method,
+          payment_date: paymentForm.payment_date,
+          appointment_id: paymentForm.appointment_id
+            ? Number(paymentForm.appointment_id)
+            : null,
+          note: paymentForm.note,
+        },
+      );
+
+      setMessage("Đã ghi nhận thanh toán.");
+      setSelectedInvoice(response.data.data);
+      resetPaymentForm();
       await fetchData();
     } catch (error) {
       setErrorMessage(
-        error.response?.data?.message || "Không thể xóa hóa đơn.",
+        error.response?.data?.message || "Không thể ghi nhận thanh toán.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const cancelInvoice = async (invoice) => {
+    const accepted = window.confirm(
+      "Bạn chắc chắn muốn hủy hồ sơ thanh toán này?",
+    );
+    if (!accepted) return;
+
+    try {
+      setMessage("");
+      setErrorMessage("");
+      await axiosClient.patch(`/invoices/${invoice.id}/cancel`);
+      setMessage("Đã hủy hồ sơ thanh toán.");
+      setSelectedInvoice(null);
+      await fetchData();
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message || "Không thể hủy hồ sơ thanh toán.",
       );
     }
   };
 
-  const getDetailName = (detail) => {
-    return detail.custom_description || detail.service_name || "Dịch vụ";
+  const exportInvoice = async (invoice) => {
+    try {
+      setExportingId(invoice.id);
+      setErrorMessage("");
+      const response = await axiosClient.get(`/invoices/${invoice.id}/export`, {
+        responseType: "blob",
+      });
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `bang-thanh-toan-${invoice.patient_name || "khach-hang"}-${invoice.invoice_code || invoice.id}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message || "Không thể xuất bảng thanh toán.",
+      );
+    } finally {
+      setExportingId(null);
+    }
   };
 
-  // print invoice (mo cua so in phieu thu)
-  const printInvoice = (invoice) => {
-    const total = Number(invoice.total_amount || 0);
-
-    const detailsHtml = (invoice.details || [])
-      .map(
-        (detail) => `
-          <tr>
-            <td>${getDetailName(detail)}</td>
-            <td style="text-align:center">${detail.quantity}</td>
-            <td style="text-align:right">${formatMoney(detail.unit_price)}</td>
-            <td style="text-align:right">${formatMoney(detail.discount_amount)}</td>
-            <td style="text-align:right">${formatMoney(detail.subtotal)}</td>
-          </tr>
-        `,
-      )
-      .join("");
-
-    const printWindow = window.open("", "_blank", "width=430,height=720");
+  const printPaymentReceipt = (invoice, payment) => {
+    const details = (invoice.details || []).map(getDetailName).join("; ");
+    const printWindow = window.open("", "_blank", "width=520,height=760");
 
     printWindow.document.write(`
       <html>
         <head>
-          <title>In hóa đơn</title>
+          <title>Phiếu thanh toán</title>
           <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 0;
-              padding: 18px;
-              color: #111827;
-            }
-
-            .receipt {
-              width: 340px;
-              margin: 0 auto;
-            }
-
-            .center {
-              text-align: center;
-            }
-
-            h2 {
-              margin: 0;
-              font-size: 20px;
-            }
-
-            .muted {
-              color: #6b7280;
-              font-size: 12px;
-            }
-
-            .line {
-              border-top: 1px dashed #999;
-              margin: 12px 0;
-            }
-
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              font-size: 12px;
-            }
-
-            th, td {
-              padding: 6px 0;
-              border-bottom: 1px dashed #ddd;
-              vertical-align: top;
-            }
-
-            th {
-              text-align: left;
-            }
-
-            .money-row {
-              display: flex;
-              justify-content: space-between;
-              margin-top: 8px;
-              font-size: 14px;
-            }
-
-            .total {
-              font-size: 16px;
-              font-weight: bold;
-            }
-
-            .thanks {
-              margin-top: 18px;
-              text-align: center;
-              font-size: 13px;
-            }
-
-            @media print {
-              body {
-                padding: 0;
-              }
-            }
+            body { font-family: Arial, sans-serif; margin: 0; padding: 22px; color: #111827; }
+            .receipt { max-width: 460px; margin: 0 auto; }
+            .center { text-align: center; }
+            h2 { margin: 0; font-size: 21px; }
+            h3 { margin: 10px 0 0; font-size: 16px; }
+            .muted { color: #6b7280; font-size: 12px; }
+            .line { border-top: 1px dashed #9ca3af; margin: 14px 0; }
+            .row { display: flex; justify-content: space-between; gap: 14px; margin: 8px 0; font-size: 13px; }
+            .row strong:last-child, .row span:last-child { text-align: right; }
+            .total { font-size: 16px; font-weight: bold; }
+            .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 36px; text-align: center; font-size: 13px; }
+            .note { margin-top: 20px; color: #6b7280; font-size: 12px; line-height: 1.5; }
           </style>
         </head>
         <body>
           <div class="receipt">
             <div class="center">
               <h2>NHA KHOA V</h2>
-              <div class="muted">Chăm sóc nha khoa rõ ràng, hiện đại và thân thiện</div>
-              <div class="muted">Hotline: 1900 6899</div>
-              <div class="muted">Địa chỉ: Thành phố Cần Thơ</div>
+              <div class="muted">Hotline: 1900 6899 - Thành phố Cần Thơ</div>
+              <h3>PHIẾU XÁC NHẬN THANH TOÁN</h3>
             </div>
-
             <div class="line"></div>
-
-            <div><strong>Mã hóa đơn:</strong> ${invoice.invoice_code || `HD${invoice.id}`}</div>
-            <div><strong>Khách hàng:</strong> ${invoice.patient_name || ""}</div>
-            <div><strong>SĐT:</strong> ${invoice.patient_phone || "Chưa cập nhật"}</div>
-            <div><strong>Ngày lập:</strong> ${new Date(invoice.created_at).toLocaleString("vi-VN")}</div>
-            <div><strong>Phương thức:</strong> ${invoice.payment_method || "Chưa cập nhật"}</div>
-
+            <div class="row"><strong>Mã hồ sơ</strong><span>${invoice.invoice_code || `TT${invoice.id}`}</span></div>
+            <div class="row"><strong>Mã lần thanh toán</strong><span>#${payment.id}</span></div>
+            <div class="row"><strong>Khách hàng</strong><span>${invoice.patient_name || ""}</span></div>
+            <div class="row"><strong>SĐT</strong><span>${invoice.patient_phone || "Chưa cập nhật"}</span></div>
+            <div class="row"><strong>Nội dung điều trị</strong><span>${details || "Chưa cập nhật"}</span></div>
             <div class="line"></div>
-
-            <table>
-              <thead>
-                <tr>
-                  <th>Dịch vụ</th>
-                  <th>SL</th>
-                  <th style="text-align:right">Giá</th>
-                  <th style="text-align:right">Giảm</th>
-                  <th style="text-align:right">Tiền</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${detailsHtml}
-              </tbody>
-            </table>
-
-            <div class="line"></div>
-
-            <div class="money-row total">
-              <span>Tổng thanh toán</span>
-              <span>${formatMoney(total)}</span>
-            </div>
-            <div class="money-row">
-              <span>Trạng thái</span>
-              <span>Đã thanh toán</span>
-            </div>
-
-            <div class="line"></div>
-
-            <div class="thanks">
-              Cảm ơn quý khách đã sử dụng dịch vụ.<br />
-              Hẹn gặp lại quý khách!
-            </div>
+            <div class="row"><span>Tạm tính</span><strong>${formatMoney(invoice.subtotal)}</strong></div>
+            <div class="row"><span>Giảm giá</span><strong>${formatMoney(invoice.discount_amount)}</strong></div>
+            <div class="row"><span>Thành tiền</span><strong>${formatMoney(invoice.total_amount)}</strong></div>
+            <div class="row total"><span>Thanh toán lần này</span><strong>${formatMoney(payment.amount)}</strong></div>
+            <div class="row"><span>Tổng đã thanh toán</span><strong>${formatMoney(payment.cumulative_paid)}</strong></div>
+            <div class="row"><span>Còn lại</span><strong>${formatMoney(payment.remaining_after)}</strong></div>
+            <div class="row"><span>Phương thức</span><strong>${payment.payment_method}</strong></div>
+            <div class="row"><span>Ngày thanh toán</span><strong>${payment.payment_date_display}</strong></div>
+            <div class="row"><span>Người ghi nhận</span><strong>${payment.created_by_username || ""}</strong></div>
+            <div class="row"><span>Ghi chú</span><strong>${payment.note || ""}</strong></div>
+            <div class="signatures"><div>Khách hàng<br/><br/><br/>________________</div><div>Người ghi nhận<br/><br/><br/>________________</div></div>
+            <p class="note">Phiếu xác nhận thanh toán nội bộ, không thay thế hóa đơn điện tử hoặc chứng từ thuế.</p>
           </div>
-
-          <script>
-            window.print();
-          </script>
+          <script>window.print();</script>
         </body>
       </html>
     `);
-
     printWindow.document.close();
   };
+
+  const renderPaymentStatus = (invoice) => (
+    <span className={`appointment-status ${statusClasses[invoice.payment_status] || "pending"}`}>
+      {statusLabels[invoice.payment_status] || invoice.payment_status}
+    </span>
+  );
 
   return (
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h2>Quản lý hóa đơn</h2>
+          <h2>Quản lý thanh toán</h2>
           <p>
-            Mỗi hóa đơn là một phiếu thu cho số tiền khách thanh toán trong lần đó.
-            Nếu khách quay lại trả tiếp, lễ tân lập hóa đơn mới.
+            Theo dõi tổng chi phí điều trị, các lần khách hàng thanh toán và số
+            tiền còn lại.
           </p>
         </div>
 
@@ -391,87 +483,150 @@ function AdminInvoices() {
           className="admin-primary-button"
           onClick={() => setShowForm(true)}
         >
-          Lập hóa đơn
+          Tạo hồ sơ thanh toán
         </button>
       </div>
 
       {message && <p className="admin-success-message">{message}</p>}
       {errorMessage && <p className="admin-error-message">{errorMessage}</p>}
 
+      <div className="payment-summary-grid">
+        <article className="payment-summary-card accent">
+          <span>Tổng hồ sơ</span>
+          <strong>{paymentStats.total}</strong>
+          <small>{paymentStats.unpaid + paymentStats.partial} hồ sơ còn cần thu</small>
+        </article>
+        <article className="payment-summary-card">
+          <span>Đã thu</span>
+          <strong>{formatMoney(paymentStats.revenue)}</strong>
+          <small>{paymentStats.paid} hồ sơ đã tất toán</small>
+        </article>
+        <article className="payment-summary-card warning">
+          <span>Còn công nợ</span>
+          <strong>{formatMoney(paymentStats.remaining)}</strong>
+          <small>{paymentStats.partial} thanh toán một phần</small>
+        </article>
+        <article className="payment-summary-card muted">
+          <span>Chưa thanh toán</span>
+          <strong>{paymentStats.unpaid}</strong>
+          <small>{paymentStats.cancelled} hồ sơ đã hủy</small>
+        </article>
+      </div>
+
+      <div className="payment-filter-panel">
+        <input
+          className="admin-search-input payment-search-input"
+          value={filters.search}
+          onChange={(event) =>
+            setFilters((current) => ({ ...current, search: event.target.value }))
+          }
+          placeholder="Tìm theo mã hồ sơ, tên khách, SĐT hoặc nội dung điều trị..."
+        />
+        <select
+          value={filters.status}
+          onChange={(event) =>
+            setFilters((current) => ({ ...current, status: event.target.value }))
+          }
+        >
+          <option value="">Tất cả trạng thái</option>
+          {Object.entries(statusLabels).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+        {(filters.search || filters.status) && (
+          <button
+            type="button"
+            className="admin-secondary-button payment-reset-filter"
+            onClick={() => setFilters({ search: "", status: "" })}
+          >
+            Xóa bộ lọc
+          </button>
+        )}
+      </div>
+
       {loading ? (
-        <p>Đang tải danh sách hóa đơn...</p>
+        <p>Đang tải danh sách thanh toán...</p>
       ) : invoices.length === 0 ? (
-        <p>Chưa có hóa đơn nào.</p>
+        <p>Chưa có hồ sơ thanh toán nào.</p>
+      ) : filteredInvoices.length === 0 ? (
+        <p className="payment-empty-state">
+          Không tìm thấy hồ sơ thanh toán phù hợp với bộ lọc hiện tại.
+        </p>
       ) : (
         <div className="admin-table-wrapper">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Mã hóa đơn</th>
+                <th>Mã hồ sơ</th>
                 <th>Khách hàng</th>
-                <th>Nội dung thu</th>
-                <th>Số tiền</th>
-                <th>Phương thức</th>
-                <th>Ngày lập</th>
-                <th>Xử lý</th>
+                <th>Nội dung điều trị</th>
+                <th>Thành tiền</th>
+                <th>Đã thanh toán</th>
+                <th>Còn lại</th>
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+                <th>Thao tác</th>
               </tr>
             </thead>
-
             <tbody>
-              {invoices.map((invoice) => (
+              {filteredInvoices.map((invoice) => (
                 <tr key={invoice.id}>
                   <td>
-                    <strong>{invoice.invoice_code || `HD${invoice.id}`}</strong>
+                    <strong>{invoice.invoice_code || `TT${invoice.id}`}</strong>
                     <span>#{invoice.id}</span>
                   </td>
-
                   <td>
                     <strong>{invoice.patient_name}</strong>
                     <span>{invoice.patient_phone || "Chưa cập nhật SĐT"}</span>
                   </td>
-
-                  <td>
-                    {invoice.details?.length > 0 ? (
-                      invoice.details.map((detail) => (
-                        <span key={detail.id}>
-                          {getDetailName(detail)}: {detail.quantity} x{" "}
-                          {formatMoney(detail.unit_price)}
-                        </span>
-                      ))
-                    ) : (
-                      <span>Chưa có chi tiết</span>
-                    )}
+                  <td className="payment-treatment-cell">
+                    {(invoice.details || []).slice(0, 2).map((detail) => (
+                      <span key={detail.id} title={`${getDetailName(detail)}: ${detail.quantity} x ${formatMoney(detail.unit_price)}`}>
+                        {getDetailName(detail)}: {detail.quantity} x{" "}
+                        {formatMoney(detail.unit_price)}
+                      </span>
+                    ))}
                   </td>
-
+                  <td className="payment-money-cell"><strong>{formatMoney(invoice.total_amount)}</strong></td>
+                  <td className="payment-money-cell">{formatMoney(invoice.paid_amount)}</td>
+                  <td className="payment-money-cell">{formatMoney(invoice.remaining_amount)}</td>
+                  <td>{renderPaymentStatus(invoice)}</td>
+                  <td>{new Date(invoice.created_at).toLocaleDateString("vi-VN")}</td>
                   <td>
-                    <strong>{formatMoney(invoice.total_amount)}</strong>
-                  </td>
-
-                  <td>
-                    <span>{invoice.payment_method || "Chưa cập nhật"}</span>
-                    <span className="appointment-status confirmed">Đã thanh toán</span>
-                  </td>
-
-                  <td>
-                    <span>{new Date(invoice.created_at).toLocaleDateString("vi-VN")}</span>
-                  </td>
-
-                  <td>
-                    <div className="admin-action-group">
+                    <div className="admin-action-group payment-action-row">
                       <button
                         type="button"
                         className="admin-action-button"
-                        onClick={() => printInvoice(invoice)}
+                        onClick={() => setSelectedInvoice(invoice)}
                       >
-                        In hóa đơn
+                        Xem chi tiết
                       </button>
+                      {["Unpaid", "PartiallyPaid"].includes(invoice.payment_status) && (
+                        <button
+                          type="button"
+                          className="admin-action-button"
+                          onClick={() => openPaymentModal(invoice)}
+                        >
+                          Ghi nhận thanh toán
+                        </button>
+                      )}
                       <button
                         type="button"
-                        className="admin-danger-button"
-                        onClick={() => deleteInvoice(invoice)}
+                        className="admin-action-button"
+                        onClick={() => exportInvoice(invoice)}
+                        disabled={exportingId === invoice.id}
                       >
-                        Xóa
+                        {exportingId === invoice.id ? "Đang xuất..." : "Xuất Excel"}
                       </button>
+                      {invoice.payment_status !== "Cancelled" && (
+                        <button
+                          type="button"
+                          className="admin-danger-button"
+                          onClick={() => cancelInvoice(invoice)}
+                        >
+                          Hủy hồ sơ
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -486,18 +641,21 @@ function AdminInvoices() {
           <div className="admin-modal admin-modal-wide">
             <div className="admin-modal-header">
               <div>
-                <h3>Lập hóa đơn</h3>
-                <p>
-                  Nhập nội dung điều trị và số tiền thực tế khách thanh toán trong lần này.
-                </p>
+                <h3>Tạo hồ sơ thanh toán</h3>
+                <p>Nhập nội dung điều trị, giảm giá và khoản thanh toán lần đầu nếu có.</p>
               </div>
-
-              <button type="button" onClick={resetForm}>
-                ×
-              </button>
+              <button type="button" onClick={resetForm}>×</button>
             </div>
 
             <form onSubmit={handleSubmit}>
+              <div className="payment-section-heading">
+                <span>A</span>
+                <div>
+                  <strong>Thông tin khách hàng</strong>
+                  <small>Chọn đúng hồ sơ khách và lịch hẹn liên quan nếu có.</small>
+                </div>
+              </div>
+
               <label className="smart-customer-field">
                 Khách hàng
                 <input
@@ -506,28 +664,18 @@ function AdminInvoices() {
                   onChange={(event) => {
                     setCustomerSearch(event.target.value);
                     setShowCustomerResults(true);
-                    setInvoiceForm({
-                      ...invoiceForm,
-                      patient_id: "",
-                    });
+                    setFormData((current) => ({ ...current, patient_id: "", appointment_id: "" }));
                   }}
                   onFocus={() => setShowCustomerResults(true)}
                   placeholder="Nhập tên hoặc số điện thoại khách hàng..."
                 />
-
                 {showCustomerResults && (
                   <div className="smart-customer-results">
                     {filteredCustomers.length === 0 ? (
-                      <div className="smart-customer-empty">
-                        Không tìm thấy khách phù hợp
-                      </div>
+                      <div className="smart-customer-empty">Không tìm thấy khách phù hợp</div>
                     ) : (
                       filteredCustomers.map((customer) => (
-                        <button
-                          type="button"
-                          key={customer.id}
-                          onClick={() => chooseCustomer(customer)}
-                        >
+                        <button type="button" key={customer.id} onClick={() => chooseCustomer(customer)}>
                           <strong>{customer.full_name}</strong>
                           <span>{customer.phone || "Chưa cập nhật SĐT"}</span>
                         </button>
@@ -535,7 +683,6 @@ function AdminInvoices() {
                     )}
                   </div>
                 )}
-
                 {selectedCustomer && (
                   <small className="smart-customer-selected">
                     Đã chọn hồ sơ #{selectedCustomer.id}
@@ -544,103 +691,339 @@ function AdminInvoices() {
               </label>
 
               <label>
-                Phương thức thanh toán
+                Lịch hẹn liên quan
                 <select
-                  name="payment_method"
-                  value={invoiceForm.payment_method}
-                  onChange={handleInvoiceChange}
+                  value={formData.appointment_id}
+                  onChange={(event) =>
+                    setFormData((current) => ({ ...current, appointment_id: event.target.value }))
+                  }
                 >
-                  <option value="Tiền mặt">Tiền mặt</option>
-                  <option value="Chuyển khoản">Chuyển khoản</option>
+                  <option value="">Không gắn lịch hẹn</option>
+                  {customerAppointments.map((appointment) => (
+                    <option key={appointment.id} value={appointment.id}>
+                      #{appointment.id} - {appointment.service_name} -{" "}
+                      {appointment.appointment_date}
+                    </option>
+                  ))}
                 </select>
               </label>
 
-              <div className="invoice-detail-box">
+              <div className="payment-section-heading">
+                <span>B</span>
+                <div>
+                  <strong>Nội dung điều trị</strong>
+                  <small>Có thể thêm nhiều dòng chi phí cho cùng một hồ sơ.</small>
+                </div>
+              </div>
+
+              <div className="invoice-detail-box payment-detail-editor">
                 <div className="invoice-detail-header">
-                  <strong>Chi tiết hóa đơn</strong>
-                  <button type="button" onClick={addDetailRow}>
-                    + Thêm dòng
-                  </button>
+                  <strong>Nội dung điều trị</strong>
+                  <button type="button" onClick={addDetailRow}>+ Thêm dòng</button>
                 </div>
 
                 {details.map((detail, index) => (
                   <div className="invoice-detail-row flexible" key={index}>
-                    <select
-                      name="service_id"
-                      value={detail.service_id}
-                      onChange={(event) => handleDetailChange(index, event)}
-                    >
+                    <select name="service_id" value={detail.service_id} onChange={(event) => handleDetailChange(index, event)}>
                       <option value="">Nhóm dịch vụ</option>
                       {services.map((service) => (
-                        <option key={service.id} value={service.id}>
-                          {service.service_name}
-                        </option>
+                        <option key={service.id} value={service.id}>{service.service_name}</option>
                       ))}
                     </select>
-
                     <input
                       required
                       name="custom_description"
                       value={detail.custom_description}
                       onChange={(event) => handleDetailChange(index, event)}
-                      placeholder="Ví dụ: Chữa tủy răng 36 lần 1"
+                      placeholder="Nội dung chi tiết"
                     />
-
-                    <input
-                      required
-                      type="number"
-                      min="1"
-                      name="quantity"
-                      value={detail.quantity}
-                      onChange={(event) => handleDetailChange(index, event)}
-                      placeholder="SL"
-                    />
-
-                    <input
-                      required
-                      type="number"
-                      min="1"
-                      name="unit_price"
-                      value={detail.unit_price}
-                      onChange={(event) => handleDetailChange(index, event)}
-                      placeholder="Số tiền"
-                    />
-
-                    <input
-                      type="number"
-                      min="0"
-                      name="discount_amount"
-                      value={detail.discount_amount}
-                      onChange={(event) => handleDetailChange(index, event)}
-                      placeholder="Giảm"
-                    />
-
+                    <input required type="number" min="1" name="quantity" value={detail.quantity} onChange={(event) => handleDetailChange(index, event)} placeholder="SL" />
+                    <input required type="number" min="1" name="unit_price" value={detail.unit_price} onChange={(event) => handleDetailChange(index, event)} placeholder="Đơn giá" />
                     <strong>{formatMoney(calculateDetailSubtotal(detail))}</strong>
-
-                    <button
-                      type="button"
-                      onClick={() => removeDetailRow(index)}
-                      disabled={details.length === 1}
-                    >
-                      Xóa
-                    </button>
+                    <button type="button" onClick={() => removeDetailRow(index)} disabled={details.length === 1}>Xóa</button>
                   </div>
                 ))}
+              </div>
 
-                <div className="invoice-total">
-                  <div>
-                    Tổng thanh toán: <strong>{formatMoney(totalAmount)}</strong>
-                  </div>
+              <div className="payment-section-heading">
+                <span>C</span>
+                <div>
+                  <strong>Giảm giá</strong>
+                  <small>Ghi rõ lý do để tiện đối soát về sau.</small>
                 </div>
               </div>
 
-              <div className="admin-modal-actions">
-                <button type="button" onClick={resetForm}>
-                  Đóng
-                </button>
+              <div className="admin-form-row">
+                <label>
+                  Giảm giá (VNĐ)
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.discount_amount}
+                    onChange={(event) =>
+                      setFormData((current) => ({ ...current, discount_amount: event.target.value }))
+                    }
+                  />
+                </label>
+                <label>
+                  Lý do giảm giá
+                  <input
+                    value={formData.discount_reason}
+                    onChange={(event) =>
+                      setFormData((current) => ({ ...current, discount_reason: event.target.value }))
+                    }
+                    placeholder="Ví dụ: ưu đãi khách hàng thân thiết"
+                  />
+                </label>
+              </div>
 
+              <div className="payment-section-heading">
+                <span>D</span>
+                <div>
+                  <strong>Thanh toán lần đầu</strong>
+                  <small>Có thể để 0 nếu khách chưa thanh toán.</small>
+                </div>
+              </div>
+
+              <div className="admin-form-row">
+                <label>
+                  Số tiền thanh toán lần đầu
+                  <input
+                    type="number"
+                    min="0"
+                    max={totalAmount}
+                    value={formData.first_payment_amount}
+                    onChange={(event) =>
+                      setFormData((current) => ({ ...current, first_payment_amount: event.target.value }))
+                    }
+                  />
+                </label>
+                <label>
+                  Phương thức thanh toán lần đầu
+                  <select
+                    value={formData.first_payment_method}
+                    onChange={(event) =>
+                      setFormData((current) => ({ ...current, first_payment_method: event.target.value }))
+                    }
+                    disabled={firstPaymentAmount <= 0}
+                  >
+                    <option value="Tiền mặt">Tiền mặt</option>
+                    <option value="Chuyển khoản">Chuyển khoản</option>
+                  </select>
+                </label>
+                <label>
+                  Ngày thanh toán lần đầu
+                  <input
+                    type="date"
+                    value={formData.first_payment_date}
+                    onChange={(event) =>
+                      setFormData((current) => ({ ...current, first_payment_date: event.target.value }))
+                    }
+                    disabled={firstPaymentAmount <= 0}
+                  />
+                </label>
+              </div>
+
+              <div className="payment-section-heading">
+                <span>E</span>
+                <div>
+                  <strong>Ghi chú và tổng kết</strong>
+                  <small>Kiểm tra lại số tiền trước khi lưu hồ sơ.</small>
+                </div>
+              </div>
+
+              <label>
+                Ghi chú
+                <textarea
+                  rows={3}
+                  value={formData.note}
+                  onChange={(event) =>
+                    setFormData((current) => ({ ...current, note: event.target.value }))
+                  }
+                  placeholder="Ghi chú nội bộ cho hồ sơ thanh toán..."
+                />
+              </label>
+
+              <div className="invoice-total payment-summary-box">
+                <div>Tạm tính: <strong>{formatMoney(subtotal)}</strong></div>
+                <div>Giảm giá: <strong>{formatMoney(discountAmount)}</strong></div>
+                <div>Thành tiền: <strong>{formatMoney(totalAmount)}</strong></div>
+                <div>Thanh toán lần đầu: <strong>{formatMoney(firstPaymentAmount)}</strong></div>
+                <div>Còn lại: <strong>{formatMoney(firstRemainingAmount)}</strong></div>
+              </div>
+
+              <div className="admin-modal-actions">
+                <button type="button" onClick={resetForm}>Đóng</button>
                 <button type="submit" disabled={saving}>
-                  {saving ? "Đang lưu..." : "Lưu hóa đơn"}
+                  {saving ? "Đang lưu..." : "Lưu hồ sơ"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {selectedInvoice && (
+        <div className="admin-modal-overlay">
+          <div className="admin-modal admin-modal-wide">
+            <div className="admin-modal-header">
+              <div>
+                <h3>Chi tiết hồ sơ thanh toán</h3>
+                <p>{selectedInvoice.invoice_code || `TT${selectedInvoice.id}`} - {selectedInvoice.patient_name}</p>
+              </div>
+              <button type="button" onClick={() => setSelectedInvoice(null)}>×</button>
+            </div>
+
+            <div className="medical-record-list payment-detail-grid">
+              <article className="medical-record-card">
+                <div><span>Mã khách hàng</span><strong>#{selectedInvoice.patient_id}</strong></div>
+                <div><span>Họ tên</span><strong>{selectedInvoice.patient_name}</strong></div>
+                <div><span>Số điện thoại</span><strong>{selectedInvoice.patient_phone || "Chưa cập nhật"}</strong></div>
+                <div><span>Trạng thái</span>{renderPaymentStatus(selectedInvoice)}</div>
+              </article>
+
+              <article className="medical-record-card">
+                {(selectedInvoice.details || []).map((detail) => (
+                  <div key={detail.id}>
+                    <span>{detail.treatment_group || detail.service_name || "Nội dung điều trị"}</span>
+                    <strong>{getDetailName(detail)}</strong>
+                    <p>{detail.quantity} x {formatMoney(detail.unit_price)} = {formatMoney(detail.subtotal)}</p>
+                  </div>
+                ))}
+              </article>
+
+              <article className="medical-record-card">
+                <div><span>Tạm tính</span><strong>{formatMoney(selectedInvoice.subtotal)}</strong></div>
+                <div><span>Giảm giá</span><strong>{formatMoney(selectedInvoice.discount_amount)}</strong></div>
+                <div><span>Lý do giảm giá</span><strong>{selectedInvoice.discount_reason || "Không có"}</strong></div>
+                <div><span>Thành tiền</span><strong>{formatMoney(selectedInvoice.total_amount)}</strong></div>
+                <div><span>Đã thanh toán</span><strong>{formatMoney(selectedInvoice.paid_amount)}</strong></div>
+                <div><span>Còn lại</span><strong>{formatMoney(selectedInvoice.remaining_amount)}</strong></div>
+              </article>
+            </div>
+
+            <div className="invoice-detail-box payment-history-box mt-3">
+              <div className="invoice-detail-header">
+                <strong>Lịch sử thanh toán</strong>
+                <button type="button" onClick={() => exportInvoice(selectedInvoice)} disabled={exportingId === selectedInvoice.id}>
+                  {exportingId === selectedInvoice.id ? "Đang xuất..." : "Xuất bảng thanh toán"}
+                </button>
+              </div>
+              <div className="admin-table-wrapper">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Lần</th>
+                      <th>Ngày</th>
+                      <th>Số tiền</th>
+                      <th>Phương thức</th>
+                      <th>Người ghi nhận</th>
+                      <th>Đã trả lũy kế</th>
+                      <th>Còn lại</th>
+                      <th>Ghi chú</th>
+                      <th>In</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(selectedInvoice.payments || []).map((payment) => (
+                      <tr key={payment.id}>
+                        <td>#{payment.payment_number}</td>
+                        <td>{payment.payment_date_display}</td>
+                        <td className="payment-money-cell">{formatMoney(payment.amount)}</td>
+                        <td>{payment.payment_method}</td>
+                        <td>{payment.created_by_username || "Chưa xác định"}</td>
+                        <td className="payment-money-cell">{formatMoney(payment.cumulative_paid)}</td>
+                        <td className="payment-money-cell">{formatMoney(payment.remaining_after)}</td>
+                        <td>{payment.note || ""}</td>
+                        <td>
+                          <button type="button" className="admin-action-button" onClick={() => printPaymentReceipt(selectedInvoice, payment)}>
+                            In phiếu
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {(!selectedInvoice.payments || selectedInvoice.payments.length === 0) && (
+                      <tr><td colSpan="9">Chưa phát sinh lần thanh toán nào.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="admin-modal-actions">
+              {["Unpaid", "PartiallyPaid"].includes(selectedInvoice.payment_status) && (
+                <button type="button" onClick={() => openPaymentModal(selectedInvoice)}>Ghi nhận thanh toán</button>
+              )}
+              <button type="button" onClick={() => setSelectedInvoice(null)}>Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {paymentInvoice && (
+        <div className="admin-modal-overlay">
+          <div className="admin-modal payment-collect-modal">
+            <div className="admin-modal-header">
+              <div>
+                <h3>Ghi nhận thanh toán</h3>
+                <p>{paymentInvoice.invoice_code || `TT${paymentInvoice.id}`}</p>
+              </div>
+              <button type="button" onClick={resetPaymentForm}>×</button>
+            </div>
+
+            <form onSubmit={submitPayment}>
+              <div className="invoice-total payment-summary-box">
+                <div>Tổng chi phí: <strong>{formatMoney(paymentInvoice.subtotal)}</strong></div>
+                <div>Giảm giá: <strong>{formatMoney(paymentInvoice.discount_amount)}</strong></div>
+                <div>Thành tiền: <strong>{formatMoney(paymentInvoice.total_amount)}</strong></div>
+                <div>Đã thanh toán trước đó: <strong>{formatMoney(paymentInvoice.paid_amount)}</strong></div>
+                <div>Còn lại sau thanh toán: <strong>{formatMoney(paymentPreview?.remainingAfter || 0)}</strong></div>
+              </div>
+
+              <label>
+                Số tiền thanh toán lần này
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  max={paymentInvoice.remaining_amount}
+                  className={paymentAmountError ? "is-invalid" : ""}
+                  value={paymentForm.amount}
+                  onChange={(event) => setPaymentForm((current) => ({ ...current, amount: event.target.value }))}
+                />
+                {paymentAmountError && <small className="payment-field-error">{paymentAmountError}</small>}
+              </label>
+              <label>
+                Phương thức
+                <select value={paymentForm.payment_method} onChange={(event) => setPaymentForm((current) => ({ ...current, payment_method: event.target.value }))}>
+                  <option value="Tiền mặt">Tiền mặt</option>
+                  <option value="Chuyển khoản">Chuyển khoản</option>
+                </select>
+              </label>
+              <label>
+                Ngày thanh toán
+                <input type="date" value={paymentForm.payment_date} onChange={(event) => setPaymentForm((current) => ({ ...current, payment_date: event.target.value }))} />
+              </label>
+              <label>
+                Lịch hẹn liên quan
+                <select value={paymentForm.appointment_id} onChange={(event) => setPaymentForm((current) => ({ ...current, appointment_id: event.target.value }))}>
+                  <option value="">Không gắn lịch hẹn</option>
+                  {customerAppointments.map((appointment) => (
+                    <option key={appointment.id} value={appointment.id}>
+                      #{appointment.id} - {appointment.service_name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Ghi chú
+                <textarea rows={3} value={paymentForm.note} onChange={(event) => setPaymentForm((current) => ({ ...current, note: event.target.value }))} />
+              </label>
+
+              <div className="admin-modal-actions">
+                <button type="button" onClick={resetPaymentForm}>Đóng</button>
+                <button type="submit" disabled={saving || Boolean(paymentAmountError)}>
+                  {saving ? "Đang lưu..." : "Lưu thanh toán"}
                 </button>
               </div>
             </form>

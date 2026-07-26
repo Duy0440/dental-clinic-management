@@ -198,6 +198,14 @@ function NavbarClean() {
                 </li>
               )}
 
+              {canViewCustomerMenu && (
+                <li className="nav-item">
+                  <Link className="nav-link custom-nav-link" to="/my-payments" onClick={closeMenu}>
+                    Thanh toán của tôi
+                  </Link>
+                </li>
+              )}
+
               <li className="nav-item">
                 <Link className="nav-link custom-nav-link" to="/chatbot" onClick={closeMenu}>
                   Hỏi đáp AI

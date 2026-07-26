@@ -19,6 +19,7 @@ import Chatbot from "./pages/ChatbotConsultantV3";
 import Dashboard from "./pages/Dashboard";
 import MyAppointments from "./pages/MyAppointments";
 import MedicalResults from "./pages/MedicalResults";
+import MyPayments from "./pages/MyPayments";
 
 import AdminAppointments from "./pages/admin/AdminAppointments";
 import AdminCustomers from "./pages/admin/AdminCustomers";
@@ -83,6 +84,15 @@ function App() {
             element={
               <ProtectedCustomerRoute>
                 <MedicalResults />
+              </ProtectedCustomerRoute>
+            }
+          />
+
+          <Route
+            path="my-payments"
+            element={
+              <ProtectedCustomerRoute>
+                <MyPayments />
               </ProtectedCustomerRoute>
             }
           />

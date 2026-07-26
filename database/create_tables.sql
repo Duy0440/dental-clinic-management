@@ -158,26 +158,62 @@ CREATE TABLE IF NOT EXISTS invoices (
   patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
   appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
   invoice_code VARCHAR(40) NOT NULL UNIQUE,
-  total_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
-  paid_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  subtotal NUMERIC(14, 2) NOT NULL DEFAULT 0,
+  discount_amount NUMERIC(14, 2) NOT NULL DEFAULT 0,
+  discount_reason TEXT,
+  total_amount NUMERIC(14, 2) NOT NULL DEFAULT 0,
+  paid_amount NUMERIC(14, 2) NOT NULL DEFAULT 0,
+  remaining_amount NUMERIC(14, 2) NOT NULL DEFAULT 0,
   payment_status VARCHAR(20) NOT NULL DEFAULT 'Unpaid'
-    CHECK (payment_status IN ('Unpaid', 'Partial', 'Paid', 'Cancelled')),
+    CHECK (payment_status IN ('Unpaid', 'PartiallyPaid', 'Paid', 'Cancelled')),
   payment_method VARCHAR(40),
+  cancelled_at TIMESTAMP,
+  cancelled_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   issued_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CHECK (
+    subtotal >= 0
+    AND discount_amount >= 0
+    AND discount_amount <= subtotal
+    AND total_amount >= 0
+    AND paid_amount >= 0
+    AND paid_amount <= total_amount
+    AND remaining_amount >= 0
+  )
 );
 
 CREATE TABLE IF NOT EXISTS invoice_details (
   id SERIAL PRIMARY KEY,
   invoice_id INTEGER NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
   service_id INTEGER REFERENCES services(id) ON DELETE SET NULL,
+  treatment_group TEXT,
   custom_description TEXT,
   quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
-  unit_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
-  discount_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
-  subtotal NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  unit_price NUMERIC(14, 2) NOT NULL DEFAULT 0,
+  discount_amount NUMERIC(14, 2) NOT NULL DEFAULT 0,
+  subtotal NUMERIC(14, 2) NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CHECK (service_id IS NOT NULL OR custom_description IS NOT NULL)
 );
+
+CREATE TABLE IF NOT EXISTS payments (
+  id SERIAL PRIMARY KEY,
+  invoice_id INTEGER NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+  amount NUMERIC(14, 2) NOT NULL CHECK (amount > 0),
+  payment_method VARCHAR(40) NOT NULL CHECK (payment_method IN ('Tiền mặt', 'Chuyển khoản')),
+  payment_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
+  note TEXT,
+  created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_payments_invoice
+  ON payments (invoice_id, payment_date, id);
+
+CREATE INDEX IF NOT EXISTS idx_invoices_patient_status
+  ON invoices (patient_id, payment_status);
 
 CREATE TABLE IF NOT EXISTS reviews (
   id SERIAL PRIMARY KEY,

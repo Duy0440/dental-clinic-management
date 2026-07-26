@@ -1,8 +1,12 @@
 ﻿const express = require("express");
 const {
   listInvoices,
+  listMyInvoices,
+  getInvoiceDetail,
   addInvoice,
-  removeInvoice,
+  addInvoicePayment,
+  cancelInvoice,
+  exportInvoice,
 } = require("../controllers/invoiceController");
 const {
   verifyToken,
@@ -11,9 +15,13 @@ const {
 
 const router = express.Router();
 
-// invoice routes (lap hoa don va quan ly hoa don)
+// payment routes (giu URL invoices de tranh anh huong code cu)
 router.get("/", verifyToken, authorizeRoles("admin"), listInvoices);
+router.get("/my", verifyToken, authorizeRoles("customer"), listMyInvoices);
+router.get("/:invoiceId/export", verifyToken, authorizeRoles("admin", "customer"), exportInvoice);
+router.get("/:invoiceId", verifyToken, authorizeRoles("admin", "customer"), getInvoiceDetail);
 router.post("/", verifyToken, authorizeRoles("admin"), addInvoice);
-router.delete("/:invoiceId", verifyToken, authorizeRoles("admin"), removeInvoice);
+router.post("/:invoiceId/payments", verifyToken, authorizeRoles("admin"), addInvoicePayment);
+router.patch("/:invoiceId/cancel", verifyToken, authorizeRoles("admin"), cancelInvoice);
 
 module.exports = router;
