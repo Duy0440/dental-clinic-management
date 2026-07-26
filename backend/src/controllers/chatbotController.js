@@ -1,17 +1,27 @@
-﻿const {
+const {
   createChatbotLog,
   checkChatbotUserExists,
 } = require("../models/chatbotLogModel");
 const { generateDentalReply } = require("../services/chatbotService");
+const {
+  MAX_PUBLIC_INPUT_LENGTH,
+  sanitizePublicInput,
+} = require("../utils/publicText");
 
-// chatbot reply (trả lời câu hỏi và lưu lịch sử)
 const getChatbotReply = async (req, res) => {
   try {
     const { message, user_id, history = [] } = req.body;
+    const sanitizedMessage = sanitizePublicInput(message);
 
-    if (!message || !String(message).trim()) {
+    if (!sanitizedMessage) {
       return res.status(400).json({
         message: "Vui lòng nhập câu hỏi trước khi gửi.",
+      });
+    }
+
+    if (String(message).trim().length > MAX_PUBLIC_INPUT_LENGTH) {
+      return res.status(400).json({
+        message: `Câu hỏi không được vượt quá ${MAX_PUBLIC_INPUT_LENGTH} ký tự.`,
       });
     }
 
@@ -25,26 +35,38 @@ const getChatbotReply = async (req, res) => {
       }
     }
 
-    const chatbotResult = await generateDentalReply(message, history);
+    const safeHistory = Array.isArray(history) ? history : [];
+    const chatbotResult = await generateDentalReply(sanitizedMessage, safeHistory);
 
-    await createChatbotLog({
-      user_id: user_id || null,
-      question: message,
-      answer: chatbotResult.answer,
-    });
+    try {
+      await createChatbotLog({
+        user_id: user_id || null,
+        question: sanitizedMessage,
+        answer: chatbotResult.answer,
+      });
+    } catch (logError) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[chatbot] log write failed", logError.name);
+      }
+    }
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Chatbot đã phản hồi thành công.",
       data: {
-        reply: chatbotResult.answer,
-        source: chatbotResult.source,
+        answer: chatbotResult.answer,
+        sources: chatbotResult.sources,
+        confidence: chatbotResult.confidence,
+        provider: chatbotResult.provider,
         suggestions: chatbotResult.suggestions,
       },
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Lỗi máy chủ",
-      error: error.message,
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[chatbot] request failed", error.message);
+    }
+
+    return res.status(500).json({
+      message: "Chatbot đang tạm gián đoạn. Vui lòng thử lại sau.",
     });
   }
 };

@@ -1,9 +1,9 @@
 const express = require("express");
-const { getChatbotReply } = require("../controllers/chatbotController");
+const { searchPublic } = require("../controllers/publicSearchController");
 const { createPublicRateLimit } = require("../middlewares/publicRateLimit");
 
 const router = express.Router();
 
-router.post("/", createPublicRateLimit({ limit: 15 }), getChatbotReply);
+router.get("/", createPublicRateLimit({ limit: 40 }), searchPublic);
 
 module.exports = router;

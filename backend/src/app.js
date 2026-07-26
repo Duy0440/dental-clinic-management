@@ -15,6 +15,7 @@ const invoiceDetailRoutes = require("./routes/invoiceDetailRoutes");
 const chatbotLogRoutes = require("./routes/chatbotLogRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const publicSearchRoutes = require("./routes/publicSearchRoutes");
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use("/api/invoice-details", invoiceDetailRoutes);
 app.use("/api/chatbot-logs", chatbotLogRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/search", publicSearchRoutes);
 
 module.exports = app;
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
+import DashboardActivityPanels from "../components/admin/DashboardActivityPanels";
 
 const STATUS_LABELS = {
   Pending: "Chờ xác nhận",
@@ -157,11 +157,6 @@ function Dashboard() {
   }));
   const recentAppointments = dashboard?.recent_appointments || [];
   const upcomingReExams = dashboard?.upcoming_re_examinations || [];
-  const maxAppointmentStatus = Math.max(...appointmentStatus.map((item) => item.total), 1);
-  const maxServiceUsage = Math.max(
-    ...serviceStats.map((item) => Number(item.usage_count || 0)),
-    1,
-  );
   const revenueSummary = useMemo(() => {
     const values = revenueSeries.map((item) => Number(item.revenue || 0));
     const total = values.reduce((sum, value) => sum + value, 0);
@@ -610,104 +605,13 @@ function Dashboard() {
         </div>
       </section>
 
-      <section className="ops-dashboard-insight-grid">
-        <div className="ops-panel">
-          <div className="ops-panel-header">
-            <div>
-              <h3>Tình trạng lịch hẹn</h3>
-              <p>Phân bổ trạng thái trong khoảng đang xem.</p>
-            </div>
-          </div>
-          <div className="ops-status-list">
-            {appointmentStatus.map((item) => (
-              <div className="ops-status-row" key={item.status}>
-                <div>
-                  <span>{STATUS_LABELS[item.status] || item.status}</span>
-                  <strong>{item.total}</strong>
-                </div>
-                <div className="ops-progress">
-                  <span style={{ width: `${(item.total / maxAppointmentStatus) * 100}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="ops-panel ops-service-panel">
-          <div className="ops-panel-header">
-            <div>
-              <h3>Dịch vụ được sử dụng nhiều</h3>
-              <p>Thống kê từ các dịch vụ đã ghi nhận trong hồ sơ thanh toán.</p>
-            </div>
-            {serviceStats.length > 0 && (
-              <span className="ops-service-count">Top {serviceStats.length}</span>
-            )}
-          </div>
-          {serviceStats.length === 0 ? (
-            <p className="ops-muted">Chưa có dữ liệu dịch vụ trong khoảng thời gian này.</p>
-          ) : (
-            <div className="ops-service-usage-list">
-              {serviceStats.map((item) => (
-                <article
-                  className="ops-service-usage-row"
-                  key={item.service_id || item.service_key || item.service_name}
-                >
-                  <div>
-                    <strong>{item.service_name}</strong>
-                    <span>
-                      {item.usage_count} lượt • {item.record_count} hồ sơ
-                    </span>
-                  </div>
-                  <div className="ops-service-usage-track" aria-hidden="true">
-                    <span
-                      style={{
-                        width: `${(Number(item.usage_count || 0) / maxServiceUsage) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="ops-panel">
-        <div className="ops-panel-header">
-          <div>
-            <h3>Lịch hẹn mới nhất</h3>
-            <p>Hiển thị tối đa 7 lịch trong kỳ.</p>
-          </div>
-          <Link to="/admin/appointments">Xem tất cả</Link>
-        </div>
-        <div className="ops-appointment-list">
-          {recentAppointments.map((appointment) => (
-            <article key={appointment.id} className="ops-appointment-row">
-              <div>
-                <strong>{appointment.patient_name}</strong>
-                <span>{appointment.service_name}</span>
-                <small>{appointment.dentist_name || "Chưa phân công"}</small>
-              </div>
-              <div>
-                <strong>{appointment.appointment_date_display}</strong>
-                <span>{appointment.appointment_time}</span>
-                <small>{SOURCE_LABELS[appointment.booking_source] || "Chưa phân loại nguồn"}</small>
-              </div>
-              <span className={`appointment-status ${
-                appointment.status === "Confirmed"
-                  ? "confirmed"
-                  : appointment.status === "Completed"
-                    ? "completed"
-                    : appointment.status === "Cancelled"
-                      ? "cancelled"
-                      : "pending"
-              }`}>
-                {STATUS_LABELS[appointment.status] || appointment.status}
-              </span>
-            </article>
-          ))}
-        </div>
-      </section>
+      <DashboardActivityPanels
+        appointmentStatus={appointmentStatus}
+        recentAppointments={recentAppointments}
+        serviceStats={serviceStats}
+        sourceLabels={SOURCE_LABELS}
+        statusLabels={STATUS_LABELS}
+      />
 
       <section className="ops-panel">
         <div className="ops-panel-header">

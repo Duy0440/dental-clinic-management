@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import axiosClient from "../../api/axiosClient";
+import PaymentDetailModal from "../../components/admin/PaymentDetailModal";
 
 const todayText = () => new Date().toISOString().slice(0, 10);
 
@@ -953,190 +954,19 @@ function AdminInvoices() {
       )}
 
       {selectedInvoice && (
-        <div className="admin-modal-overlay">
-          <div className="admin-modal admin-modal-wide payment-detail-modal">
-            <div className="admin-modal-header">
-              <div>
-                <h3>Chi tiết hồ sơ thanh toán</h3>
-                <p>{selectedInvoice.invoice_code || `TT${selectedInvoice.id}`} - {selectedInvoice.patient_name}</p>
-              </div>
-              <button type="button" onClick={() => setSelectedInvoice(null)}>×</button>
-            </div>
-
-            <div className="payment-detail-layout">
-              <div className="payment-detail-main">
-                <section className="payment-detail-section">
-                  <div className="payment-section-heading compact">
-                    <span>A</span>
-                    <div>
-                      <strong>Thông tin khách hàng</strong>
-                      <small>Thông tin định danh của hồ sơ thanh toán.</small>
-                    </div>
-                  </div>
-                  <article className="medical-record-card payment-info-card payment-customer-card">
-                    <div>
-                      <span>Mã khách hàng</span>
-                      <strong>#{selectedInvoice.patient_id}</strong>
-                    </div>
-                    <div>
-                      <span>Họ tên</span>
-                      <strong>{selectedInvoice.patient_name}</strong>
-                    </div>
-                    <div>
-                      <span>Số điện thoại</span>
-                      <strong>{selectedInvoice.patient_phone || "Chưa cập nhật"}</strong>
-                    </div>
-                    <div>
-                      <span>Trạng thái</span>
-                      {renderPaymentStatus(selectedInvoice)}
-                    </div>
-                  </article>
-                </section>
-
-                <section className="payment-detail-section">
-                  <div className="payment-section-heading compact">
-                    <span>B</span>
-                    <div>
-                      <strong>Nội dung điều trị</strong>
-                      <small>Các dòng chi phí đã ghi nhận trong hồ sơ.</small>
-                    </div>
-                  </div>
-                  <article className="medical-record-card payment-treatment-card">
-                    {(selectedInvoice.details || []).length <= 1 ? (
-                      (selectedInvoice.details || []).map((detail) => (
-                        <div key={detail.id || getDetailName(detail)} className="payment-treatment-single">
-                          <div className="payment-treatment-name">
-                            <span>Tên dịch vụ</span>
-                            <strong>{getDetailName(detail)}</strong>
-                            <small>{detail.treatment_group || detail.service_name || "Nội dung điều trị"}</small>
-                          </div>
-                          <div className="payment-treatment-metrics">
-                            <p><span>Số lượng</span><b>{detail.quantity}</b></p>
-                            <p><span>Đơn giá</span><b>{formatMoney(detail.unit_price)}</b></p>
-                            <p><span>Thành tiền</span><b>{formatMoney(detail.subtotal)}</b></p>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="payment-treatment-table-wrap">
-                        <table className="payment-treatment-table">
-                          <thead>
-                            <tr>
-                              <th>Tên dịch vụ / nội dung</th>
-                              <th>Số lượng</th>
-                              <th>Đơn giá</th>
-                              <th>Thành tiền</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(selectedInvoice.details || []).map((detail) => (
-                              <tr key={detail.id || getDetailName(detail)}>
-                                <td>
-                                  <strong>{getDetailName(detail)}</strong>
-                                  <span>{detail.treatment_group || detail.service_name || "Nội dung điều trị"}</span>
-                                </td>
-                                <td>{detail.quantity}</td>
-                                <td className="payment-money-cell">{formatMoney(detail.unit_price)}</td>
-                                <td className="payment-money-cell"><strong>{formatMoney(detail.subtotal)}</strong></td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                    {(!selectedInvoice.details || selectedInvoice.details.length === 0) && (
-                      <p className="ops-muted">Chưa có dòng điều trị trong hồ sơ này.</p>
-                    )}
-                  </article>
-                </section>
-              </div>
-
-              <aside className="payment-detail-side">
-                <div className="payment-section-heading compact">
-                  <span>C</span>
-                  <div>
-                    <strong>Tổng quan thanh toán</strong>
-                    <small>Đối soát tổng tiền, đã thu và công nợ còn lại.</small>
-                  </div>
-                </div>
-                <article className="medical-record-card payment-overview-card">
-                  <div className="payment-overview-row"><span>Tạm tính</span><strong>{formatMoney(selectedInvoice.subtotal)}</strong></div>
-                  <div className="payment-overview-row"><span>Giảm giá</span><strong>{formatMoney(selectedInvoice.discount_amount)}</strong></div>
-                  <div className="payment-overview-row is-note"><span>Lý do giảm giá</span><strong>{selectedInvoice.discount_reason || "Không có"}</strong></div>
-                  <div className="payment-overview-row is-emphasis"><span>Thành tiền</span><strong>{formatMoney(selectedInvoice.total_amount)}</strong></div>
-                  <div className="payment-overview-row"><span>Đã thanh toán</span><strong>{formatMoney(selectedInvoice.paid_amount)}</strong></div>
-                  <div className="payment-overview-row is-danger"><span>Còn lại</span><strong>{formatMoney(selectedInvoice.remaining_amount)}</strong></div>
-                </article>
-              </aside>
-            </div>
-
-            <div className="invoice-detail-box payment-history-box mt-3">
-              <div className="payment-section-heading compact">
-                <span>D</span>
-                <div>
-                  <strong>Lịch sử thanh toán</strong>
-                  <small>Mỗi dòng là một lần khách đã thanh toán.</small>
-                </div>
-              </div>
-              <div className="admin-table-wrapper">
-                <table className="admin-table payment-history-table">
-                  <thead>
-                    <tr>
-                      <th>Lần</th>
-                      <th>Ngày</th>
-                      <th>Số tiền</th>
-                      <th>Phương thức</th>
-                      <th>Người ghi nhận</th>
-                      <th>Đã trả lũy kế</th>
-                      <th>Còn lại</th>
-                      <th>Ghi chú</th>
-                      <th>In phiếu</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(selectedInvoice.payments || []).map((payment) => (
-                      <tr key={payment.id}>
-                        <td>#{payment.payment_number}</td>
-                        <td className="payment-date-cell">
-                          {formatDisplayDate(
-                            payment.payment_date || payment.payment_date_display,
-                            payment.created_at,
-                          )}
-                        </td>
-                        <td className="payment-money-cell">{formatMoney(payment.amount)}</td>
-                        <td>{payment.payment_method}</td>
-                        <td>{payment.created_by_username || "Chưa xác định"}</td>
-                        <td className="payment-money-cell">{formatMoney(payment.cumulative_paid)}</td>
-                        <td className="payment-money-cell">{formatMoney(payment.remaining_after)}</td>
-                        <td className="payment-note-cell">{payment.note || "—"}</td>
-                        <td>
-                          <button type="button" className="admin-action-button" onClick={() => printPaymentReceipt(selectedInvoice, payment)}>
-                            In phiếu
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {(!selectedInvoice.payments || selectedInvoice.payments.length === 0) && (
-                      <tr><td colSpan="9">Chưa phát sinh lần thanh toán nào.</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="admin-modal-actions">
-              {hasDebt(selectedInvoice) && (
-                <button type="button" className="admin-primary-button" onClick={() => exportInvoice(selectedInvoice)} disabled={exportingId === selectedInvoice.id}>
-                  {exportingId === selectedInvoice.id ? "Đang xuất..." : "Xuất bảng công nợ"}
-                </button>
-              )}
-              {hasDebt(selectedInvoice) && (
-                <button type="button" className="admin-secondary-button" onClick={() => openPaymentModal(selectedInvoice)}>Ghi nhận thanh toán</button>
-              )}
-              <button type="button" onClick={() => setSelectedInvoice(null)}>Đóng</button>
-            </div>
-          </div>
-        </div>
+        <PaymentDetailModal
+          exportingId={exportingId}
+          formatDate={formatDisplayDate}
+          formatMoney={formatMoney}
+          getDetailName={getDetailName}
+          hasDebt={hasDebt}
+          invoice={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+          onExport={exportInvoice}
+          onOpenPayment={openPaymentModal}
+          onPrintReceipt={printPaymentReceipt}
+          statusLabels={statusLabels}
+        />
       )}
 
       {paymentInvoice && (

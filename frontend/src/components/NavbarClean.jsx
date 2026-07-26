@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import axiosClient from "../api/axiosClient";
 import { serviceCategories } from "../data/serviceInfo";
 import BrandLogo from "./BrandLogo";
 
@@ -9,6 +10,10 @@ function NavbarClean() {
   const navigate = useNavigate();
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user") || "null"));
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const dashboardPath =
@@ -19,7 +24,48 @@ function NavbarClean() {
   useEffect(() => {
     setUser(JSON.parse(localStorage.getItem("user") || "null"));
     setIsMenuOpen(false);
+    setIsSearchOpen(false);
+    setActiveSuggestionIndex(-1);
   }, [location.pathname, location.search, location.hash]);
+
+  useEffect(() => {
+    const query = searchKeyword.trim();
+
+    if (query.length < 2) {
+      setSearchSuggestions([]);
+      setSearchLoading(false);
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      setSearchLoading(true);
+
+      axiosClient
+        .get("/search", {
+          params: { q: query },
+          signal: controller.signal,
+        })
+        .then((response) => {
+          const groups = response.data?.data?.groups || [];
+          setSearchSuggestions(
+            groups.flatMap((group) => group.items || []).slice(0, 8),
+          );
+          setActiveSuggestionIndex(-1);
+        })
+        .catch((error) => {
+          if (error.code !== "ERR_CANCELED") setSearchSuggestions([]);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setSearchLoading(false);
+        });
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [searchKeyword]);
 
   // close mobile menu (dong menu khi chuyen trang)
   const closeMenu = () => {
@@ -48,7 +94,46 @@ function NavbarClean() {
       return;
     }
 
+    const selectedSuggestion = searchSuggestions[activeSuggestionIndex];
+    if (selectedSuggestion) {
+      navigate(selectedSuggestion.url || "/");
+      setIsSearchOpen(false);
+      closeMenu();
+      return;
+    }
+
     navigate(`/search?keyword=${encodeURIComponent(searchKeyword.trim())}`);
+    setIsSearchOpen(false);
+    closeMenu();
+  };
+
+  const handleSearchKeyDown = (event) => {
+    if (!isSearchOpen || searchSuggestions.length === 0) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveSuggestionIndex((current) =>
+        current >= searchSuggestions.length - 1 ? 0 : current + 1,
+      );
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveSuggestionIndex((current) =>
+        current <= 0 ? searchSuggestions.length - 1 : current - 1,
+      );
+    }
+
+    if (event.key === "Escape") {
+      setIsSearchOpen(false);
+      setActiveSuggestionIndex(-1);
+    }
+  };
+
+  const openSuggestion = (suggestion) => {
+    navigate(suggestion.url || "/");
+    setIsSearchOpen(false);
+    setActiveSuggestionIndex(-1);
     closeMenu();
   };
 
@@ -70,11 +155,61 @@ function NavbarClean() {
               className="header-search-input"
               placeholder="Tìm dịch vụ, bác sĩ hoặc thông tin cần xem"
               value={searchKeyword}
-              onChange={(event) => setSearchKeyword(event.target.value)}
+              onChange={(event) => {
+                setSearchKeyword(event.target.value);
+                setIsSearchOpen(true);
+              }}
+              onFocus={() => setIsSearchOpen(true)}
+              onBlur={() => window.setTimeout(() => setIsSearchOpen(false), 120)}
+              onKeyDown={handleSearchKeyDown}
+              maxLength="120"
+              role="combobox"
+              aria-expanded={isSearchOpen}
+              aria-controls="header-search-suggestions"
+              aria-activedescendant={
+                activeSuggestionIndex >= 0
+                  ? `header-search-option-${activeSuggestionIndex}`
+                  : undefined
+              }
             />
             <button type="submit" className="header-search-button">
               Tìm
             </button>
+            {isSearchOpen && searchKeyword.trim().length >= 2 && (
+              <div
+                className="header-search-suggestions"
+                id="header-search-suggestions"
+                role="listbox"
+              >
+                {searchLoading && <p>Đang tìm dữ liệu...</p>}
+                {!searchLoading && searchSuggestions.length === 0 && (
+                  <p>Không tìm thấy nội dung phù hợp.</p>
+                )}
+                {!searchLoading &&
+                  searchSuggestions.map((suggestion, index) => (
+                    <button
+                      type="button"
+                      id={`header-search-option-${index}`}
+                      className={index === activeSuggestionIndex ? "active" : ""}
+                      role="option"
+                      aria-selected={index === activeSuggestionIndex}
+                      key={suggestion.id}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => openSuggestion(suggestion)}
+                    >
+                      <span>{suggestion.type === "dentist" ? "Nha sĩ" : suggestion.type === "service" ? "Dịch vụ" : "Thông tin"}</span>
+                      <strong>{suggestion.title}</strong>
+                    </button>
+                  ))}
+                <Link
+                  to={`/search?keyword=${encodeURIComponent(searchKeyword.trim())}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => setIsSearchOpen(false)}
+                >
+                  Xem tất cả kết quả
+                </Link>
+              </div>
+            )}
           </form>
 
           <div className="header-actions">
