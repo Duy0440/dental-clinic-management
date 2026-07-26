@@ -190,20 +190,17 @@ const exportSummary = async (req, res) => {
       {
         name: "Dịch vụ",
         rows: buildSimpleSheetRows(
-          "HIỆU QUẢ DỊCH VỤ",
-          ["Dịch vụ", "Số lượt", "Số lượng", "Tổng giá trị dịch vụ", "Tỷ trọng"],
+          "DỊCH VỤ ĐƯỢC SỬ DỤNG NHIỀU",
+          ["Dịch vụ", "Số lượt sử dụng", "Số hồ sơ sử dụng"],
           dashboard.service_stats || [],
           (item) => [
             item.service_name,
             item.usage_count || 0,
-            item.quantity || 0,
-            item.service_value || 0,
-            `${item.share || 0}%`,
+            item.record_count || 0,
           ],
-          [3],
         ),
-        widths: [34, 12, 12, 22, 12],
-        titleMergeTo: 5,
+        widths: [34, 18, 18],
+        titleMergeTo: 3,
       },
     ]);
 

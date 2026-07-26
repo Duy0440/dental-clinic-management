@@ -64,8 +64,14 @@ const getDashboardSummary = async ({ from, to } = {}) => {
     columnExists("invoice_details", "treatment_group"),
   ]);
   const serviceNameExpression = hasTreatmentGroup
-    ? "COALESCE(NULLIF(idt.treatment_group, ''), s.service_name, idt.custom_description, 'Dịch vụ khác')"
-    : "COALESCE(s.service_name, idt.custom_description, 'Dịch vụ khác')";
+    ? "COALESCE(s.service_name, NULLIF(BTRIM(idt.treatment_group), ''), NULLIF(BTRIM(idt.custom_description), ''), 'Dịch vụ khác')"
+    : "COALESCE(s.service_name, NULLIF(BTRIM(idt.custom_description), ''), 'Dịch vụ khác')";
+  const serviceGroupExpression = `
+    CASE
+      WHEN idt.service_id IS NOT NULL THEN 'service:' || idt.service_id::text
+      ELSE 'legacy:' || LOWER(REGEXP_REPLACE(${serviceNameExpression}, '\\s+', ' ', 'g'))
+    END
+  `;
 
   const paymentSummaryPromise = hasPaymentsTable
     ? queryOne(
@@ -104,20 +110,30 @@ const getDashboardSummary = async ({ from, to } = {}) => {
 
   const serviceStatsPromise = pool.query(
     `
+      WITH service_usage AS (
+        SELECT
+          ${serviceGroupExpression} AS service_key,
+          idt.service_id,
+          ${serviceNameExpression} AS service_name,
+          idt.invoice_id,
+          COALESCE(idt.quantity, 0) AS quantity
+        FROM invoice_details idt
+        JOIN invoices i ON i.id = idt.invoice_id
+        LEFT JOIN services s ON s.id = idt.service_id
+        WHERE i.created_at >= $1::date
+          AND i.created_at < ($2::date + INTERVAL '1 day')
+          AND i.payment_status <> 'Cancelled'
+      )
       SELECT
-        ${serviceNameExpression} AS service_name,
-        COUNT(idt.id) AS usage_count,
-        COALESCE(SUM(idt.quantity), 0) AS quantity,
-        COALESCE(SUM(idt.subtotal), 0) AS service_value
-      FROM invoice_details idt
-      JOIN invoices i ON i.id = idt.invoice_id
-      LEFT JOIN services s ON s.id = idt.service_id
-      WHERE i.created_at >= $1::date
-        AND i.created_at < ($2::date + INTERVAL '1 day')
-        AND i.payment_status <> 'Cancelled'
-      GROUP BY ${serviceNameExpression}
-      ORDER BY service_value DESC, usage_count DESC
-      LIMIT 8
+        service_key,
+        MAX(service_id) AS service_id,
+        MIN(service_name) AS service_name,
+        COALESCE(SUM(quantity), 0) AS usage_count,
+        COUNT(DISTINCT invoice_id) AS record_count
+      FROM service_usage
+      GROUP BY service_key
+      ORDER BY usage_count DESC, record_count DESC, service_name ASC
+      LIMIT 6
     `,
     values,
   );
@@ -294,10 +310,6 @@ const getDashboardSummary = async ({ from, to } = {}) => {
       : Promise.resolve({ rows: [] }),
   ]);
 
-  const serviceTotalValue = serviceStatsResult.rows.reduce(
-    (total, item) => total + toNumber(item.service_value),
-    0,
-  );
   const visits = toNumber(visitSummary.visit_count);
   const webBookings = appointmentSummary.web_booking_count === null
     ? null
@@ -343,13 +355,11 @@ const getDashboardSummary = async ({ from, to } = {}) => {
       revenue: toNumber(item.revenue),
     })),
     service_stats: serviceStatsResult.rows.map((item) => ({
+      service_key: item.service_key,
+      service_id: item.service_id ? toNumber(item.service_id) : null,
       service_name: item.service_name,
       usage_count: toNumber(item.usage_count),
-      quantity: toNumber(item.quantity),
-      service_value: toNumber(item.service_value),
-      share: serviceTotalValue > 0
-        ? Number(((toNumber(item.service_value) / serviceTotalValue) * 100).toFixed(1))
-        : 0,
+      record_count: toNumber(item.record_count),
     })),
     recent_appointments: recentAppointmentsResult.rows,
     upcoming_re_examinations: upcomingReExamsResult.rows,

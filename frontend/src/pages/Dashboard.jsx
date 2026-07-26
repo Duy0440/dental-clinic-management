@@ -41,12 +41,53 @@ const toSeriesLabel = (date) => {
   return `${day}/${month}`;
 };
 
+const formatCompactDecimal = (value) =>
+  Number(value)
+    .toFixed(1)
+    .replace(/\.0$/, "")
+    .replace(".", ",");
+
 const formatShortMoney = (value) => {
   const amount = Number(value || 0);
-  if (amount >= 1000000000) return `${(amount / 1000000000).toFixed(1).replace(".", ",")} tỷ`;
-  if (amount >= 1000000) return `${(amount / 1000000).toFixed(1).replace(".", ",")} triệu`;
+  if (amount >= 1000000000) return `${formatCompactDecimal(amount / 1000000000)} tỷ`;
+  if (amount >= 1000000) return `${formatCompactDecimal(amount / 1000000)} triệu`;
   if (amount >= 1000) return `${Math.round(amount / 1000).toLocaleString("vi-VN")} nghìn`;
   return `${amount.toLocaleString("vi-VN")} VNĐ`;
+};
+
+const createNiceRevenueScale = (rawMax) => {
+  if (!Number.isFinite(rawMax) || rawMax <= 0) {
+    return {
+      maxValue: 1000000,
+      ticks: [0, 250000, 500000, 750000, 1000000],
+    };
+  }
+
+  const million = 1000000;
+  const billion = 1000000000;
+  const paddedMax = rawMax * 1.15;
+  const roundingStep =
+    rawMax <= 10 * million
+      ? million
+      : rawMax <= 100 * million
+        ? 10 * million
+        : rawMax <= billion
+          ? 100 * million
+          : rawMax <= 5 * billion
+            ? 500 * million
+            : billion;
+  const maxValue = Math.ceil(paddedMax / roundingStep) * roundingStep;
+  const roundedIntervals = Math.round(maxValue / roundingStep);
+  const intervalCount =
+    roundedIntervals >= 3 && roundedIntervals <= 5 ? roundedIntervals : 4;
+
+  return {
+    maxValue,
+    ticks: Array.from(
+      { length: intervalCount + 1 },
+      (_, index) => (maxValue / intervalCount) * index,
+    ),
+  };
 };
 
 const sanitizeFileName = (value) =>
@@ -107,10 +148,20 @@ function Dashboard() {
   const overview = dashboard?.overview || {};
   const metadata = dashboard?.metadata || {};
   const revenueSeries = dashboard?.revenue_series || [];
-  const appointmentStatus = dashboard?.appointment_status || [];
+  const serviceStats = (dashboard?.service_stats || []).slice(0, 5);
+  const appointmentStatus = Object.keys(STATUS_LABELS).map((status) => ({
+    status,
+    total: Number(
+      (dashboard?.appointment_status || []).find((item) => item.status === status)?.total || 0,
+    ),
+  }));
   const recentAppointments = dashboard?.recent_appointments || [];
   const upcomingReExams = dashboard?.upcoming_re_examinations || [];
   const maxAppointmentStatus = Math.max(...appointmentStatus.map((item) => item.total), 1);
+  const maxServiceUsage = Math.max(
+    ...serviceStats.map((item) => Number(item.usage_count || 0)),
+    1,
+  );
   const revenueSummary = useMemo(() => {
     const values = revenueSeries.map((item) => Number(item.revenue || 0));
     const total = values.reduce((sum, value) => sum + value, 0);
@@ -136,17 +187,20 @@ function Dashboard() {
   const revenueChart = useMemo(() => {
     const width = 920;
     const height = 300;
-    const padding = { top: 24, right: 26, bottom: 48, left: 76 };
+    const padding = { top: 30, right: 26, bottom: 48, left: 76 };
     const innerWidth = width - padding.left - padding.right;
     const innerHeight = height - padding.top - padding.bottom;
-    const maxValue = Math.max(...revenueSeries.map((item) => Number(item.revenue || 0)), 1);
+    const rawMax = Math.max(
+      ...revenueSeries.map((item) => Number(item.revenue || 0)),
+      0,
+    );
+    const scale = createNiceRevenueScale(rawMax);
     const barSlot = revenueSeries.length ? innerWidth / revenueSeries.length : innerWidth;
     const barWidth = Math.max(10, Math.min(28, barSlot * 0.42));
     const labelStep = Math.max(1, Math.ceil(revenueSeries.length / 8));
-    const gridLines = [1, 0.75, 0.5, 0.25, 0];
     const bars = revenueSeries.map((item, index) => {
       const value = Number(item.revenue || 0);
-      const barHeight = value > 0 ? Math.max((value / maxValue) * innerHeight, 4) : 0;
+      const barHeight = value > 0 ? Math.max((value / scale.maxValue) * innerHeight, 4) : 0;
       const x = padding.left + barSlot * index + (barSlot - barWidth) / 2;
       const y = padding.top + innerHeight - barHeight;
 
@@ -164,10 +218,40 @@ function Dashboard() {
       };
     });
 
-    return { width, height, padding, innerWidth, innerHeight, maxValue, bars, gridLines };
+    return {
+      width,
+      height,
+      padding,
+      innerWidth,
+      innerHeight,
+      maxValue: scale.maxValue,
+      ticks: scale.ticks,
+      bars,
+    };
   }, [revenueSeries]);
   const hoveredRevenue =
     hoveredRevenueIndex !== null ? revenueChart.bars[hoveredRevenueIndex] : null;
+  const revenueTooltip = hoveredRevenue
+    ? (() => {
+        const width = 190;
+        const height = 64;
+        const margin = 8;
+        const centerX = hoveredRevenue.x + hoveredRevenue.width / 2;
+        const x = Math.min(
+          Math.max(centerX - width / 2, margin),
+          revenueChart.width - width - margin,
+        );
+        const hasRoomAbove = hoveredRevenue.y >= height + 18;
+        const y = hasRoomAbove
+          ? hoveredRevenue.y - height - 12
+          : Math.min(
+              hoveredRevenue.y + 12,
+              revenueChart.height - height - margin,
+            );
+
+        return { x, y, width, height };
+      })()
+    : null;
 
   const exportReport = async () => {
     try {
@@ -421,12 +505,13 @@ function Dashboard() {
                   </linearGradient>
                 </defs>
 
-                {revenueChart.gridLines.map((ratio) => {
-                  const y = revenueChart.padding.top + revenueChart.innerHeight * (1 - ratio);
-                  const value = Math.round(revenueChart.maxValue * ratio);
+                {revenueChart.ticks.map((value) => {
+                  const y =
+                    revenueChart.padding.top +
+                    revenueChart.innerHeight * (1 - value / revenueChart.maxValue);
 
                   return (
-                    <g key={ratio}>
+                    <g key={value}>
                       <line
                         x1={revenueChart.padding.left}
                         x2={revenueChart.padding.left + revenueChart.innerWidth}
@@ -480,20 +565,27 @@ function Dashboard() {
                     )}
                   </g>
                 ))}
-              </svg>
 
-              {hoveredRevenue && (
-                <div
-                  className="ops-revenue-tooltip"
-                  style={{
-                    left: `${((hoveredRevenue.x + hoveredRevenue.width / 2) / revenueChart.width) * 100}%`,
-                    top: `${Math.max((hoveredRevenue.y / revenueChart.height) * 100, 8)}%`,
-                  }}
-                >
-                  <span>{hoveredRevenue.label}</span>
-                  <strong>{formatMoney(hoveredRevenue.value)}</strong>
-                </div>
-              )}
+                {hoveredRevenue && revenueTooltip && (
+                  <g
+                    className="ops-revenue-svg-tooltip"
+                    transform={`translate(${revenueTooltip.x} ${revenueTooltip.y})`}
+                    aria-hidden="true"
+                  >
+                    <rect
+                      width={revenueTooltip.width}
+                      height={revenueTooltip.height}
+                      rx="12"
+                    />
+                    <text x="14" y="24" className="ops-revenue-tooltip-label">
+                      Ngày {hoveredRevenue.label}
+                    </text>
+                    <text x="14" y="48" className="ops-revenue-tooltip-value">
+                      {formatMoney(hoveredRevenue.value)}
+                    </text>
+                  </g>
+                )}
+              </svg>
             </>
           )}
         </div>
@@ -518,7 +610,7 @@ function Dashboard() {
         </div>
       </section>
 
-      <section className="ops-grid-two">
+      <section className="ops-dashboard-insight-grid">
         <div className="ops-panel">
           <div className="ops-panel-header">
             <div>
@@ -541,41 +633,79 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="ops-panel">
+        <div className="ops-panel ops-service-panel">
           <div className="ops-panel-header">
             <div>
-              <h3>Lịch hẹn mới nhất</h3>
-              <p>Hiển thị tối đa 7 lịch trong kỳ.</p>
+              <h3>Dịch vụ được sử dụng nhiều</h3>
+              <p>Thống kê từ các dịch vụ đã ghi nhận trong hồ sơ thanh toán.</p>
             </div>
-            <Link to="/admin/appointments">Xem tất cả</Link>
+            {serviceStats.length > 0 && (
+              <span className="ops-service-count">Top {serviceStats.length}</span>
+            )}
           </div>
-          <div className="ops-appointment-list">
-            {recentAppointments.map((appointment) => (
-              <article key={appointment.id} className="ops-appointment-row">
-                <div>
-                  <strong>{appointment.patient_name}</strong>
-                  <span>{appointment.service_name}</span>
-                  <small>{appointment.dentist_name || "Chưa phân công"}</small>
-                </div>
-                <div>
-                  <strong>{appointment.appointment_date_display}</strong>
-                  <span>{appointment.appointment_time}</span>
-                  <small>{SOURCE_LABELS[appointment.booking_source] || "Chưa phân loại nguồn"}</small>
-                </div>
-                <span className={`appointment-status ${
-                  appointment.status === "Confirmed"
-                    ? "confirmed"
-                    : appointment.status === "Completed"
-                      ? "completed"
-                      : appointment.status === "Cancelled"
-                        ? "cancelled"
-                        : "pending"
-                }`}>
-                  {STATUS_LABELS[appointment.status] || appointment.status}
-                </span>
-              </article>
-            ))}
+          {serviceStats.length === 0 ? (
+            <p className="ops-muted">Chưa có dữ liệu dịch vụ trong khoảng thời gian này.</p>
+          ) : (
+            <div className="ops-service-usage-list">
+              {serviceStats.map((item) => (
+                <article
+                  className="ops-service-usage-row"
+                  key={item.service_id || item.service_key || item.service_name}
+                >
+                  <div>
+                    <strong>{item.service_name}</strong>
+                    <span>
+                      {item.usage_count} lượt • {item.record_count} hồ sơ
+                    </span>
+                  </div>
+                  <div className="ops-service-usage-track" aria-hidden="true">
+                    <span
+                      style={{
+                        width: `${(Number(item.usage_count || 0) / maxServiceUsage) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="ops-panel">
+        <div className="ops-panel-header">
+          <div>
+            <h3>Lịch hẹn mới nhất</h3>
+            <p>Hiển thị tối đa 7 lịch trong kỳ.</p>
           </div>
+          <Link to="/admin/appointments">Xem tất cả</Link>
+        </div>
+        <div className="ops-appointment-list">
+          {recentAppointments.map((appointment) => (
+            <article key={appointment.id} className="ops-appointment-row">
+              <div>
+                <strong>{appointment.patient_name}</strong>
+                <span>{appointment.service_name}</span>
+                <small>{appointment.dentist_name || "Chưa phân công"}</small>
+              </div>
+              <div>
+                <strong>{appointment.appointment_date_display}</strong>
+                <span>{appointment.appointment_time}</span>
+                <small>{SOURCE_LABELS[appointment.booking_source] || "Chưa phân loại nguồn"}</small>
+              </div>
+              <span className={`appointment-status ${
+                appointment.status === "Confirmed"
+                  ? "confirmed"
+                  : appointment.status === "Completed"
+                    ? "completed"
+                    : appointment.status === "Cancelled"
+                      ? "cancelled"
+                      : "pending"
+              }`}>
+                {STATUS_LABELS[appointment.status] || appointment.status}
+              </span>
+            </article>
+          ))}
         </div>
       </section>
 

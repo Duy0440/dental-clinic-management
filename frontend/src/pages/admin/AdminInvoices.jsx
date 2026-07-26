@@ -56,6 +56,34 @@ const formatMoneyInput = (value) => {
   return digits ? Number(digits).toLocaleString("vi-VN") : "";
 };
 
+const formatDisplayDate = (value, fallbackValue = "") => {
+  const parseParts = (source) => {
+    const text = String(source || "").trim();
+    const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const displayMatch = text.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+
+    if (isoMatch) {
+      return { year: Number(isoMatch[1]), month: isoMatch[2], day: isoMatch[3] };
+    }
+    if (displayMatch) {
+      return { year: Number(displayMatch[3]), month: displayMatch[2], day: displayMatch[1] };
+    }
+    return null;
+  };
+
+  const primary = parseParts(value);
+  const fallback = parseParts(fallbackValue);
+  const parts =
+    primary && primary.year >= 2000 && primary.year <= 2100
+      ? primary
+      : fallback && fallback.year >= 2000 && fallback.year <= 2100
+        ? fallback
+        : primary;
+
+  if (!parts) return "Chưa cập nhật";
+  return `${parts.day}/${parts.month}/${String(parts.year).padStart(4, "0")}`;
+};
+
 const sanitizeFileName = (value) =>
   String(value || "khach-hang")
     .normalize("NFD")
@@ -497,7 +525,7 @@ function AdminInvoices() {
             <div class="row"><span>Tổng đã thanh toán</span><strong>${formatMoney(payment.cumulative_paid)}</strong></div>
             <div class="row"><span>Còn lại</span><strong>${formatMoney(payment.remaining_after)}</strong></div>
             <div class="row"><span>Phương thức</span><strong>${payment.payment_method}</strong></div>
-            <div class="row"><span>Ngày thanh toán</span><strong>${payment.payment_date_display}</strong></div>
+            <div class="row"><span>Ngày thanh toán</span><strong>${formatDisplayDate(payment.payment_date || payment.payment_date_display, payment.created_at)}</strong></div>
             <div class="row"><span>Người ghi nhận</span><strong>${payment.created_by_username || ""}</strong></div>
             <div class="row"><span>Ghi chú</span><strong>${payment.note || ""}</strong></div>
             <div class="signatures"><div>Khách hàng<br/><br/><br/>________________</div><div>Người ghi nhận<br/><br/><br/>________________</div></div>
@@ -977,12 +1005,15 @@ function AdminInvoices() {
                     {(selectedInvoice.details || []).length <= 1 ? (
                       (selectedInvoice.details || []).map((detail) => (
                         <div key={detail.id || getDetailName(detail)} className="payment-treatment-single">
-                          <span>{detail.treatment_group || detail.service_name || "Nội dung điều trị"}</span>
-                          <strong>{getDetailName(detail)}</strong>
-                          <div>
-                            <p>Số lượng: <b>{detail.quantity}</b></p>
-                            <p>Đơn giá: <b>{formatMoney(detail.unit_price)}</b></p>
-                            <p>Thành tiền: <b>{formatMoney(detail.subtotal)}</b></p>
+                          <div className="payment-treatment-name">
+                            <span>Tên dịch vụ</span>
+                            <strong>{getDetailName(detail)}</strong>
+                            <small>{detail.treatment_group || detail.service_name || "Nội dung điều trị"}</small>
+                          </div>
+                          <div className="payment-treatment-metrics">
+                            <p><span>Số lượng</span><b>{detail.quantity}</b></p>
+                            <p><span>Đơn giá</span><b>{formatMoney(detail.unit_price)}</b></p>
+                            <p><span>Thành tiền</span><b>{formatMoney(detail.subtotal)}</b></p>
                           </div>
                         </div>
                       ))
@@ -1029,12 +1060,12 @@ function AdminInvoices() {
                   </div>
                 </div>
                 <article className="medical-record-card payment-overview-card">
-                  <div><span>Tạm tính</span><strong>{formatMoney(selectedInvoice.subtotal)}</strong></div>
-                  <div><span>Giảm giá</span><strong>{formatMoney(selectedInvoice.discount_amount)}</strong></div>
-                  <div><span>Lý do giảm giá</span><strong>{selectedInvoice.discount_reason || "Không có"}</strong></div>
-                  <div className="is-emphasis"><span>Thành tiền</span><strong>{formatMoney(selectedInvoice.total_amount)}</strong></div>
-                  <div><span>Đã thanh toán</span><strong>{formatMoney(selectedInvoice.paid_amount)}</strong></div>
-                  <div className="is-danger"><span>Còn lại</span><strong>{formatMoney(selectedInvoice.remaining_amount)}</strong></div>
+                  <div className="payment-overview-row"><span>Tạm tính</span><strong>{formatMoney(selectedInvoice.subtotal)}</strong></div>
+                  <div className="payment-overview-row"><span>Giảm giá</span><strong>{formatMoney(selectedInvoice.discount_amount)}</strong></div>
+                  <div className="payment-overview-row is-note"><span>Lý do giảm giá</span><strong>{selectedInvoice.discount_reason || "Không có"}</strong></div>
+                  <div className="payment-overview-row is-emphasis"><span>Thành tiền</span><strong>{formatMoney(selectedInvoice.total_amount)}</strong></div>
+                  <div className="payment-overview-row"><span>Đã thanh toán</span><strong>{formatMoney(selectedInvoice.paid_amount)}</strong></div>
+                  <div className="payment-overview-row is-danger"><span>Còn lại</span><strong>{formatMoney(selectedInvoice.remaining_amount)}</strong></div>
                 </article>
               </aside>
             </div>
@@ -1048,7 +1079,7 @@ function AdminInvoices() {
                 </div>
               </div>
               <div className="admin-table-wrapper">
-                <table className="admin-table">
+                <table className="admin-table payment-history-table">
                   <thead>
                     <tr>
                       <th>Lần</th>
@@ -1059,20 +1090,25 @@ function AdminInvoices() {
                       <th>Đã trả lũy kế</th>
                       <th>Còn lại</th>
                       <th>Ghi chú</th>
-                      <th>In</th>
+                      <th>In phiếu</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(selectedInvoice.payments || []).map((payment) => (
                       <tr key={payment.id}>
                         <td>#{payment.payment_number}</td>
-                        <td>{payment.payment_date_display}</td>
+                        <td className="payment-date-cell">
+                          {formatDisplayDate(
+                            payment.payment_date || payment.payment_date_display,
+                            payment.created_at,
+                          )}
+                        </td>
                         <td className="payment-money-cell">{formatMoney(payment.amount)}</td>
                         <td>{payment.payment_method}</td>
                         <td>{payment.created_by_username || "Chưa xác định"}</td>
                         <td className="payment-money-cell">{formatMoney(payment.cumulative_paid)}</td>
                         <td className="payment-money-cell">{formatMoney(payment.remaining_after)}</td>
-                        <td>{payment.note || ""}</td>
+                        <td className="payment-note-cell">{payment.note || "—"}</td>
                         <td>
                           <button type="button" className="admin-action-button" onClick={() => printPaymentReceipt(selectedInvoice, payment)}>
                             In phiếu
