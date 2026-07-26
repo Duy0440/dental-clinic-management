@@ -47,6 +47,18 @@ const cleanText = (value) => {
   return value.trim() || null;
 };
 
+const getTeethPayload = (body = {}) => {
+  if (Array.isArray(body.teeth)) {
+    return body.teeth;
+  }
+
+  if (Array.isArray(body.dental_chart)) {
+    return body.dental_chart;
+  }
+
+  return [];
+};
+
 const recordDataFromBody = (body, dentistId) => ({
   appointment_id: parseId(body.appointment_id),
   patient_id: parseId(body.patient_id),
@@ -204,10 +216,11 @@ const addMedicalRecord = async (req, res) => {
     const dentist = req.user.role === "dentist" ? await getDentistProfile(req.user.id) : null;
     if (req.user.role === "dentist" && !dentist) return res.status(404).json({ message: "Dentist profile not found" });
     const data = recordDataFromBody(req.body, dentist ? dentist.id : parseId(req.body.dentist_id));
+    const teeth = getTeethPayload(req.body);
     const status = dentist && req.body.status === "Confirmed"
       ? "Confirmed"
       : req.body.status === "Draft" ? "Draft" : "PendingConfirmation";
-    const chartError = validateDentalChart(req.body.teeth || []);
+    const chartError = validateDentalChart(teeth);
     if (chartError) return res.status(400).json({ message: chartError });
     if (status === "Confirmed" && !hasConfirmationContent(data)) {
       return res.status(400).json({ message: "Diagnosis and treatment are required before confirmation" });
@@ -223,13 +236,18 @@ const addMedicalRecord = async (req, res) => {
         await assignAppointmentDentist(data.appointment_id, data.dentist_id, db);
       }
       const record = await createMedicalRecord({ ...data, entered_by_user_id: req.user.id, status }, db);
-      if (req.body.teeth?.length) await replaceDentalChart(record.id, req.body.teeth, db);
+      if (Array.isArray(teeth)) {
+        await replaceDentalChart(record.id, teeth, db, {
+          patientId: data.patient_id,
+          createdByUserId: req.user.id,
+        });
+      }
       if (status === "Confirmed") await completeAppointment(record.appointment_id, db);
       await createMedicalRecordAuditLog({
         medicalRecordId: record.id,
         action: "CREATED",
         changedByUserId: req.user.id,
-        newData: { status, teeth: req.body.teeth || [] },
+        newData: { status, teeth },
       }, db);
       return getMedicalRecordById(record.id, db);
     });
@@ -252,9 +270,12 @@ const editMedicalRecord = async (req, res) => {
     if (!(await canAccessRecord(req, oldRecord))) return res.status(403).json({ message: "You do not have permission" });
     const dentist = req.user.role === "dentist" ? await getDentistProfile(req.user.id) : null;
     const data = recordDataFromBody({ ...oldRecord, ...req.body }, dentist ? dentist.id : parseId(req.body.dentist_id) || oldRecord.dentist_id);
+    const hasTeethPayload =
+      Array.isArray(req.body.teeth) || Array.isArray(req.body.dental_chart);
+    const teeth = hasTeethPayload ? getTeethPayload(req.body) : oldRecord.teeth || [];
     data.appointment_id = oldRecord.appointment_id;
     data.patient_id = parseId(req.body.patient_id) || oldRecord.patient_id;
-    const chartError = validateDentalChart(req.body.teeth || []);
+    const chartError = validateDentalChart(teeth);
     if (chartError) return res.status(400).json({ message: chartError });
     const validation = await validateRecordReferences(data);
     if (validation.message) return res.status(400).json({ message: validation.message });
@@ -263,13 +284,18 @@ const editMedicalRecord = async (req, res) => {
 
     const updated = await withMedicalRecordTransaction(async (db) => {
       await updateMedicalRecord(recordId, data, db);
-      if (Array.isArray(req.body.teeth)) await replaceDentalChart(recordId, req.body.teeth, db);
+      if (hasTeethPayload) {
+        await replaceDentalChart(recordId, teeth, db, {
+          patientId: data.patient_id,
+          createdByUserId: req.user.id,
+        });
+      }
       await createMedicalRecordAuditLog({
         medicalRecordId: recordId,
         action: "UPDATED",
         changedByUserId: req.user.id,
         oldData: { status: oldRecord.status },
-        newData: { teeth: req.body.teeth },
+        newData: { teeth },
       }, db);
       return getMedicalRecordById(recordId, db);
     });

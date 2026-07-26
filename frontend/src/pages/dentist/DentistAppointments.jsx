@@ -1,5 +1,6 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
+import DentalChart from "../../components/DentalChart";
 
 const STATUS_LABELS = {
   Pending: "Chờ xác nhận",
@@ -15,25 +16,6 @@ const STATUS_CLASSES = {
   Cancelled: "cancelled",
 };
 
-const TOOTH_CONDITIONS = {
-  normal: "Binh thuong",
-  caries: "Sau rang",
-  filled: "Da tram",
-  root_canal: "Da chua tuy",
-  crown: "Boc rang su",
-  implant: "Implant",
-  missing: "Mat rang",
-  extraction_indicated: "Chi dinh nho",
-  impacted: "Rang moc ngam",
-  periodontal_issue: "Van de nha chu",
-  other: "Khac",
-};
-
-const TOOTH_NUMBERS = [
-  18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28,
-  48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38,
-];
-
 const getTodayText = () => {
   const today = new Date();
   const year = today.getFullYear();
@@ -42,7 +24,6 @@ const getTodayText = () => {
   return `${year}-${month}-${day}`;
 };
 
-// dentist appointments page (nha si xem lich va cap nhat ho so dieu tri)
 function DentistAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -53,12 +34,7 @@ function DentistAppointments() {
     re_examination_date: "",
     re_examination_time: "",
   });
-  const [dentalChart, setDentalChart] = useState([]);
-  const [toothInput, setToothInput] = useState({
-    tooth_number: "",
-    condition: "caries",
-    note: "",
-  });
+  const [teeth, setTeeth] = useState([]);
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -72,7 +48,6 @@ function DentistAppointments() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  // fetch appointments (lay lich kham cua nha si dang nhap)
   const fetchAppointments = async () => {
     try {
       setLoading(true);
@@ -102,10 +77,11 @@ function DentistAppointments() {
     (appointment) => appointment.status === "Confirmed",
   );
   const needRecordAppointments = appointments.filter(
-    (appointment) => appointment.status === "Confirmed" && !appointment.has_medical_record,
+    (appointment) =>
+      appointment.status === "Confirmed" && !appointment.has_medical_record,
   );
   const normalizedSearch = searchText.trim().toLowerCase();
-  // filter appointments (tim benh nhan va loc trang thai)
+
   const filteredAppointments = appointments.filter((appointment) => {
     const matchesSearch =
       !normalizedSearch ||
@@ -142,7 +118,6 @@ function DentistAppointments() {
     return time.slice(0, 5);
   };
 
-  // open record form (mo form cap nhat ket qua kham)
   const openMedicalRecordForm = (appointment) => {
     setSelectedAppointment(appointment);
     setFormData({
@@ -153,8 +128,9 @@ function DentistAppointments() {
       re_examination_time: "",
     });
     setAttachmentFile(null);
-    setDentalChart([]);
-    setToothInput({ tooth_number: "", condition: "caries", note: "" });
+    setAvailableReExamTimes([]);
+    setReExamTimeMessage("Chọn ngày tái khám để kiểm tra giờ còn trống.");
+    setTeeth([]);
     setMessage("");
     setErrorMessage("");
   };
@@ -164,25 +140,9 @@ function DentistAppointments() {
     setAttachmentFile(null);
     setAvailableReExamTimes([]);
     setReExamTimeMessage("Chọn ngày tái khám để kiểm tra giờ còn trống.");
-    setDentalChart([]);
+    setTeeth([]);
   };
 
-  // them trang thai rang vao ho so cua ca dieu tri
-  const addToothChart = () => {
-    if (!toothInput.tooth_number) {
-      setErrorMessage("Vui long chon so rang truoc khi them vao so do rang.");
-      return;
-    }
-
-    setDentalChart((current) => [
-      ...current.filter((item) => item.tooth_number !== Number(toothInput.tooth_number)),
-      { ...toothInput, tooth_number: Number(toothInput.tooth_number) },
-    ]);
-    setToothInput({ tooth_number: "", condition: "caries", note: "" });
-    setErrorMessage("");
-  };
-
-  // handle record form (cap nhat chan doan, dieu tri, tai kham)
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -203,7 +163,6 @@ function DentistAppointments() {
   };
 
   useEffect(() => {
-    // fetch re-exam times (kiem tra gio tai kham con trong)
     const fetchReExaminationTimes = async () => {
       if (!selectedAppointment) {
         return;
@@ -263,7 +222,6 @@ function DentistAppointments() {
     fetchReExaminationTimes();
   }, [selectedAppointment, formData.re_examination_date]);
 
-  // create medical record (luu ket qua dieu tri)
   const handleCreateMedicalRecord = async (event) => {
     event.preventDefault();
     setMessage("");
@@ -296,7 +254,7 @@ function DentistAppointments() {
         diagnosis: formData.diagnosis,
         treatment: formData.treatment,
         note: formData.note,
-        dental_chart: dentalChart,
+        teeth,
         re_examination_date: formData.re_examination_date || null,
         re_examination_time: formData.re_examination_time || null,
         status: "Confirmed",
@@ -337,7 +295,10 @@ function DentistAppointments() {
         <div>
           <span className="dentist-eyebrow">Lịch làm việc</span>
           <h2>Lịch khám của tôi</h2>
-          <p>Theo dõi các lịch hẹn đã được lễ tân phân công và cập nhật điều trị sau khi khám.</p>
+          <p>
+            Theo dõi các lịch hẹn đã được lễ tân phân công và cập nhật điều trị
+            sau khi khám.
+          </p>
         </div>
       </div>
 
@@ -396,11 +357,13 @@ function DentistAppointments() {
       {!loading && !errorMessage && appointments.length === 0 && (
         <div className="dentist-empty-state">
           <strong>Chưa có lịch khám được phân công</strong>
-          <p>Khi lễ tân xác nhận và phân công lịch, danh sách sẽ hiển thị tại đây.</p>
+          <p>
+            Khi lễ tân xác nhận và phân công lịch, danh sách sẽ hiển thị tại đây.
+          </p>
         </div>
       )}
 
-      {!loading && !errorMessage && appointments.length > 0 && filteredAppointments.length === 0 && (
+      {!loading && !errorMessage && filteredAppointments.length === 0 && appointments.length > 0 && (
         <div className="dentist-empty-state">
           <strong>Không có lịch phù hợp</strong>
           <p>Thử đổi từ khóa tìm kiếm hoặc bộ lọc trạng thái.</p>
@@ -443,7 +406,9 @@ function DentistAppointments() {
                     <td>
                       <div>{appointment.note || "Không có ghi chú từ khách."}</div>
                       {appointment.clinic_note && (
-                        <span className="dentist-clinic-note">Phòng khám: {appointment.clinic_note}</span>
+                        <span className="dentist-clinic-note">
+                          Phòng khám: {appointment.clinic_note}
+                        </span>
                       )}
                     </td>
 
@@ -594,79 +559,7 @@ function DentistAppointments() {
               )}
             </div>
 
-            <div className="dentist-tooth-chart">
-              <div className="dentist-tooth-chart-header">
-                <div>
-                  <label>Sơ đồ răng</label>
-                  <p>Ghi nhận các răng cần theo dõi trong ca điều trị này.</p>
-                </div>
-              </div>
-
-              <div className="dentist-tooth-chart-form">
-                <select
-                  value={toothInput.tooth_number}
-                  onChange={(event) =>
-                    setToothInput((current) => ({
-                      ...current,
-                      tooth_number: event.target.value,
-                    }))
-                  }
-                >
-                  <option value="">Chọn số răng</option>
-                  {TOOTH_NUMBERS.map((toothNumber) => (
-                    <option key={toothNumber} value={toothNumber}>
-                      Răng {toothNumber}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={toothInput.condition}
-                  onChange={(event) =>
-                    setToothInput((current) => ({
-                      ...current,
-                      condition: event.target.value,
-                    }))
-                  }
-                >
-                  {Object.entries(TOOTH_CONDITIONS).map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </select>
-
-                <input
-                  type="text"
-                  value={toothInput.note}
-                  onChange={(event) =>
-                    setToothInput((current) => ({ ...current, note: event.target.value }))
-                  }
-                  placeholder="Ghi chú ngắn (nếu có)"
-                />
-
-                <button type="button" onClick={addToothChart}>Thêm răng</button>
-              </div>
-
-              {dentalChart.length > 0 && (
-                <div className="dentist-tooth-chart-list">
-                  {dentalChart.map((item) => (
-                    <div key={item.tooth_number} className="dentist-tooth-chart-item">
-                      <span><strong>Răng {item.tooth_number}</strong> - {TOOTH_CONDITIONS[item.condition]}</span>
-                      {item.note && <small>{item.note}</small>}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setDentalChart((current) =>
-                            current.filter((tooth) => tooth.tooth_number !== item.tooth_number),
-                          )
-                        }
-                      >
-                        Xóa
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <DentalChart mode="edit" teeth={teeth} onChange={setTeeth} />
 
             <label>Hình ảnh hoặc file đính kèm</label>
             <input
@@ -674,7 +567,9 @@ function DentistAppointments() {
               accept="image/*,.pdf"
               onChange={(event) => setAttachmentFile(event.target.files[0])}
             />
-            <p className="dentist-helper-text">Có thể đính kèm ảnh răng, phim chụp hoặc file PDF kết quả.</p>
+            <p className="dentist-helper-text">
+              Có thể đính kèm ảnh răng, phim chụp hoặc file PDF kết quả.
+            </p>
 
             {errorMessage && <p className="admin-error-message">{errorMessage}</p>}
 

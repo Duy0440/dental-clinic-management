@@ -1,12 +1,13 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 import { getAssetUrl } from "../../api/urlHelpers";
+import DentalChart from "../../components/DentalChart";
+import { extractMedicalRecordTeeth } from "../../utils/dentalChart";
 
 const isImageFile = (fileType) => {
   return fileType?.startsWith("image/");
 };
 
-// dentist records page (xem ho so dieu tri da cap nhat)
 function DentistMedicalRecords() {
   const [records, setRecords] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -16,7 +17,6 @@ function DentistMedicalRecords() {
   const [confirmingId, setConfirmingId] = useState(null);
 
   useEffect(() => {
-    // fetch records (lay danh sach ho so dieu tri)
     const fetchRecords = async () => {
       try {
         const response = await axiosClient.get("/medical-records");
@@ -54,7 +54,6 @@ function DentistMedicalRecords() {
     return labels[status] || "Chờ xác nhận";
   };
 
-  // confirm record (nha si xac nhan ho so do le tan lap)
   const handleConfirm = async (recordId) => {
     try {
       setConfirmingId(recordId);
@@ -64,9 +63,11 @@ function DentistMedicalRecords() {
       const response = await axiosClient.post(`/medical-records/${recordId}/confirm`);
       const confirmedRecord = response.data.data;
 
-      setRecords((current) => current.map((record) => (
-        record.id === confirmedRecord.id ? confirmedRecord : record
-      )));
+      setRecords((current) =>
+        current.map((record) =>
+          record.id === confirmedRecord.id ? confirmedRecord : record,
+        ),
+      );
       setMessage("Đã xác nhận hồ sơ và hoàn tất lịch khám.");
     } catch (error) {
       setErrorMessage(
@@ -83,7 +84,10 @@ function DentistMedicalRecords() {
         <div>
           <span className="dentist-eyebrow">Theo dõi điều trị</span>
           <h2>Hồ sơ điều trị</h2>
-          <p>Xem lại các chẩn đoán, nội dung điều trị, lịch tái khám và file hình ảnh đã cập nhật.</p>
+          <p>
+            Xem lại chẩn đoán, nội dung điều trị, sơ đồ răng, lịch tái khám và
+            file hình ảnh đã cập nhật.
+          </p>
         </div>
       </div>
 
@@ -128,6 +132,11 @@ function DentistMedicalRecords() {
               <div className="dentist-record-section">
                 <span>Ghi chú chuyên môn</span>
                 <p>{record.note || "Không có ghi chú."}</p>
+              </div>
+
+              <div className="dentist-record-section">
+                <span>Sơ đồ răng</span>
+                <DentalChart mode="view" teeth={extractMedicalRecordTeeth(record)} />
               </div>
 
               <div className="dentist-record-footer">

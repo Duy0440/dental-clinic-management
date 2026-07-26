@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import { getAssetUrl } from "../../api/urlHelpers";
+import DentalChart from "../../components/DentalChart";
 import MedicalRecordForm from "../../components/admin/MedicalRecordForm";
+import { extractMedicalRecordTeeth } from "../../utils/dentalChart";
 
 const getTodayText = () => {
   const today = new Date();
@@ -398,6 +400,14 @@ function AdminCustomerDetail() {
                 <div>
                   <span>Điều trị</span>
                   <p>{record.treatment || "Chưa cập nhật"}</p>
+                </div>
+
+                <div className="medical-record-chart-block">
+                  <span>Sơ đồ răng</span>
+                  <DentalChart
+                    mode="view"
+                    teeth={extractMedicalRecordTeeth(record)}
+                  />
                 </div>
 
                 <div>

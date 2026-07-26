@@ -21,13 +21,36 @@ const TOOTH_CONDITIONS = [
   "other",
 ];
 
-// validate chart (kiem tra so rang va tinh trang rang)
+let cachedDentalChartColumns = null;
+
+const getDentalChartColumns = async (db = pool) => {
+  if (cachedDentalChartColumns) {
+    return cachedDentalChartColumns;
+  }
+
+  const result = await db.query(
+    `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'dental_chart_entries'
+    `,
+  );
+
+  cachedDentalChartColumns = new Set(
+    result.rows.map((row) => row.column_name),
+  );
+
+  return cachedDentalChartColumns;
+};
+
 const validateDentalChart = (teeth = []) => {
   if (!Array.isArray(teeth)) {
     return "Dental chart must be an array";
   }
 
   const usedTeeth = new Set();
+
   for (const tooth of teeth) {
     const toothNumber = Number(tooth.tooth_number);
     const condition = tooth.condition_code || tooth.condition || "normal";
@@ -35,20 +58,29 @@ const validateDentalChart = (teeth = []) => {
     if (!FDI_TEETH.includes(toothNumber)) {
       return `Invalid FDI tooth number: ${tooth.tooth_number}`;
     }
+
     if (!TOOTH_CONDITIONS.includes(condition)) {
       return `Invalid tooth condition: ${condition}`;
     }
+
     if (usedTeeth.has(toothNumber)) {
       return `Duplicated tooth number: ${toothNumber}`;
     }
+
     usedTeeth.add(toothNumber);
   }
 
   return null;
 };
 
-// replace chart (luu lai cac rang cua mot ho so)
-const replaceDentalChart = async (recordId, teeth = [], db = pool) => {
+const replaceDentalChart = async (
+  recordId,
+  teeth = [],
+  db = pool,
+  options = {},
+) => {
+  const columns = await getDentalChartColumns(db);
+
   await db.query(
     "DELETE FROM dental_chart_entries WHERE medical_record_id = $1",
     [recordId],
@@ -56,35 +88,55 @@ const replaceDentalChart = async (recordId, teeth = [], db = pool) => {
 
   for (const tooth of teeth) {
     const condition = tooth.condition_code || tooth.condition || "normal";
+    const insertColumns = ["medical_record_id", "tooth_number"];
+    const values = [recordId, Number(tooth.tooth_number)];
+
+    if (columns.has("condition_code")) {
+      insertColumns.push("condition_code");
+      values.push(condition);
+    }
+
+    if (columns.has("condition")) {
+      insertColumns.push("condition");
+      values.push(condition);
+    }
+
+    insertColumns.push("treatment_note", "note");
+    values.push(tooth.treatment_note || null, tooth.note || null);
+
+    if (columns.has("patient_id")) {
+      insertColumns.push("patient_id");
+      values.push(options.patientId || null);
+    }
+
+    if (columns.has("created_by_user_id")) {
+      insertColumns.push("created_by_user_id");
+      values.push(options.createdByUserId || null);
+    }
+
+    const placeholders = insertColumns.map((_, index) => `$${index + 1}`);
+
     await db.query(
       `
-        INSERT INTO dental_chart_entries (
-          medical_record_id,
-          tooth_number,
-          condition,
-          treatment_note,
-          note
-        )
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO dental_chart_entries (${insertColumns.join(", ")})
+        VALUES (${placeholders.join(", ")})
       `,
-      [
-        recordId,
-        Number(tooth.tooth_number),
-        condition,
-        tooth.treatment_note || null,
-        tooth.note || null,
-      ],
+      values,
     );
   }
 };
 
-// patient chart (lay tinh trang moi nhat cua tung rang)
 const getLatestPatientDentalChart = async (patientId) => {
+  const columns = await getDentalChartColumns(pool);
+  const conditionSelect = columns.has("condition_code")
+    ? "COALESCE(dce.condition_code, dce.condition) AS condition_code"
+    : "dce.condition AS condition_code";
+
   const result = await pool.query(
     `
       SELECT DISTINCT ON (dce.tooth_number)
         dce.tooth_number,
-        dce.condition AS condition_code,
+        ${conditionSelect},
         dce.treatment_note,
         dce.note,
         mr.id AS medical_record_id,

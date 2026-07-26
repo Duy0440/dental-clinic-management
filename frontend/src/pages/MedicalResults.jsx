@@ -1,8 +1,9 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axiosClient from "../api/axiosClient";
 import { getAssetUrl } from "../api/urlHelpers";
+import DentalChart from "../components/DentalChart";
+import { extractMedicalRecordTeeth } from "../utils/dentalChart";
 
-// medical results page (khach xem ket qua dieu tri)
 function MedicalResults() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
@@ -12,7 +13,6 @@ function MedicalResults() {
   const [previewImage, setPreviewImage] = useState(null);
 
   useEffect(() => {
-    // fetch records (lay ho so dieu tri cua khach)
     const fetchMedicalResults = async () => {
       try {
         const response = await axiosClient.get(
@@ -43,7 +43,6 @@ function MedicalResults() {
   };
 
   const getFileUrl = (fileUrl) => {
-    // asset url (doi duong dan file upload)
     return getAssetUrl(fileUrl);
   };
 
@@ -55,7 +54,6 @@ function MedicalResults() {
     <div className="container py-5">
       <div className="mb-4">
         <h2 className="mb-1">Kết quả điều trị</h2>
-
         <p className="text-secondary mb-0">
           Xem lại chẩn đoán, nội dung điều trị và khuyến nghị tái khám từ phòng
           khám.
@@ -77,15 +75,14 @@ function MedicalResults() {
       {!loading && !message && records.length > 0 && (
         <div className="row g-4">
           {records.map((record) => (
-            <div className="col-lg-6" key={record.id}>
-              <article className="card border-0 shadow-sm rounded-4 h-100">
+            <div className="col-12" key={record.id}>
+              <article className="card border-0 shadow-sm rounded-4">
                 <div className="card-body p-4">
-                  <div className="d-flex justify-content-between gap-3 mb-4">
+                  <div className="d-flex justify-content-between gap-3 mb-4 flex-wrap">
                     <div>
                       <p className="text-secondary small mb-1">
                         Kết quả #{record.id}
                       </p>
-
                       <h4 className="mb-0">{record.dentist_name}</h4>
                     </div>
 
@@ -109,14 +106,18 @@ function MedicalResults() {
                   {record.treatment_plan && (
                     <div className="mb-3">
                       <strong>Kế hoạch điều trị</strong>
-                      <p className="text-secondary mb-0 mt-1">{record.treatment_plan}</p>
+                      <p className="text-secondary mb-0 mt-1">
+                        {record.treatment_plan}
+                      </p>
                     </div>
                   )}
 
                   {record.prescription && (
                     <div className="mb-3">
                       <strong>Hướng dẫn / đơn thuốc</strong>
-                      <p className="text-secondary mb-0 mt-1">{record.prescription}</p>
+                      <p className="text-secondary mb-0 mt-1">
+                        {record.prescription}
+                      </p>
                     </div>
                   )}
 
@@ -127,13 +128,19 @@ function MedicalResults() {
                     </p>
                   </div>
 
+                  <div className="mb-4">
+                    <DentalChart
+                      mode="view"
+                      teeth={extractMedicalRecordTeeth(record)}
+                    />
+                  </div>
+
                   <div className="border rounded-4 p-3 bg-light-subtle">
                     <strong>Tái khám đề xuất</strong>
 
                     <p className="mb-0 mt-1">
                       {record.re_examination_date_display ||
                         "Chưa có đề xuất tái khám"}
-
                       {record.re_examination_time &&
                         ` lúc ${formatTime(record.re_examination_time)}`}
                     </p>
@@ -144,10 +151,7 @@ function MedicalResults() {
 
                         <div className="record-attachment-list mt-2">
                           {record.attachments.map((file) => (
-                            <div
-                              className="record-attachment-item"
-                              key={file.id}
-                            >
+                            <div className="record-attachment-item" key={file.id}>
                               {isImageFile(file.file_type) ? (
                                 <button
                                   type="button"
@@ -196,6 +200,7 @@ function MedicalResults() {
           ))}
         </div>
       )}
+
       {previewImage && (
         <div
           className="image-preview-overlay"
