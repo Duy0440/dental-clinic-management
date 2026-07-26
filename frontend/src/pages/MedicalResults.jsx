@@ -39,7 +39,7 @@ function MedicalResults() {
   }, [user?.patient_id]);
 
   const formatTime = (time) => {
-    return time ? time.slice(0, 5) : "";
+    return time ? String(time).slice(0, 5) : "";
   };
 
   const getFileUrl = (fileUrl) => {
@@ -86,49 +86,77 @@ function MedicalResults() {
                       <h4 className="mb-0">{record.dentist_name}</h4>
                     </div>
 
-                    <span className="result-status-badge">Đã cập nhật</span>
+                    <span className="result-status-badge">Đã xác nhận</span>
                   </div>
 
-                  <div className="mb-3">
-                    <strong>Chẩn đoán</strong>
-                    <p className="text-secondary mb-0 mt-1">
-                      {record.diagnosis || "Chưa cập nhật"}
-                    </p>
-                  </div>
-
-                  <div className="mb-3">
-                    <strong>Nội dung điều trị</strong>
-                    <p className="text-secondary mb-0 mt-1">
-                      {record.treatment || "Chưa cập nhật"}
-                    </p>
-                  </div>
-
-                  {record.treatment_plan && (
-                    <div className="mb-3">
-                      <strong>Kế hoạch điều trị</strong>
+                  <div className="medical-result-grid">
+                    <div>
+                      <strong>Ngày khám</strong>
                       <p className="text-secondary mb-0 mt-1">
-                        {record.treatment_plan}
+                        {record.created_at
+                          ? new Date(record.created_at).toLocaleDateString("vi-VN")
+                          : "Chưa cập nhật"}
                       </p>
                     </div>
-                  )}
 
-                  {record.prescription && (
-                    <div className="mb-3">
-                      <strong>Hướng dẫn / đơn thuốc</strong>
+                    <div>
+                      <strong>Nha sĩ phụ trách</strong>
                       <p className="text-secondary mb-0 mt-1">
-                        {record.prescription}
+                        {record.dentist_name || "Chưa cập nhật"}
                       </p>
                     </div>
-                  )}
 
-                  <div className="mb-3">
-                    <strong>Ghi chú chuyên môn</strong>
-                    <p className="text-secondary mb-0 mt-1">
-                      {record.note || "Không có ghi chú thêm."}
-                    </p>
+                    <div>
+                      <strong>Lý do khám</strong>
+                      <p className="text-secondary mb-0 mt-1">
+                        {record.chief_complaint || "Chưa cập nhật"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <strong>Khám lâm sàng</strong>
+                      <p className="text-secondary mb-0 mt-1">
+                        {record.clinical_examination || "Chưa cập nhật"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <strong>Chẩn đoán</strong>
+                      <p className="text-secondary mb-0 mt-1">
+                        {record.diagnosis || "Chưa cập nhật"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <strong>Nội dung điều trị</strong>
+                      <p className="text-secondary mb-0 mt-1">
+                        {record.treatment || "Chưa cập nhật"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <strong>Hướng điều trị tiếp theo</strong>
+                      <p className="text-secondary mb-0 mt-1">
+                        {record.treatment_plan || "Chưa cập nhật"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <strong>Thuốc/Hướng dẫn</strong>
+                      <p className="text-secondary mb-0 mt-1">
+                        {record.prescription || "Chưa cập nhật"}
+                      </p>
+                    </div>
+
+                    <div className="medical-result-full">
+                      <strong>Ghi chú</strong>
+                      <p className="text-secondary mb-0 mt-1">
+                        {record.note || "Không có ghi chú thêm."}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="mb-4">
+                  <div className="my-4">
                     <DentalChart
                       mode="view"
                       teeth={extractMedicalRecordTeeth(record)}
@@ -137,7 +165,6 @@ function MedicalResults() {
 
                   <div className="border rounded-4 p-3 bg-light-subtle">
                     <strong>Tái khám đề xuất</strong>
-
                     <p className="mb-0 mt-1">
                       {record.re_examination_date_display ||
                         "Chưa có đề xuất tái khám"}

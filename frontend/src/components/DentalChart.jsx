@@ -68,11 +68,9 @@ function DentalChart({ mode = "view", teeth = [], onChange }) {
       return;
     }
 
-    const currentTooth = toothMap.get(selectedTooth);
-
     setDraft({
       ...createEmptyDraft(selectedTooth),
-      ...(currentTooth || {}),
+      ...(toothMap.get(selectedTooth) || {}),
     });
   }, [selectedTooth, toothMap]);
 
@@ -89,9 +87,7 @@ function DentalChart({ mode = "view", teeth = [], onChange }) {
           tooth.note,
       ) || normalizedTeeth[0];
 
-    if (firstMarkedTooth) {
-      setSelectedTooth(firstMarkedTooth.tooth_number);
-    }
+    setSelectedTooth(firstMarkedTooth.tooth_number);
   }, [normalizedTeeth, selectedTooth]);
 
   const getConditionLabel = (conditionCode) => {
@@ -103,12 +99,11 @@ function DentalChart({ mode = "view", teeth = [], onChange }) {
 
   const openTooth = (toothNumber) => {
     const normalizedToothNumber = String(toothNumber);
-    const currentTooth = toothMap.get(normalizedToothNumber);
 
     setSelectedTooth(normalizedToothNumber);
     setDraft({
       ...createEmptyDraft(normalizedToothNumber),
-      ...(currentTooth || {}),
+      ...(toothMap.get(normalizedToothNumber) || {}),
     });
   };
 
@@ -147,12 +142,12 @@ function DentalChart({ mode = "view", teeth = [], onChange }) {
       note: String(draft.note || "").trim(),
     };
 
-    const nextTeeth = normalizedTeeth.filter(
-      (tooth) => tooth.tooth_number !== cleanedTooth.tooth_number,
-    );
-
-    nextTeeth.push(cleanedTooth);
-    emitChange(nextTeeth);
+    emitChange([
+      ...normalizedTeeth.filter(
+        (tooth) => tooth.tooth_number !== cleanedTooth.tooth_number,
+      ),
+      cleanedTooth,
+    ]);
     setDraft(cleanedTooth);
   };
 
@@ -161,11 +156,9 @@ function DentalChart({ mode = "view", teeth = [], onChange }) {
       return;
     }
 
-    const nextTeeth = normalizedTeeth.filter(
-      (tooth) => tooth.tooth_number !== selectedTooth,
+    emitChange(
+      normalizedTeeth.filter((tooth) => tooth.tooth_number !== selectedTooth),
     );
-
-    emitChange(nextTeeth);
     setDraft(createEmptyDraft(selectedTooth));
   };
 
@@ -195,6 +188,14 @@ function DentalChart({ mode = "view", teeth = [], onChange }) {
         aria-pressed={isSelected}
         title={`Răng ${toothNumber} - ${getConditionLabel(conditionCode)}`}
       >
+        <svg
+          className="dental-tooth-shape"
+          viewBox="0 0 32 38"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M16 2c-6.6 0-11 4.7-11 11.1 0 4 1.8 7.4 3.4 10.4 1.2 2.2 1.8 5.2 2.3 7.6.5 2.5 1.1 4.9 3 4.9 1.5 0 1.9-2.4 2.2-4.6.3-2.1.6-4.2 1.1-4.2s.8 2.1 1.1 4.2c.3 2.2.7 4.6 2.2 4.6 1.9 0 2.5-2.4 3-4.9.5-2.4 1.1-5.4 2.3-7.6 1.6-3 3.4-6.4 3.4-10.4C29 6.7 24.6 2 18 2h-2z" />
+        </svg>
         <span className="dental-tooth-number">{toothNumber}</span>
         {hasInformation && (
           <span className="dental-tooth-mark" aria-hidden="true">
@@ -205,6 +206,74 @@ function DentalChart({ mode = "view", teeth = [], onChange }) {
     );
   };
 
+  const renderViewPanel = () => (
+    <div className="dental-view-fields">
+      <div>
+        <span>Tình trạng</span>
+        <strong>{getConditionLabel(draft.condition_code)}</strong>
+      </div>
+      <div>
+        <span>Nội dung xử lý</span>
+        <p>{draft.treatment_note || "Chưa ghi nhận."}</p>
+      </div>
+      <div>
+        <span>Ghi chú</span>
+        <p>{draft.note || "Không có ghi chú."}</p>
+      </div>
+    </div>
+  );
+
+  const renderEditPanel = () => (
+    <>
+      <label className="dental-field">
+        <span>Tình trạng răng</span>
+        <select
+          value={draft.condition_code}
+          onChange={(event) => updateDraft("condition_code", event.target.value)}
+        >
+          {conditionOptions.map((condition) => (
+            <option key={condition.value} value={condition.value}>
+              {condition.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="dental-field">
+        <span>Nội dung xử lý</span>
+        <textarea
+          rows={3}
+          value={draft.treatment_note}
+          onChange={(event) => updateDraft("treatment_note", event.target.value)}
+          placeholder="Ví dụ: Làm sạch xoang sâu, trám tạm..."
+        />
+      </label>
+
+      <label className="dental-field">
+        <span>Ghi chú</span>
+        <textarea
+          rows={2}
+          value={draft.note}
+          onChange={(event) => updateDraft("note", event.target.value)}
+          placeholder="Nhập ghi chú chuyên môn nếu cần"
+        />
+      </label>
+
+      <div className="dental-editor-actions">
+        <button type="button" className="dental-save-button" onClick={saveTooth}>
+          Lưu thông tin răng
+        </button>
+        <button
+          type="button"
+          className="dental-remove-button"
+          onClick={removeTooth}
+        >
+          Xóa đánh dấu
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <section className="dental-chart-card">
       <div className="dental-chart-heading">
@@ -212,7 +281,6 @@ function DentalChart({ mode = "view", teeth = [], onChange }) {
           <span className="dental-chart-eyebrow">Sơ đồ răng điện tử</span>
           <h4>Theo dõi tình trạng từng răng</h4>
         </div>
-
         <p>
           Chọn vị trí răng theo chuẩn FDI để ghi nhận tình trạng, nội dung xử
           lý và ghi chú chuyên môn.
@@ -222,23 +290,22 @@ function DentalChart({ mode = "view", teeth = [], onChange }) {
       <div className="dental-chart-layout">
         <div className="dental-chart-board">
           <div className="dental-chart-scroll">
-            {arches.map((arch) => (
-              <div className="dental-arch" key={arch.label}>
-                <div className="dental-arch-label">{arch.label}</div>
-
-                <div className="dental-arch-row">
-                  <div className="dental-quadrant">
-                    {arch.left.map(renderTooth)}
-                  </div>
-
-                  <span className="dental-midline" aria-hidden="true" />
-
-                  <div className="dental-quadrant">
-                    {arch.right.map(renderTooth)}
+            <div className="dental-arch-list">
+              {arches.map((arch) => (
+                <div className="dental-arch" key={arch.label}>
+                  <div className="dental-arch-label">{arch.label}</div>
+                  <div className="dental-arch-row">
+                    <div className="dental-quadrant">
+                      {arch.left.map(renderTooth)}
+                    </div>
+                    <span className="dental-midline" aria-hidden="true" />
+                    <div className="dental-quadrant">
+                      {arch.right.map(renderTooth)}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           <div className="dental-chart-legend">
@@ -266,70 +333,9 @@ function DentalChart({ mode = "view", teeth = [], onChange }) {
                       : "Thông tin đã ghi nhận"}
                   </small>
                 </div>
-
                 <strong>{getConditionLabel(draft.condition_code)}</strong>
               </div>
-
-              <label className="dental-field">
-                <span>Tình trạng răng</span>
-                <select
-                  value={draft.condition_code}
-                  onChange={(event) =>
-                    updateDraft("condition_code", event.target.value)
-                  }
-                  disabled={!editable}
-                >
-                  {conditionOptions.map((condition) => (
-                    <option key={condition.value} value={condition.value}>
-                      {condition.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="dental-field">
-                <span>Nội dung xử lý</span>
-                <textarea
-                  rows={3}
-                  value={draft.treatment_note}
-                  onChange={(event) =>
-                    updateDraft("treatment_note", event.target.value)
-                  }
-                  placeholder="Ví dụ: Làm sạch xoang sâu, trám tạm..."
-                  disabled={!editable}
-                />
-              </label>
-
-              <label className="dental-field">
-                <span>Ghi chú</span>
-                <textarea
-                  rows={2}
-                  value={draft.note}
-                  onChange={(event) => updateDraft("note", event.target.value)}
-                  placeholder="Nhập ghi chú chuyên môn nếu cần"
-                  disabled={!editable}
-                />
-              </label>
-
-              {editable && (
-                <div className="dental-editor-actions">
-                  <button
-                    type="button"
-                    className="dental-save-button"
-                    onClick={saveTooth}
-                  >
-                    Lưu thông tin răng
-                  </button>
-
-                  <button
-                    type="button"
-                    className="dental-remove-button"
-                    onClick={removeTooth}
-                  >
-                    Xóa đánh dấu
-                  </button>
-                </div>
-              )}
+              {editable ? renderEditPanel() : renderViewPanel()}
             </>
           ) : (
             <div className="dental-empty-state">
@@ -338,7 +344,6 @@ function DentalChart({ mode = "view", teeth = [], onChange }) {
                   ? "Chọn răng để xem chi tiết"
                   : "Chưa chọn răng"}
               </strong>
-
               <p>
                 {editable
                   ? "Bấm vào một răng trên sơ đồ để ghi nhận tình trạng, nội dung xử lý và ghi chú."

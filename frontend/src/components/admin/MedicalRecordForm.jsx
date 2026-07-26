@@ -1,8 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import axiosClient from "../../api/axiosClient";
+import { extractMedicalRecordTeeth } from "../../utils/dentalChart";
 import DentalChart from "../DentalChart";
+import MedicalRecordStatusBadge from "../MedicalRecordStatusBadge";
 
 const getTodayText = () => new Date().toISOString().slice(0, 10);
+
+const toFormDate = (value) => {
+  if (!value) return "";
+  return String(value).slice(0, 10);
+};
+
+const toFormTime = (value) => {
+  if (!value) return "";
+  return String(value).slice(0, 5);
+};
 
 const buildDefaultForm = (appointment) => ({
   appointment_id: appointment?.id || "",
@@ -20,13 +32,39 @@ const buildDefaultForm = (appointment) => ({
   re_examination_time: "",
 });
 
+const buildFormFromRecord = (record, appointment) => {
+  if (!record) {
+    return buildDefaultForm(appointment);
+  }
+
+  return {
+    appointment_id: record.appointment_id || "",
+    dentist_id: record.dentist_id || "",
+    chief_complaint: record.chief_complaint || "",
+    medical_history: record.medical_history || "",
+    allergies: record.allergies || "",
+    clinical_examination: record.clinical_examination || "",
+    diagnosis: record.diagnosis || "",
+    treatment: record.treatment || "",
+    treatment_plan: record.treatment_plan || "",
+    prescription: record.prescription || "",
+    note: record.note || "",
+    re_examination_date: toFormDate(record.re_examination_date),
+    re_examination_time: toFormTime(record.re_examination_time),
+  };
+};
+
 function MedicalRecordForm({
   customerId,
   appointments = [],
   dentists = [],
+  record = null,
+  mode = "create",
   onClose,
   onCreated,
+  onSaved,
 }) {
+  const isEditMode = mode === "edit" && record?.id;
   const suggestedAppointment = useMemo(
     () =>
       appointments.find((item) =>
@@ -36,20 +74,20 @@ function MedicalRecordForm({
   );
 
   const [formData, setFormData] = useState(() =>
-    buildDefaultForm(suggestedAppointment),
+    buildFormFromRecord(record, suggestedAppointment),
   );
-  const [teeth, setTeeth] = useState([]);
+  const [teeth, setTeeth] = useState(() => extractMedicalRecordTeeth(record));
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [availableTimes, setAvailableTimes] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    setFormData(buildDefaultForm(suggestedAppointment));
-    setTeeth([]);
+    setFormData(buildFormFromRecord(record, suggestedAppointment));
+    setTeeth(extractMedicalRecordTeeth(record));
     setAttachmentFile(null);
     setMessage("");
-  }, [suggestedAppointment]);
+  }, [record, suggestedAppointment]);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,11 +110,19 @@ function MedicalRecordForm({
         );
 
         if (!cancelled) {
-          setAvailableTimes(response.data?.data?.available_times || []);
+          const nextTimes = response.data?.data?.available_times || [];
+          const currentTime = formData.re_examination_time;
+          setAvailableTimes(
+            currentTime && !nextTimes.includes(currentTime)
+              ? [currentTime, ...nextTimes]
+              : nextTimes,
+          );
         }
       } catch {
         if (!cancelled) {
-          setAvailableTimes([]);
+          setAvailableTimes(
+            formData.re_examination_time ? [formData.re_examination_time] : [],
+          );
         }
       }
     };
@@ -86,7 +132,11 @@ function MedicalRecordForm({
     return () => {
       cancelled = true;
     };
-  }, [formData.dentist_id, formData.re_examination_date]);
+  }, [
+    formData.dentist_id,
+    formData.re_examination_date,
+    formData.re_examination_time,
+  ]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -117,7 +167,9 @@ function MedicalRecordForm({
   };
 
   const validateForm = () => {
-    if (!customerId) {
+    const patientId = record?.patient_id || customerId;
+
+    if (!patientId) {
       return "Không xác định được bệnh nhân.";
     }
 
@@ -153,19 +205,24 @@ function MedicalRecordForm({
     try {
       setSaving(true);
 
+      const patientId = record?.patient_id || customerId;
       const payload = {
         ...formData,
-        patient_id: Number(customerId),
+        patient_id: Number(patientId),
         appointment_id: formData.appointment_id
           ? Number(formData.appointment_id)
           : null,
         dentist_id: Number(formData.dentist_id),
         teeth,
-        status: "PendingConfirmation",
+        status: record?.status || "PendingConfirmation",
       };
 
-      const response = await axiosClient.post("/medical-records", payload);
-      const medicalRecordId = response.data?.data?.id;
+      const response = isEditMode
+        ? await axiosClient.put(`/medical-records/${record.id}`, payload)
+        : await axiosClient.post("/medical-records", payload);
+
+      const savedRecord = response.data?.data;
+      const medicalRecordId = savedRecord?.id;
 
       if (!medicalRecordId) {
         throw new Error("Không nhận được mã bệnh án sau khi lưu.");
@@ -186,8 +243,9 @@ function MedicalRecordForm({
         );
       }
 
-      if (typeof onCreated === "function") {
-        await onCreated(response.data?.data);
+      const callback = onSaved || onCreated;
+      if (typeof callback === "function") {
+        await callback(savedRecord);
       }
     } catch (error) {
       setMessage(
@@ -210,11 +268,15 @@ function MedicalRecordForm({
       >
         <div className="admin-modal-header">
           <div>
-            <h3 id="medical-record-form-title">Tạo bệnh án điều trị</h3>
+            <h3 id="medical-record-form-title">
+              {isEditMode ? "Chỉnh sửa bệnh án" : "Tạo bệnh án điều trị"}
+            </h3>
             <p>
-              Admin/lễ tân nhập thông tin theo phiếu bệnh án. Nha sĩ phụ trách
-              sẽ kiểm tra và xác nhận trước khi hiển thị cho khách hàng.
+              {isEditMode
+                ? "Cập nhật nội dung bệnh án trước khi nha sĩ xác nhận."
+                : "Admin/lễ tân nhập thông tin theo phiếu bệnh án. Nha sĩ phụ trách sẽ kiểm tra và xác nhận trước khi hiển thị cho khách hàng."}
             </p>
+            {record?.status && <MedicalRecordStatusBadge status={record.status} />}
           </div>
 
           <button
@@ -243,7 +305,7 @@ function MedicalRecordForm({
                   name="appointment_id"
                   value={formData.appointment_id}
                   onChange={handleChange}
-                  disabled={saving}
+                  disabled={saving || isEditMode}
                 >
                   <option value="">Không gắn với lịch hẹn</option>
                   {appointments.map((item) => (
@@ -251,6 +313,16 @@ function MedicalRecordForm({
                       #{item.id} - {item.service_name || "Chưa xác định dịch vụ"}
                     </option>
                   ))}
+                  {isEditMode &&
+                    formData.appointment_id &&
+                    !appointments.some(
+                      (item) =>
+                        String(item.id) === String(formData.appointment_id),
+                    ) && (
+                      <option value={formData.appointment_id}>
+                        Lịch #{formData.appointment_id}
+                      </option>
+                    )}
                 </select>
               </label>
 
@@ -270,6 +342,14 @@ function MedicalRecordForm({
                       {item.specialty ? ` - ${item.specialty}` : ""}
                     </option>
                   ))}
+                  {formData.dentist_id &&
+                    !dentists.some(
+                      (item) => String(item.id) === String(formData.dentist_id),
+                    ) && (
+                      <option value={formData.dentist_id}>
+                        {record?.dentist_name || `Nha sĩ #${formData.dentist_id}`}
+                      </option>
+                    )}
                 </select>
               </label>
             </div>
@@ -409,11 +489,11 @@ function MedicalRecordForm({
 
             <div className="admin-form-row">
               <label>
-                Ngày giờ tái khám
+                Ngày tái khám
                 <input
                   type="date"
                   name="re_examination_date"
-                  min={getTodayText()}
+                  min={isEditMode ? undefined : getTodayText()}
                   value={formData.re_examination_date}
                   onChange={handleChange}
                   disabled={saving}
@@ -442,8 +522,17 @@ function MedicalRecordForm({
               </label>
             </div>
 
+            {isEditMode && record?.attachments?.length > 0 && (
+              <div className="medical-record-existing-files">
+                <strong>File đã đính kèm</strong>
+                {record.attachments.map((file) => (
+                  <span key={file.id}>{file.file_name}</span>
+                ))}
+              </div>
+            )}
+
             <label>
-              File đính kèm
+              {isEditMode ? "Đính kèm thêm file mới" : "File đính kèm"}
               <input
                 type="file"
                 accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
@@ -468,7 +557,11 @@ function MedicalRecordForm({
             </button>
 
             <button type="submit" disabled={saving}>
-              {saving ? "Đang lưu bệnh án..." : "Lưu và gửi nha sĩ xác nhận"}
+              {saving
+                ? "Đang lưu bệnh án..."
+                : isEditMode
+                  ? "Lưu cập nhật"
+                  : "Lưu và gửi nha sĩ xác nhận"}
             </button>
           </div>
         </form>

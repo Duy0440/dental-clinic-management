@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import { getAssetUrl } from "../../api/urlHelpers";
 import DentalChart from "../../components/DentalChart";
+import MedicalRecordStatusBadge from "../../components/MedicalRecordStatusBadge";
 import MedicalRecordForm from "../../components/admin/MedicalRecordForm";
 import { extractMedicalRecordTeeth } from "../../utils/dentalChart";
 
@@ -39,6 +40,8 @@ function AdminCustomerDetail() {
   const [dentists, setDentists] = useState([]);
   const [services, setServices] = useState([]);
   const [showRecordForm, setShowRecordForm] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [expandedRecordId, setExpandedRecordId] = useState(null);
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
   const [appointmentForm, setAppointmentForm] = useState(initialAppointmentForm);
   const [loading, setLoading] = useState(true);
@@ -100,6 +103,7 @@ function AdminCustomerDetail() {
 
     setMedicalRecords(response.data.data || []);
     setShowRecordForm(false);
+    setEditingRecord(null);
   };
 
   // refresh appointments (tai lai lich hen cua khach)
@@ -375,7 +379,10 @@ function AdminCustomerDetail() {
           <button
             type="button"
             className="admin-primary-button"
-            onClick={() => setShowRecordForm(true)}
+            onClick={() => {
+              setEditingRecord(null);
+              setShowRecordForm(true);
+            }}
           >
             Thêm kết quả
           </button>
@@ -387,6 +394,42 @@ function AdminCustomerDetail() {
           <div className="medical-record-list">
             {medicalRecords.map((record) => (
               <article className="medical-record-card" key={record.id}>
+                <div className="medical-record-card-header">
+                  <div>
+                    <span>Bệnh án #{record.id}</span>
+                    <MedicalRecordStatusBadge status={record.status} />
+                  </div>
+
+                  <div className="medical-record-card-actions">
+                    <button
+                      type="button"
+                      className="admin-secondary-button"
+                      onClick={() =>
+                        setExpandedRecordId((currentId) =>
+                          currentId === record.id ? null : record.id,
+                        )
+                      }
+                    >
+                      {expandedRecordId === record.id
+                        ? "Thu gọn"
+                        : "Xem chi tiết"}
+                    </button>
+
+                    {["Draft", "PendingConfirmation"].includes(record.status) && (
+                      <button
+                        type="button"
+                        className="admin-primary-button"
+                        onClick={() => {
+                          setEditingRecord(record);
+                          setShowRecordForm(true);
+                        }}
+                      >
+                        Chỉnh sửa bệnh án
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 <div>
                   <span>Nha sĩ phụ trách</span>
                   <strong>{record.dentist_name}</strong>
@@ -402,13 +445,15 @@ function AdminCustomerDetail() {
                   <p>{record.treatment || "Chưa cập nhật"}</p>
                 </div>
 
-                <div className="medical-record-chart-block">
-                  <span>Sơ đồ răng</span>
-                  <DentalChart
-                    mode="view"
-                    teeth={extractMedicalRecordTeeth(record)}
-                  />
-                </div>
+                {expandedRecordId === record.id && (
+                  <div className="medical-record-chart-block">
+                    <span>Sơ đồ răng</span>
+                    <DentalChart
+                      mode="view"
+                      teeth={extractMedicalRecordTeeth(record)}
+                    />
+                  </div>
+                )}
 
                 <div>
                   <span>Tái khám đề xuất</span>
@@ -478,8 +523,14 @@ function AdminCustomerDetail() {
           customerId={customerId}
           appointments={appointments}
           dentists={dentists}
-          onClose={() => setShowRecordForm(false)}
+          record={editingRecord}
+          mode={editingRecord ? "edit" : "create"}
+          onClose={() => {
+            setShowRecordForm(false);
+            setEditingRecord(null);
+          }}
           onCreated={refreshMedicalRecords}
+          onSaved={refreshMedicalRecords}
         />
       )}
 

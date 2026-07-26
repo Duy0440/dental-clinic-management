@@ -950,6 +950,116 @@
   opacity: 0.65;
 }
 
+.medical-record-tabbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.medical-record-tabbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid #d8dee8;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #475569;
+  font-weight: 800;
+}
+
+.medical-record-tabbar button.active {
+  border-color: #f97316;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.medical-record-tabbar button span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #edf2f7;
+  color: #334155;
+  font-size: 0.78rem;
+}
+
+.dentist-record-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  align-items: center;
+}
+
+.dentist-record-actions .dentist-record-confirm-button {
+  width: auto;
+  margin-top: 0;
+}
+
+.dentist-small-button.secondary {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.dentist-record-detail-modal {
+  width: min(1120px, 96vw);
+}
+
+.dentist-record-detail {
+  display: grid;
+  gap: 16px;
+}
+
+.dentist-record-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dentist-record-detail-grid > div,
+.dentist-record-detail-section {
+  padding: 13px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.dentist-record-detail-grid span,
+.dentist-record-detail-section span {
+  display: block;
+  margin-bottom: 5px;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.dentist-record-detail-grid strong,
+.dentist-record-detail-grid p,
+.dentist-record-detail-section p {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .dentist-record-detail-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .dentist-record-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .medical-record-tabbar button {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+}
+
 .dentist-attachment-list {
   display: flex;
   flex-wrap: wrap;

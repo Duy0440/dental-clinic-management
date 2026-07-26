@@ -16,6 +16,9 @@ ALTER TABLE dental_chart_entries
   ADD COLUMN IF NOT EXISTS patient_id BIGINT;
 
 ALTER TABLE dental_chart_entries
+  ADD COLUMN IF NOT EXISTS condition TEXT;
+
+ALTER TABLE dental_chart_entries
   ADD COLUMN IF NOT EXISTS condition_code TEXT;
 
 ALTER TABLE dental_chart_entries
@@ -31,6 +34,11 @@ UPDATE dental_chart_entries
 SET condition_code = condition
 WHERE condition_code IS NULL
   AND condition IS NOT NULL;
+
+UPDATE dental_chart_entries
+SET condition = condition_code
+WHERE condition IS NULL
+  AND condition_code IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_dental_chart_entries_record_id
   ON dental_chart_entries (medical_record_id);

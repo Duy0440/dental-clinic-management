@@ -379,12 +379,60 @@
   gap: 18px;
 }
 
+.medical-record-card-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e4e8ef;
+}
+
+.medical-record-card-header > div:first-child {
+  display: grid;
+  gap: 8px;
+}
+
+.medical-record-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.medical-record-card-actions .admin-primary-button,
+.medical-record-card-actions .admin-secondary-button {
+  padding: 9px 12px;
+}
+
 .medical-record-chart-block {
   grid-column: 1 / -1;
 }
 
 .medical-record-chart-block .dental-chart-card {
   padding: 18px;
+}
+
+.medical-record-existing-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.medical-record-existing-files strong {
+  width: 100%;
+}
+
+.medical-record-existing-files span {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.84rem;
+  font-weight: 700;
 }
 
 .medical-record-card p {
