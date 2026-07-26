@@ -935,43 +935,92 @@ function AdminInvoices() {
               <button type="button" onClick={() => setSelectedInvoice(null)}>×</button>
             </div>
 
-            <div className="payment-detail-sections">
-              <section className="payment-detail-section">
-                <div className="payment-section-heading compact">
-                  <span>A</span>
-                  <div>
-                    <strong>Thông tin khách hàng</strong>
-                    <small>Thông tin định danh của hồ sơ thanh toán.</small>
-                  </div>
-                </div>
-                <article className="medical-record-card payment-info-card">
-                  <div><span>Mã khách hàng</span><strong>#{selectedInvoice.patient_id}</strong></div>
-                  <div><span>Họ tên</span><strong>{selectedInvoice.patient_name}</strong></div>
-                  <div><span>Số điện thoại</span><strong>{selectedInvoice.patient_phone || "Chưa cập nhật"}</strong></div>
-                  <div><span>Trạng thái</span>{renderPaymentStatus(selectedInvoice)}</div>
-                </article>
-              </section>
-
-              <section className="payment-detail-section">
-                <div className="payment-section-heading compact">
-                  <span>B</span>
-                  <div>
-                    <strong>Nội dung điều trị</strong>
-                    <small>Các dòng chi phí đã ghi nhận trong hồ sơ.</small>
-                  </div>
-                </div>
-                <article className="medical-record-card payment-info-card">
-                  {(selectedInvoice.details || []).map((detail) => (
-                    <div key={detail.id} className="payment-treatment-detail">
-                      <span>{detail.treatment_group || detail.service_name || "Nội dung điều trị"}</span>
-                      <strong>{getDetailName(detail)}</strong>
-                      <p>{detail.quantity} x {formatMoney(detail.unit_price)} = {formatMoney(detail.subtotal)}</p>
+            <div className="payment-detail-layout">
+              <div className="payment-detail-main">
+                <section className="payment-detail-section">
+                  <div className="payment-section-heading compact">
+                    <span>A</span>
+                    <div>
+                      <strong>Thông tin khách hàng</strong>
+                      <small>Thông tin định danh của hồ sơ thanh toán.</small>
                     </div>
-                  ))}
-                </article>
-              </section>
+                  </div>
+                  <article className="medical-record-card payment-info-card payment-customer-card">
+                    <div>
+                      <span>Mã khách hàng</span>
+                      <strong>#{selectedInvoice.patient_id}</strong>
+                    </div>
+                    <div>
+                      <span>Họ tên</span>
+                      <strong>{selectedInvoice.patient_name}</strong>
+                    </div>
+                    <div>
+                      <span>Số điện thoại</span>
+                      <strong>{selectedInvoice.patient_phone || "Chưa cập nhật"}</strong>
+                    </div>
+                    <div>
+                      <span>Trạng thái</span>
+                      {renderPaymentStatus(selectedInvoice)}
+                    </div>
+                  </article>
+                </section>
 
-              <section className="payment-detail-section">
+                <section className="payment-detail-section">
+                  <div className="payment-section-heading compact">
+                    <span>B</span>
+                    <div>
+                      <strong>Nội dung điều trị</strong>
+                      <small>Các dòng chi phí đã ghi nhận trong hồ sơ.</small>
+                    </div>
+                  </div>
+                  <article className="medical-record-card payment-treatment-card">
+                    {(selectedInvoice.details || []).length <= 1 ? (
+                      (selectedInvoice.details || []).map((detail) => (
+                        <div key={detail.id || getDetailName(detail)} className="payment-treatment-single">
+                          <span>{detail.treatment_group || detail.service_name || "Nội dung điều trị"}</span>
+                          <strong>{getDetailName(detail)}</strong>
+                          <div>
+                            <p>Số lượng: <b>{detail.quantity}</b></p>
+                            <p>Đơn giá: <b>{formatMoney(detail.unit_price)}</b></p>
+                            <p>Thành tiền: <b>{formatMoney(detail.subtotal)}</b></p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="payment-treatment-table-wrap">
+                        <table className="payment-treatment-table">
+                          <thead>
+                            <tr>
+                              <th>Tên dịch vụ / nội dung</th>
+                              <th>Số lượng</th>
+                              <th>Đơn giá</th>
+                              <th>Thành tiền</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(selectedInvoice.details || []).map((detail) => (
+                              <tr key={detail.id || getDetailName(detail)}>
+                                <td>
+                                  <strong>{getDetailName(detail)}</strong>
+                                  <span>{detail.treatment_group || detail.service_name || "Nội dung điều trị"}</span>
+                                </td>
+                                <td>{detail.quantity}</td>
+                                <td className="payment-money-cell">{formatMoney(detail.unit_price)}</td>
+                                <td className="payment-money-cell"><strong>{formatMoney(detail.subtotal)}</strong></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    {(!selectedInvoice.details || selectedInvoice.details.length === 0) && (
+                      <p className="ops-muted">Chưa có dòng điều trị trong hồ sơ này.</p>
+                    )}
+                  </article>
+                </section>
+              </div>
+
+              <aside className="payment-detail-side">
                 <div className="payment-section-heading compact">
                   <span>C</span>
                   <div>
@@ -979,15 +1028,15 @@ function AdminInvoices() {
                     <small>Đối soát tổng tiền, đã thu và công nợ còn lại.</small>
                   </div>
                 </div>
-                <article className="medical-record-card payment-info-card payment-overview-card">
+                <article className="medical-record-card payment-overview-card">
                   <div><span>Tạm tính</span><strong>{formatMoney(selectedInvoice.subtotal)}</strong></div>
                   <div><span>Giảm giá</span><strong>{formatMoney(selectedInvoice.discount_amount)}</strong></div>
                   <div><span>Lý do giảm giá</span><strong>{selectedInvoice.discount_reason || "Không có"}</strong></div>
-                  <div><span>Thành tiền</span><strong>{formatMoney(selectedInvoice.total_amount)}</strong></div>
+                  <div className="is-emphasis"><span>Thành tiền</span><strong>{formatMoney(selectedInvoice.total_amount)}</strong></div>
                   <div><span>Đã thanh toán</span><strong>{formatMoney(selectedInvoice.paid_amount)}</strong></div>
-                  <div><span>Còn lại</span><strong>{formatMoney(selectedInvoice.remaining_amount)}</strong></div>
+                  <div className="is-danger"><span>Còn lại</span><strong>{formatMoney(selectedInvoice.remaining_amount)}</strong></div>
                 </article>
-              </section>
+              </aside>
             </div>
 
             <div className="invoice-detail-box payment-history-box mt-3">
@@ -1041,12 +1090,12 @@ function AdminInvoices() {
 
             <div className="admin-modal-actions">
               {hasDebt(selectedInvoice) && (
-                <button type="button" onClick={() => openPaymentModal(selectedInvoice)}>Ghi nhận thanh toán</button>
-              )}
-              {hasDebt(selectedInvoice) && (
-                <button type="button" onClick={() => exportInvoice(selectedInvoice)} disabled={exportingId === selectedInvoice.id}>
+                <button type="button" className="admin-primary-button" onClick={() => exportInvoice(selectedInvoice)} disabled={exportingId === selectedInvoice.id}>
                   {exportingId === selectedInvoice.id ? "Đang xuất..." : "Xuất bảng công nợ"}
                 </button>
+              )}
+              {hasDebt(selectedInvoice) && (
+                <button type="button" className="admin-secondary-button" onClick={() => openPaymentModal(selectedInvoice)}>Ghi nhận thanh toán</button>
               )}
               <button type="button" onClick={() => setSelectedInvoice(null)}>Đóng</button>
             </div>

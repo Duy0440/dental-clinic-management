@@ -2014,13 +2014,21 @@
 }
 
 .payment-detail-modal {
-  width: min(1100px, 96vw);
+  width: min(1280px, 96vw);
   max-height: 92vh;
+  overflow-y: auto;
+  padding: 24px;
 }
 
-.payment-detail-sections {
+.payment-detail-layout {
   display: grid;
-  grid-template-columns: 0.95fr 1.2fr 1.05fr;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
+  gap: 18px;
+  align-items: start;
+}
+
+.payment-detail-main {
+  display: grid;
   gap: 16px;
 }
 
@@ -2040,21 +2048,29 @@
 }
 
 .payment-info-card {
-  height: calc(100% - 46px);
+  height: auto;
   padding: 16px;
   border: 1px solid #e6ebf3;
   border-radius: 18px;
   background: #ffffff;
 }
 
+.payment-customer-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
 .payment-info-card > div {
   min-width: 0;
-  padding: 10px 0;
-  border-bottom: 1px solid #edf2f7;
+  padding: 12px;
+  border: 1px solid #edf2f7;
+  border-radius: 14px;
+  background: #fbfdff;
 }
 
 .payment-info-card > div:last-child {
-  border-bottom: 0;
+  border-bottom: 1px solid #edf2f7;
 }
 
 .payment-info-card span {
@@ -2069,22 +2085,153 @@
   overflow-wrap: anywhere;
 }
 
+.payment-treatment-card {
+  padding: 16px;
+  border: 1px solid #e6ebf3;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.payment-treatment-single span,
+.payment-treatment-table span {
+  display: block;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.payment-treatment-single strong {
+  display: block;
+  margin: 6px 0 14px;
+  color: #0f172a;
+  font-size: 1.02rem;
+  line-height: 1.35;
+}
+
+.payment-treatment-single > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.payment-treatment-single p {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #edf2f7;
+  border-radius: 14px;
+  background: #fbfdff;
+  color: #64748b;
+  font-weight: 800;
+}
+
+.payment-treatment-single b {
+  display: block;
+  margin-top: 4px;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.payment-treatment-table-wrap {
+  overflow-x: auto;
+}
+
+.payment-treatment-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.payment-treatment-table th,
+.payment-treatment-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #edf2f7;
+  color: #0f172a;
+  vertical-align: top;
+}
+
+.payment-treatment-table th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.payment-treatment-table strong {
+  display: block;
+  margin-bottom: 4px;
+  line-height: 1.35;
+}
+
+.payment-detail-side {
+  position: sticky;
+  top: 0;
+}
+
+.payment-overview-card {
+  display: grid;
+  gap: 4px;
+  padding: 18px;
+  border: 1px solid #fed7aa;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fff7ed, #ffffff 64%);
+}
+
 .payment-overview-card > div {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #fed7aa;
 }
 
 .payment-overview-card strong {
+  color: #0f172a;
   text-align: right;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+.payment-overview-card > div:last-child {
+  border-bottom: 0;
+}
+
+.payment-overview-card .is-emphasis,
+.payment-overview-card .is-danger {
+  margin-inline: -8px;
+  padding-inline: 8px;
+  border-radius: 12px;
+  background: #fff3e6;
+}
+
+.payment-overview-card .is-emphasis strong,
+.payment-overview-card .is-danger strong {
+  font-size: 1.06rem;
+}
+
+.payment-overview-card .is-danger strong {
+  color: #c2410c;
 }
 
 .payment-treatment-detail p {
   margin: 6px 0 0;
   color: #64748b;
   font-weight: 800;
+}
+
+.payment-history-box {
+  margin-top: 18px;
+  background: #ffffff;
+}
+
+.payment-history-box .admin-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #edf2f7;
+  border-radius: 16px;
 }
 
 .payment-field-error {
@@ -2128,16 +2275,24 @@ label > .money-input-unit {
 
 @media (max-width: 1100px) {
   .payment-summary-grid,
-  .payment-detail-grid,
-  .payment-detail-sections {
+  .payment-detail-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .payment-detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-detail-side {
+    position: static;
   }
 }
 
 @media (max-width: 760px) {
   .payment-summary-grid,
   .payment-detail-grid,
-  .payment-detail-sections {
+  .payment-customer-card,
+  .payment-treatment-single > div {
     grid-template-columns: 1fr;
   }
 
@@ -2458,40 +2613,150 @@ label > .money-input-unit {
   font-size: 1.16rem;
 }
 
+.ops-revenue-panel {
+  padding: 20px;
+}
+
+.ops-revenue-header {
+  align-items: stretch;
+  gap: 18px;
+}
+
+.ops-revenue-topline {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 10px;
+  min-width: min(620px, 100%);
+}
+
+.ops-revenue-topline > div {
+  padding: 12px 14px;
+  border: 1px solid #edf2f7;
+  border-radius: 14px;
+  background: #fbfdff;
+}
+
+.ops-revenue-topline span,
+.ops-revenue-mini-grid span {
+  display: block;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.ops-revenue-topline strong,
+.ops-revenue-mini-grid strong {
+  display: block;
+  margin-top: 5px;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ops-revenue-topline small {
+  display: block;
+  margin-top: 2px;
+  color: #94a3b8;
+  font-weight: 800;
+}
+
 .ops-revenue-chart {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(34px, 1fr));
-  gap: 8px;
-  min-height: 260px;
-  align-items: end;
-}
-
-.ops-revenue-bar {
-  display: grid;
-  gap: 8px;
-  align-items: end;
-  text-align: center;
-}
-
-.ops-revenue-bar > div {
-  display: flex;
-  align-items: end;
-  height: 210px;
-  border-radius: 10px;
-  background: #f1f5f9;
+  position: relative;
+  min-height: 330px;
+  margin-top: 8px;
+  padding: 10px;
   overflow: hidden;
+  border: 1px solid #edf2f7;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 14% 12%, rgba(255, 138, 31, 0.08), transparent 28%),
+    linear-gradient(180deg, #ffffff, #fbfdff);
 }
 
-.ops-revenue-bar span {
+.ops-revenue-svg {
   display: block;
   width: 100%;
-  border-radius: 10px 10px 0 0;
-  background: #ff8a1f;
+  height: 310px;
 }
 
-.ops-revenue-bar small {
-  color: #64748b;
+.ops-revenue-gridline {
+  stroke: #e8eef6;
+  stroke-width: 1;
+}
+
+.ops-revenue-axis {
+  stroke: #cbd5e1;
+  stroke-width: 1.3;
+}
+
+.ops-revenue-axis-label {
+  fill: #94a3b8;
+  font-size: 12px;
   font-weight: 800;
+  text-anchor: end;
+}
+
+.ops-revenue-x-label {
+  fill: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+  text-anchor: middle;
+}
+
+.ops-revenue-svg-bar {
+  fill: url(#opsRevenueBar);
+  opacity: 0.82;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+
+.ops-revenue-svg-bar.is-active {
+  opacity: 1;
+  transform: scaleY(1.04);
+}
+
+.ops-revenue-tooltip {
+  position: absolute;
+  z-index: 2;
+  min-width: 150px;
+  padding: 10px 12px;
+  border: 1px solid #fed7aa;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.14);
+  transform: translate(-50%, calc(-100% - 10px));
+  pointer-events: none;
+}
+
+.ops-revenue-tooltip span {
+  display: block;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.ops-revenue-tooltip strong {
+  display: block;
+  margin-top: 4px;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ops-revenue-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ops-revenue-mini-grid > div {
+  padding: 12px 14px;
+  border: 1px solid #edf2f7;
+  border-radius: 14px;
+  background: #fbfdff;
 }
 
 .ops-service-row,
@@ -2557,6 +2822,10 @@ label > .money-input-unit {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .ops-revenue-header {
+    flex-direction: column;
+  }
+
   .ops-work-grid,
   .ops-grid-two {
     grid-template-columns: 1fr;
@@ -2583,8 +2852,19 @@ label > .money-input-unit {
 
   .ops-kpi-grid,
   .ops-web-grid,
+  .ops-revenue-topline,
+  .ops-revenue-mini-grid,
   .ops-reexam-grid {
     grid-template-columns: 1fr;
+  }
+
+  .ops-revenue-chart {
+    min-height: 280px;
+    overflow-x: auto;
+  }
+
+  .ops-revenue-svg {
+    min-width: 760px;
   }
 
   .ops-action-row,

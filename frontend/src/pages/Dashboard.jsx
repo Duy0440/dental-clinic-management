@@ -35,6 +35,20 @@ const formatDisplayDate = (value) => {
   return `${day}/${month}/${year}`;
 };
 
+const toSeriesLabel = (date) => {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day}/${month}`;
+};
+
+const formatShortMoney = (value) => {
+  const amount = Number(value || 0);
+  if (amount >= 1000000000) return `${(amount / 1000000000).toFixed(1).replace(".", ",")} tỷ`;
+  if (amount >= 1000000) return `${(amount / 1000000).toFixed(1).replace(".", ",")} triệu`;
+  if (amount >= 1000) return `${Math.round(amount / 1000).toLocaleString("vi-VN")} nghìn`;
+  return `${amount.toLocaleString("vi-VN")} VNĐ`;
+};
+
 const sanitizeFileName = (value) =>
   String(value || "")
     .normalize("NFD")
@@ -54,6 +68,7 @@ function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [hoveredRevenueIndex, setHoveredRevenueIndex] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
 
   const activeRange = dashboard?.range || customRange;
@@ -92,16 +107,67 @@ function Dashboard() {
   const overview = dashboard?.overview || {};
   const metadata = dashboard?.metadata || {};
   const revenueSeries = dashboard?.revenue_series || [];
-  const serviceStats = dashboard?.service_stats || [];
   const appointmentStatus = dashboard?.appointment_status || [];
   const recentAppointments = dashboard?.recent_appointments || [];
   const upcomingReExams = dashboard?.upcoming_re_examinations || [];
-  const maxRevenue = Math.max(...revenueSeries.map((item) => Number(item.revenue || 0)), 1);
-  const serviceTotalValue = serviceStats.reduce(
-    (total, item) => total + Number(item.service_value || 0),
-    0,
-  );
   const maxAppointmentStatus = Math.max(...appointmentStatus.map((item) => item.total), 1);
+  const revenueSummary = useMemo(() => {
+    const values = revenueSeries.map((item) => Number(item.revenue || 0));
+    const total = values.reduce((sum, value) => sum + value, 0);
+    const peak = revenueSeries.reduce(
+      (best, item) => (Number(item.revenue || 0) > Number(best.revenue || 0) ? item : best),
+      { label: "", revenue: 0 },
+    );
+    const todayLabel = toSeriesLabel(new Date());
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayLabel = toSeriesLabel(yesterday);
+
+    return {
+      total,
+      average: revenueSeries.length ? Math.round(total / revenueSeries.length) : 0,
+      peak,
+      today: revenueSeries.find((item) => item.label === todayLabel)?.revenue || 0,
+      yesterday: revenueSeries.find((item) => item.label === yesterdayLabel)?.revenue || 0,
+      last7: revenueSeries.slice(-7).reduce((sum, item) => sum + Number(item.revenue || 0), 0),
+      last30: revenueSeries.slice(-30).reduce((sum, item) => sum + Number(item.revenue || 0), 0),
+    };
+  }, [revenueSeries]);
+  const revenueChart = useMemo(() => {
+    const width = 920;
+    const height = 300;
+    const padding = { top: 24, right: 26, bottom: 48, left: 76 };
+    const innerWidth = width - padding.left - padding.right;
+    const innerHeight = height - padding.top - padding.bottom;
+    const maxValue = Math.max(...revenueSeries.map((item) => Number(item.revenue || 0)), 1);
+    const barSlot = revenueSeries.length ? innerWidth / revenueSeries.length : innerWidth;
+    const barWidth = Math.max(10, Math.min(28, barSlot * 0.42));
+    const labelStep = Math.max(1, Math.ceil(revenueSeries.length / 8));
+    const gridLines = [1, 0.75, 0.5, 0.25, 0];
+    const bars = revenueSeries.map((item, index) => {
+      const value = Number(item.revenue || 0);
+      const barHeight = value > 0 ? Math.max((value / maxValue) * innerHeight, 4) : 0;
+      const x = padding.left + barSlot * index + (barSlot - barWidth) / 2;
+      const y = padding.top + innerHeight - barHeight;
+
+      return {
+        ...item,
+        value,
+        x,
+        y,
+        width: barWidth,
+        height: barHeight,
+        showLabel:
+          index === 0 ||
+          index === revenueSeries.length - 1 ||
+          index % labelStep === 0,
+      };
+    });
+
+    return { width, height, padding, innerWidth, innerHeight, maxValue, bars, gridLines };
+  }, [revenueSeries]);
+  const hoveredRevenue =
+    hoveredRevenueIndex !== null ? revenueChart.bars[hoveredRevenueIndex] : null;
 
   const exportReport = async () => {
     try {
@@ -314,51 +380,140 @@ function Dashboard() {
         </div>
       </section>
 
-      <section className="ops-grid-two">
-        <div className="ops-panel">
-          <div className="ops-panel-header">
-            <div>
-              <h3>Tiền thực thu theo thời gian</h3>
-              <p>Chỉ tính các lần thanh toán đã ghi nhận trong bảng payments.</p>
-            </div>
+      <section className="ops-panel ops-revenue-panel">
+        <div className="ops-panel-header ops-revenue-header">
+          <div>
+            <h3>Tiền thực thu theo thời gian</h3>
+            <p>Tổng hợp từ các lần thanh toán đã ghi nhận.</p>
           </div>
-
-          <div className="ops-revenue-chart">
-            {revenueSeries.map((item) => (
-              <div className="ops-revenue-bar" key={item.label} title={formatMoney(item.revenue)}>
-                <div>
-                  <span style={{ height: `${Math.max((item.revenue / maxRevenue) * 100, 4)}%` }} />
-                </div>
-                <small>{item.label}</small>
-              </div>
-            ))}
+          <div className="ops-revenue-topline">
+            <div>
+              <span>Tổng trong kỳ</span>
+              <strong>{formatMoney(revenueSummary.total)}</strong>
+            </div>
+            <div>
+              <span>Trung bình/ngày</span>
+              <strong>{formatMoney(revenueSummary.average)}</strong>
+            </div>
+            <div>
+              <span>Ngày cao nhất</span>
+              <strong>{formatMoney(revenueSummary.peak.revenue)}</strong>
+              <small>{revenueSummary.peak.label || "Chưa có"}</small>
+            </div>
           </div>
         </div>
 
-        <div className="ops-panel">
-          <div className="ops-panel-header">
-            <div>
-              <h3>Hiệu quả dịch vụ</h3>
-              <p>Số lượt sử dụng và tổng giá trị dòng dịch vụ, tách riêng với tiền thực thu.</p>
-            </div>
-          </div>
+        <div className="ops-revenue-chart" onMouseLeave={() => setHoveredRevenueIndex(null)}>
+          {revenueSeries.length === 0 ? (
+            <p className="ops-muted">Chưa có dữ liệu thanh toán trong khoảng đang xem.</p>
+          ) : (
+            <>
+              <svg
+                className="ops-revenue-svg"
+                viewBox={`0 0 ${revenueChart.width} ${revenueChart.height}`}
+                role="img"
+                aria-label="Biểu đồ tiền thực thu theo thời gian"
+              >
+                <defs>
+                  <linearGradient id="opsRevenueBar" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#ff8a1f" />
+                    <stop offset="100%" stopColor="#f97316" />
+                  </linearGradient>
+                </defs>
 
-          <div className="ops-service-list">
-            {serviceStats.length === 0 && (
-              <p className="ops-muted">Chưa có dòng dịch vụ trong kỳ.</p>
-            )}
-            {serviceStats.map((item) => (
-              <div className="ops-service-row" key={item.service_name}>
-                <div>
-                  <strong>{item.service_name}</strong>
-                  <span>{item.usage_count} lượt • {formatMoney(item.service_value)}</span>
+                {revenueChart.gridLines.map((ratio) => {
+                  const y = revenueChart.padding.top + revenueChart.innerHeight * (1 - ratio);
+                  const value = Math.round(revenueChart.maxValue * ratio);
+
+                  return (
+                    <g key={ratio}>
+                      <line
+                        x1={revenueChart.padding.left}
+                        x2={revenueChart.padding.left + revenueChart.innerWidth}
+                        y1={y}
+                        y2={y}
+                        className="ops-revenue-gridline"
+                      />
+                      <text x={revenueChart.padding.left - 12} y={y + 4} className="ops-revenue-axis-label">
+                        {formatShortMoney(value)}
+                      </text>
+                    </g>
+                  );
+                })}
+
+                <line
+                  x1={revenueChart.padding.left}
+                  x2={revenueChart.padding.left + revenueChart.innerWidth}
+                  y1={revenueChart.padding.top + revenueChart.innerHeight}
+                  y2={revenueChart.padding.top + revenueChart.innerHeight}
+                  className="ops-revenue-axis"
+                />
+
+                {revenueChart.bars.map((item, index) => (
+                  <g key={`${item.label}-${index}`}>
+                    <rect
+                      x={item.x}
+                      y={item.y}
+                      width={item.width}
+                      height={item.height}
+                      rx="8"
+                      className={`ops-revenue-svg-bar${hoveredRevenueIndex === index ? " is-active" : ""}`}
+                    />
+                    <rect
+                      x={item.x - 10}
+                      y={revenueChart.padding.top}
+                      width={item.width + 20}
+                      height={revenueChart.innerHeight}
+                      fill="transparent"
+                      onMouseEnter={() => setHoveredRevenueIndex(index)}
+                      onFocus={() => setHoveredRevenueIndex(index)}
+                      tabIndex="0"
+                    />
+                    {item.showLabel && (
+                      <text
+                        x={item.x + item.width / 2}
+                        y={revenueChart.padding.top + revenueChart.innerHeight + 26}
+                        className="ops-revenue-x-label"
+                      >
+                        {item.label}
+                      </text>
+                    )}
+                  </g>
+                ))}
+              </svg>
+
+              {hoveredRevenue && (
+                <div
+                  className="ops-revenue-tooltip"
+                  style={{
+                    left: `${((hoveredRevenue.x + hoveredRevenue.width / 2) / revenueChart.width) * 100}%`,
+                    top: `${Math.max((hoveredRevenue.y / revenueChart.height) * 100, 8)}%`,
+                  }}
+                >
+                  <span>{hoveredRevenue.label}</span>
+                  <strong>{formatMoney(hoveredRevenue.value)}</strong>
                 </div>
-                <small>{item.share}%</small>
-                <div className="ops-progress">
-                  <span style={{ width: `${serviceTotalValue ? item.share : 0}%` }} />
-                </div>
-              </div>
-            ))}
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="ops-revenue-mini-grid">
+          <div>
+            <span>Hôm nay</span>
+            <strong>{formatShortMoney(revenueSummary.today)}</strong>
+          </div>
+          <div>
+            <span>Hôm qua</span>
+            <strong>{formatShortMoney(revenueSummary.yesterday)}</strong>
+          </div>
+          <div>
+            <span>7 ngày gần nhất</span>
+            <strong>{formatShortMoney(revenueSummary.last7)}</strong>
+          </div>
+          <div>
+            <span>30 ngày gần nhất</span>
+            <strong>{formatShortMoney(revenueSummary.last30)}</strong>
           </div>
         </div>
       </section>
