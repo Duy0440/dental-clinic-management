@@ -257,7 +257,7 @@ function DentistAppointments() {
         teeth,
         re_examination_date: formData.re_examination_date || null,
         re_examination_time: formData.re_examination_time || null,
-        status: "Confirmed",
+        status: "PendingConfirmation",
       });
 
       const newRecord = response.data.data;

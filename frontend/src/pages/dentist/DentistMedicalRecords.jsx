@@ -8,7 +8,6 @@ import { extractMedicalRecordTeeth } from "../../utils/dentalChart";
 
 const RECORD_TABS = [
   { value: "PendingConfirmation", label: "Chờ xác nhận" },
-  { value: "Draft", label: "Bản nháp" },
   { value: "Confirmed", label: "Đã xác nhận" },
 ];
 
@@ -18,6 +17,10 @@ const isImageFile = (fileType) => {
 
 function DentistMedicalRecords() {
   const [records, setRecords] = useState([]);
+  const [tabCounts, setTabCounts] = useState({
+    PendingConfirmation: 0,
+    Confirmed: 0,
+  });
   const [activeStatus, setActiveStatus] = useState("PendingConfirmation");
   const [viewingRecord, setViewingRecord] = useState(null);
   const [editingRecord, setEditingRecord] = useState(null);
@@ -31,8 +34,17 @@ function DentistMedicalRecords() {
     try {
       setLoading(true);
       const response = await axiosClient.get("/medical-records");
-      setRecords(response.data.data || []);
+      setRecords(response.data.records || response.data.data || []);
+      setTabCounts({
+        PendingConfirmation: response.data.counts?.PendingConfirmation || 0,
+        Confirmed: response.data.counts?.Confirmed || 0,
+      });
     } catch (error) {
+      setRecords([]);
+      setTabCounts({
+        PendingConfirmation: 0,
+        Confirmed: 0,
+      });
       setErrorMessage(
         error.response?.data?.message || "Không thể tải hồ sơ điều trị.",
       );
@@ -50,15 +62,6 @@ function DentistMedicalRecords() {
     [records, activeStatus],
   );
 
-  const tabCounts = useMemo(() => {
-    return RECORD_TABS.reduce((counts, tab) => {
-      counts[tab.value] = records.filter(
-        (record) => record.status === tab.value,
-      ).length;
-      return counts;
-    }, {});
-  }, [records]);
-
   const formatDate = (date) => {
     if (!date) return "Chưa hẹn tái khám";
     const [year, month, day] = String(date).slice(0, 10).split("-");
@@ -68,6 +71,18 @@ function DentistMedicalRecords() {
   const formatTime = (time) => {
     if (!time) return "";
     return ` lúc ${String(time).slice(0, 5)}`;
+  };
+
+  const formatAppointmentDate = (record) => {
+    if (record.appointment_date_display) {
+      return record.appointment_time
+        ? `${record.appointment_date_display} ${String(record.appointment_time).slice(0, 5)}`
+        : record.appointment_date_display;
+    }
+
+    return record.created_at
+      ? new Date(record.created_at).toLocaleDateString("vi-VN")
+      : "Chưa cập nhật";
   };
 
   const closeEditForm = () => {
@@ -262,6 +277,11 @@ function DentistMedicalRecords() {
               </div>
 
               <div className="dentist-record-section">
+                <span>Ngày khám</span>
+                <p>{formatAppointmentDate(record)}</p>
+              </div>
+
+              <div className="dentist-record-section">
                 <span>Chẩn đoán</span>
                 <p>{record.diagnosis || "Chưa cập nhật chẩn đoán."}</p>
               </div>
@@ -272,11 +292,8 @@ function DentistMedicalRecords() {
               </div>
 
               <div className="dentist-record-footer">
-                <span>Tái khám đề xuất</span>
-                <strong>
-                  {formatDate(record.re_examination_date)}
-                  {formatTime(record.re_examination_time)}
-                </strong>
+                <span>Người nhập dữ liệu</span>
+                <strong>{record.entered_by_username || "Chưa xác định"}</strong>
               </div>
 
               <div className="dentist-record-actions">
@@ -288,7 +305,7 @@ function DentistMedicalRecords() {
                   Xem bệnh án
                 </button>
 
-                {record.status !== "Confirmed" && (
+                {record.status === "PendingConfirmation" && (
                   <button
                     type="button"
                     className="dentist-small-button secondary"
@@ -339,7 +356,7 @@ function DentistMedicalRecords() {
             {renderRecordDetail(viewingRecord)}
 
             <div className="dentist-record-actions">
-              {viewingRecord.status !== "Confirmed" && (
+              {viewingRecord.status === "PendingConfirmation" && (
                 <button
                   type="button"
                   className="dentist-small-button secondary"

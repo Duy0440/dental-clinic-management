@@ -1,5 +1,7 @@
 const pool = require("../config/db");
 
+const RECORD_STATUSES = ["PendingConfirmation", "Confirmed"];
+
 const recordSelect = `
   SELECT
     mr.*,
@@ -8,6 +10,9 @@ const recordSelect = `
     p.full_name AS patient_name,
     p.phone AS patient_phone,
     p.user_id AS patient_user_id,
+    TO_CHAR(a.appointment_date, 'YYYY-MM-DD') AS appointment_date,
+    TO_CHAR(a.appointment_date, 'DD/MM/YYYY') AS appointment_date_display,
+    a.appointment_time,
     d.full_name AS dentist_name,
     d.user_id AS dentist_user_id,
     u.username AS entered_by_username,
@@ -49,6 +54,7 @@ const recordSelect = `
   FROM medical_records mr
   JOIN patients p ON p.id = mr.patient_id
   JOIN dentists d ON d.id = mr.dentist_id
+  LEFT JOIN appointments a ON a.id = mr.appointment_id
   LEFT JOIN users u ON u.id = mr.entered_by_user_id
   LEFT JOIN users confirmer ON confirmer.id = mr.confirmed_by_user_id
 `;
@@ -93,7 +99,9 @@ const getMedicalRecords = async (filters = {}) => {
   }
 
   if (filters.status) {
-    addFilter("mr.status = ?", filters.status);
+    addFilter("mr.status::text = ?", filters.status);
+  } else {
+    where.push("mr.status::text IN ('PendingConfirmation', 'Confirmed')");
   }
 
   if (filters.search?.trim()) {
@@ -114,6 +122,62 @@ const getMedicalRecords = async (filters = {}) => {
 
   const result = await pool.query(query, values);
   return result.rows;
+};
+
+// record counts (dem tab bang cung dieu kien loc voi danh sach)
+const getMedicalRecordCounts = async (filters = {}) => {
+  const values = [];
+  const where = ["mr.status::text IN ('PendingConfirmation', 'Confirmed')"];
+
+  const addFilter = (sql, value) => {
+    values.push(value);
+    where.push(sql.replace("?", `$${values.length}`));
+  };
+
+  if (filters.dentistId) {
+    addFilter("mr.dentist_id = ?", filters.dentistId);
+  }
+
+  if (filters.patientId) {
+    addFilter("mr.patient_id = ?", filters.patientId);
+  }
+
+  if (filters.appointmentId) {
+    addFilter("mr.appointment_id = ?", filters.appointmentId);
+  }
+
+  if (filters.search?.trim()) {
+    values.push(`%${filters.search.trim()}%`);
+    const placeholder = `$${values.length}`;
+    where.push(
+      `(p.full_name ILIKE ${placeholder}
+        OR p.phone ILIKE ${placeholder}
+        OR d.full_name ILIKE ${placeholder})`,
+    );
+  }
+
+  const result = await pool.query(
+    `
+      SELECT mr.status::text AS status, COUNT(*)::integer AS total
+      FROM medical_records mr
+      JOIN patients p ON p.id = mr.patient_id
+      JOIN dentists d ON d.id = mr.dentist_id
+      WHERE ${where.join(" AND ")}
+      GROUP BY mr.status::text
+    `,
+    values,
+  );
+
+  return result.rows.reduce(
+    (counts, row) => ({
+      ...counts,
+      [row.status]: row.total,
+    }),
+    {
+      PendingConfirmation: 0,
+      Confirmed: 0,
+    },
+  );
 };
 
 // record detail (lay day du mot ho so)
@@ -231,13 +295,13 @@ const updateMedicalRecordStatus = async (
       UPDATE medical_records
       SET
         status = $2,
-        confirmed_by_user_id = CASE WHEN $2 = 'Confirmed' THEN $3 ELSE NULL END,
-        confirmed_at = CASE WHEN $2 = 'Confirmed' THEN CURRENT_TIMESTAMP ELSE NULL END,
+        confirmed_by_user_id = CASE WHEN $4 THEN $3::integer ELSE NULL END,
+        confirmed_at = CASE WHEN $4 THEN CURRENT_TIMESTAMP ELSE NULL END,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
       RETURNING *
     `,
-    [recordId, status, confirmedByUserId || null],
+    [recordId, status, confirmedByUserId || null, status === "Confirmed"],
   );
   return result.rows[0];
 };
@@ -358,7 +422,9 @@ const assignAppointmentDentist = async (
 
 module.exports = {
   withMedicalRecordTransaction,
+  RECORD_STATUSES,
   getMedicalRecords,
+  getMedicalRecordCounts,
   getMedicalRecordById,
   getMedicalRecordsByPatientId,
   createMedicalRecord,

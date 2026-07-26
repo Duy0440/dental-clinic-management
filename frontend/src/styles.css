@@ -1446,11 +1446,6 @@ img {
   line-height: 1;
 }
 
-.medical-record-status-badge.draft {
-  background: #e5e7eb;
-  color: #374151;
-}
-
 .medical-record-status-badge.pending {
   background: #fef3c7;
   color: #92400e;

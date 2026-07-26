@@ -6,7 +6,6 @@ const {
   getPatientDentalChart,
   addMedicalRecord,
   editMedicalRecord,
-  submitMedicalRecord,
   confirmMedicalRecord,
   getMedicalRecordAudit,
   uploadMedicalRecordAttachment,
@@ -47,12 +46,6 @@ router.put(
   verifyToken,
   authorizeRoles("admin", "dentist"),
   editMedicalRecord,
-);
-router.post(
-  "/:id/submit",
-  verifyToken,
-  authorizeRoles("admin", "dentist"),
-  submitMedicalRecord,
 );
 router.post(
   "/:id/confirm",

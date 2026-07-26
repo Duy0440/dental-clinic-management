@@ -1,6 +1,8 @@
 const {
   withMedicalRecordTransaction,
+  RECORD_STATUSES,
   getMedicalRecords,
+  getMedicalRecordCounts,
   getMedicalRecordById,
   getMedicalRecordsByPatientId,
   createMedicalRecord,
@@ -34,7 +36,8 @@ const {
   normalizeTime,
 } = require("../utils/clinicSchedule");
 
-const EDITABLE_STATUSES = ["Draft", "PendingConfirmation"];
+const EDITABLE_STATUSES = new Set(["PendingConfirmation"]);
+const ALLOWED_LIST_STATUSES = new Set(RECORD_STATUSES);
 
 // input number (doi id sang so de tranh loi query)
 const parseId = (value) => {
@@ -147,12 +150,25 @@ const validateReExamination = async (data, recordId) => {
 // record list (admin xem tat ca, nha si xem ho so cua minh)
 const listMedicalRecords = async (req, res) => {
   try {
+    const requestedStatus = req.query.status;
+    if (requestedStatus && !ALLOWED_LIST_STATUSES.has(requestedStatus)) {
+      return res.json({
+        data: [],
+        records: [],
+        counts: {
+          PendingConfirmation: 0,
+          Confirmed: 0,
+        },
+      });
+    }
+
     const filters = {
       patientId: parseId(req.query.patient_id),
       appointmentId: parseId(req.query.appointment_id),
-      status: req.query.status,
+      status: requestedStatus,
       search: req.query.search,
     };
+
     if (req.user.role === "dentist") {
       const dentist = await getDentistProfile(req.user.id);
       if (!dentist) return res.status(404).json({ message: "Dentist profile not found" });
@@ -160,9 +176,18 @@ const listMedicalRecords = async (req, res) => {
     } else {
       filters.dentistId = parseId(req.query.dentist_id);
     }
-    return res.json({ data: await getMedicalRecords(filters) });
+
+    const [records, counts] = await Promise.all([
+      getMedicalRecords(filters),
+      getMedicalRecordCounts({ ...filters, status: undefined }),
+    ]);
+
+    return res.json({ data: records, records, counts });
   } catch (error) {
-    return res.status(500).json({ message: "Cannot load medical records" });
+    console.error("listMedicalRecords failed:", error);
+    return res.status(500).json({
+      message: "Không thể tải danh sách bệnh án. Vui lòng thử lại.",
+    });
   }
 };
 
@@ -214,21 +239,16 @@ const getPatientDentalChart = async (req, res) => {
   }
 };
 
-// create record (tao ban nhap hoac cho nha si xac nhan)
+// create record (tao ho so cho nha si xac nhan)
 const addMedicalRecord = async (req, res) => {
   try {
     const dentist = req.user.role === "dentist" ? await getDentistProfile(req.user.id) : null;
     if (req.user.role === "dentist" && !dentist) return res.status(404).json({ message: "Dentist profile not found" });
     const data = recordDataFromBody(req.body, dentist ? dentist.id : parseId(req.body.dentist_id));
     const teeth = getTeethPayload(req.body);
-    const status = dentist && req.body.status === "Confirmed"
-      ? "Confirmed"
-      : req.body.status === "Draft" ? "Draft" : "PendingConfirmation";
+    const status = "PendingConfirmation";
     const chartError = validateDentalChart(teeth);
     if (chartError) return res.status(400).json({ message: chartError });
-    if (status === "Confirmed" && !hasConfirmationContent(data)) {
-      return res.status(400).json({ message: "Diagnosis and treatment are required before confirmation" });
-    }
     const validation = await validateRecordReferences(data);
     if (validation.message) return res.status(400).json({ message: validation.message });
     const reexam = await validateReExamination(data);
@@ -246,7 +266,6 @@ const addMedicalRecord = async (req, res) => {
           createdByUserId: req.user.id,
         });
       }
-      if (status === "Confirmed") await completeAppointment(record.appointment_id, db);
       await createMedicalRecordAuditLog({
         medicalRecordId: record.id,
         action: "CREATED",
@@ -264,13 +283,13 @@ const addMedicalRecord = async (req, res) => {
   }
 };
 
-// update record (chi sua ban nhap va cho xac nhan)
+// update record (chi sua ho so cho xac nhan)
 const editMedicalRecord = async (req, res) => {
   try {
     const recordId = parseId(req.params.id);
     const oldRecord = await getMedicalRecordById(recordId);
     if (!oldRecord) return res.status(404).json({ message: "Medical record not found" });
-    if (!EDITABLE_STATUSES.includes(oldRecord.status)) return res.status(409).json({ message: "Confirmed records cannot be edited" });
+    if (!EDITABLE_STATUSES.has(oldRecord.status)) return res.status(409).json({ message: "Confirmed records cannot be edited" });
     if (!(await canAccessRecord(req, oldRecord))) return res.status(403).json({ message: "You do not have permission" });
     const dentist = req.user.role === "dentist" ? await getDentistProfile(req.user.id) : null;
     const data = recordDataFromBody({ ...oldRecord, ...req.body }, dentist ? dentist.id : parseId(req.body.dentist_id) || oldRecord.dentist_id);
@@ -309,30 +328,12 @@ const editMedicalRecord = async (req, res) => {
   }
 };
 
-// submit record (gui ho so cho nha si xac nhan)
-const submitMedicalRecord = async (req, res) => {
-  try {
-    const record = await getMedicalRecordById(parseId(req.params.id));
-    if (!record) return res.status(404).json({ message: "Medical record not found" });
-    if (record.status !== "Draft") return res.status(409).json({ message: "Only draft records can be submitted" });
-    if (!(await canAccessRecord(req, record))) return res.status(403).json({ message: "You do not have permission" });
-    const data = await withMedicalRecordTransaction(async (db) => {
-      await updateMedicalRecordStatus(record.id, "PendingConfirmation", null, db);
-      await createMedicalRecordAuditLog({ medicalRecordId: record.id, action: "SUBMITTED_FOR_CONFIRMATION", changedByUserId: req.user.id, oldData: { status: "Draft" }, newData: { status: "PendingConfirmation" } }, db);
-      return getMedicalRecordById(record.id, db);
-    });
-    return res.json({ message: "Medical record submitted", data });
-  } catch (error) {
-    return res.status(500).json({ message: "Cannot submit medical record" });
-  }
-};
-
 // confirm record (chi nha si phu trach duoc xac nhan va hoan tat lich)
 const confirmMedicalRecord = async (req, res) => {
   try {
     const record = await getMedicalRecordById(parseId(req.params.id));
     if (!record) return res.status(404).json({ message: "Medical record not found" });
-    if (!EDITABLE_STATUSES.includes(record.status)) return res.status(409).json({ message: "Record is already confirmed" });
+    if (!EDITABLE_STATUSES.has(record.status)) return res.status(409).json({ message: "Record is already confirmed" });
     const dentist = await getDentistProfile(req.user.id);
     if (!dentist || Number(dentist.id) !== Number(record.dentist_id)) return res.status(403).json({ message: "Only the responsible dentist can confirm" });
     if (!hasConfirmationContent(record)) return res.status(400).json({ message: "Diagnosis and treatment are required before confirmation" });
@@ -346,7 +347,7 @@ const confirmMedicalRecord = async (req, res) => {
   } catch (error) {
     console.error("confirmMedicalRecord failed:", error);
     return res.status(500).json({
-      message: error.message || "Cannot confirm medical record",
+      message: "Không thể xác nhận bệnh án. Vui lòng thử lại.",
     });
   }
 };
@@ -394,7 +395,6 @@ module.exports = {
   getPatientDentalChart,
   addMedicalRecord,
   editMedicalRecord,
-  submitMedicalRecord,
   confirmMedicalRecord,
   getMedicalRecordAudit,
   uploadMedicalRecordAttachment,

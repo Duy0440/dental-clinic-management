@@ -1,8 +1,4 @@
 const STATUS_CONFIG = {
-  Draft: {
-    label: "Bản nháp",
-    className: "draft",
-  },
   PendingConfirmation: {
     label: "Chờ nha sĩ xác nhận",
     className: "pending",

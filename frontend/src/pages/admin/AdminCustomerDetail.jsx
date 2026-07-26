@@ -415,7 +415,7 @@ function AdminCustomerDetail() {
                         : "Xem chi tiết"}
                     </button>
 
-                    {["Draft", "PendingConfirmation"].includes(record.status) && (
+                    {record.status === "PendingConfirmation" && (
                       <button
                         type="button"
                         className="admin-primary-button"

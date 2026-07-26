@@ -214,7 +214,7 @@ function MedicalRecordForm({
           : null,
         dentist_id: Number(formData.dentist_id),
         teeth,
-        status: record?.status || "PendingConfirmation",
+        status: "PendingConfirmation",
       };
 
       const response = isEditMode
