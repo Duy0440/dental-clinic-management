@@ -2,6 +2,7 @@
 const {
   savePageVisit,
   getSummary,
+  exportSummary,
 } = require("../controllers/dashboardController");
 const {
   verifyToken,
@@ -13,5 +14,6 @@ const router = express.Router();
 // dashboard routes (luot truy cap va thong ke tong quan)
 router.post("/visit", savePageVisit);
 router.get("/summary", verifyToken, authorizeRoles("admin"), getSummary);
+router.get("/export", verifyToken, authorizeRoles("admin"), exportSummary);
 
 module.exports = router;

@@ -36,7 +36,7 @@ const pageInfo = {
   "/admin": {
     eyebrow: "Tổng quan",
     title: "Tổng quan phòng khám",
-    description: "Theo dõi lịch hẹn, khách hàng, doanh thu và các việc cần xử lý trong ngày.",
+    description: "Theo dõi lịch hẹn, khách hàng, tiền thực thu và các việc cần xử lý trong ngày.",
   },
   "/admin/appointments": {
     eyebrow: "Lịch hẹn",
@@ -175,12 +175,6 @@ function AdminLayoutWithAlerts() {
           </div>
         </div>
 
-        <div className="admin-slogan-panel">
-          <span>Thông điệp</span>
-          <strong>Chăm sóc rõ ràng, phục vụ tận tâm.</strong>
-          <small>Mỗi hồ sơ khách hàng cần được theo dõi đầy đủ và chính xác.</small>
-        </div>
-
         <nav className="admin-menu admin-menu-v2">
           {menuGroups.map((group) => (
             <div className="admin-menu-group" key={group.title}>
@@ -215,8 +209,8 @@ function AdminLayoutWithAlerts() {
           </div>
 
           <div className="admin-topbar-status admin-topbar-slogan">
-            <span>Nha khoa V</span>
-            <strong>Tận tâm trong từng lần hẹn</strong>
+            <span>Hệ thống</span>
+            <strong>Đang vận hành</strong>
           </div>
         </header>
 

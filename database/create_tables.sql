@@ -53,6 +53,8 @@ CREATE TABLE IF NOT EXISTS appointments (
   appointment_time TIME NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'Pending'
     CHECK (status IN ('Pending', 'Confirmed', 'Completed', 'Cancelled')),
+  booking_source VARCHAR(30)
+    CHECK (booking_source IS NULL OR booking_source IN ('website', 'customer', 'admin')),
   note TEXT,
   clinic_note TEXT,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -260,6 +262,7 @@ CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments(appointment_dat
 CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
 CREATE INDEX IF NOT EXISTS idx_appointments_patient ON appointments(patient_id);
 CREATE INDEX IF NOT EXISTS idx_appointments_dentist ON appointments(dentist_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_booking_source ON appointments(booking_source, appointment_date);
 CREATE INDEX IF NOT EXISTS idx_medical_records_patient ON medical_records(patient_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_patient ON invoices(patient_id);
 CREATE INDEX IF NOT EXISTS idx_chatbot_logs_user ON chatbot_logs(user_id);

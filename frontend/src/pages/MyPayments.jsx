@@ -15,6 +15,34 @@ const statusClasses = {
   Cancelled: "cancelled",
 };
 
+const sanitizeFileName = (value) =>
+  String(value || "khach-hang")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase() || "khach-hang";
+
+const hasDebt = (record) =>
+  Number(record?.remaining_amount || 0) > 0 &&
+  ["Unpaid", "PartiallyPaid"].includes(record?.payment_status);
+
+const getExportErrorMessage = async (error, fallback) => {
+  const data = error.response?.data;
+  if (typeof Blob !== "undefined" && data instanceof Blob) {
+    const text = await data.text();
+    try {
+      return JSON.parse(text).message || fallback;
+    } catch {
+      return text || fallback;
+    }
+  }
+
+  return error.response?.data?.message || fallback;
+};
+
 function MyPayments() {
   const [invoices, setInvoices] = useState([]);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -49,6 +77,11 @@ function MyPayments() {
     "Nội dung điều trị";
 
   const exportInvoice = async (invoice) => {
+    if (!hasDebt(invoice)) {
+      setMessage("Hồ sơ này đã được thanh toán đầy đủ, không có công nợ để xuất.");
+      return;
+    }
+
     try {
       setExportingId(invoice.id);
       const response = await axiosClient.get(`/invoices/${invoice.id}/export`, {
@@ -57,75 +90,16 @@ function MyPayments() {
       const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = `bang-thanh-toan-${invoice.patient_name || "khach-hang"}-${invoice.invoice_code || invoice.id}.xlsx`;
+      link.download = `cong-no-${sanitizeFileName(invoice.patient_name)}-${invoice.invoice_code || invoice.id}.xlsx`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      setMessage(
-        error.response?.data?.message || "Không thể xuất bảng thanh toán.",
-      );
+      setMessage(await getExportErrorMessage(error, "Không thể xuất bảng công nợ."));
     } finally {
       setExportingId(null);
     }
-  };
-
-  const printReceipt = (invoice, payment) => {
-    const treatment = (invoice.details || []).map(getDetailName).join("; ");
-    const printWindow = window.open("", "_blank", "width=520,height=760");
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Phiếu thanh toán</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 0; padding: 22px; color: #111827; }
-            .receipt { max-width: 460px; margin: 0 auto; }
-            .center { text-align: center; }
-            h2 { margin: 0; font-size: 21px; }
-            h3 { margin: 10px 0 0; font-size: 16px; }
-            .muted { color: #6b7280; font-size: 12px; }
-            .line { border-top: 1px dashed #9ca3af; margin: 14px 0; }
-            .row { display: flex; justify-content: space-between; gap: 14px; margin: 8px 0; font-size: 13px; }
-            .row span:last-child, .row strong:last-child { text-align: right; }
-            .total { font-size: 16px; font-weight: bold; }
-            .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 36px; text-align: center; font-size: 13px; }
-            .note { margin-top: 20px; color: #6b7280; font-size: 12px; line-height: 1.5; }
-          </style>
-        </head>
-        <body>
-          <div class="receipt">
-            <div class="center">
-              <h2>NHA KHOA V</h2>
-              <div class="muted">Hotline: 1900 6899 - Thành phố Cần Thơ</div>
-              <h3>PHIẾU XÁC NHẬN THANH TOÁN</h3>
-            </div>
-            <div class="line"></div>
-            <div class="row"><strong>Mã hồ sơ</strong><span>${invoice.invoice_code || `TT${invoice.id}`}</span></div>
-            <div class="row"><strong>Mã lần thanh toán</strong><span>#${payment.id}</span></div>
-            <div class="row"><strong>Khách hàng</strong><span>${invoice.patient_name || ""}</span></div>
-            <div class="row"><strong>SĐT</strong><span>${invoice.patient_phone || "Chưa cập nhật"}</span></div>
-            <div class="row"><strong>Nội dung điều trị</strong><span>${treatment || "Chưa cập nhật"}</span></div>
-            <div class="line"></div>
-            <div class="row"><span>Tạm tính</span><strong>${formatMoney(invoice.subtotal)}</strong></div>
-            <div class="row"><span>Giảm giá</span><strong>${formatMoney(invoice.discount_amount)}</strong></div>
-            <div class="row"><span>Thành tiền</span><strong>${formatMoney(invoice.total_amount)}</strong></div>
-            <div class="row total"><span>Thanh toán lần này</span><strong>${formatMoney(payment.amount)}</strong></div>
-            <div class="row"><span>Tổng đã thanh toán</span><strong>${formatMoney(payment.cumulative_paid)}</strong></div>
-            <div class="row"><span>Còn lại</span><strong>${formatMoney(payment.remaining_after)}</strong></div>
-            <div class="row"><span>Phương thức</span><strong>${payment.payment_method}</strong></div>
-            <div class="row"><span>Ngày thanh toán</span><strong>${payment.payment_date_display}</strong></div>
-            <div class="row"><span>Người ghi nhận</span><strong>${payment.created_by_username || ""}</strong></div>
-            <div class="row"><span>Ghi chú</span><strong>${payment.note || ""}</strong></div>
-            <div class="signatures"><div>Khách hàng<br/><br/><br/>________________</div><div>Người ghi nhận<br/><br/><br/>________________</div></div>
-            <p class="note">Phiếu xác nhận thanh toán nội bộ, không thay thế hóa đơn điện tử hoặc chứng từ thuế.</p>
-          </div>
-          <script>window.print();</script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
   };
 
   const renderStatus = (invoice) => (
@@ -180,9 +154,11 @@ function MyPayments() {
                     <button type="button" className="admin-action-button" onClick={() => setSelectedInvoice(invoice)}>
                       Xem chi tiết
                     </button>
-                    <button type="button" className="admin-action-button" onClick={() => exportInvoice(invoice)} disabled={exportingId === invoice.id}>
-                      {exportingId === invoice.id ? "Đang xuất..." : "Xuất bảng thanh toán"}
-                    </button>
+                    {hasDebt(invoice) && (
+                      <button type="button" className="admin-action-button" onClick={() => exportInvoice(invoice)} disabled={exportingId === invoice.id}>
+                        {exportingId === invoice.id ? "Đang xuất..." : "Xuất bảng công nợ"}
+                      </button>
+                    )}
                   </div>
                 </div>
               </article>
@@ -217,7 +193,6 @@ function MyPayments() {
                     <th>Số tiền</th>
                     <th>Phương thức</th>
                     <th>Còn lại</th>
-                    <th>In</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -228,15 +203,10 @@ function MyPayments() {
                       <td>{formatMoney(payment.amount)}</td>
                       <td>{payment.payment_method}</td>
                       <td>{formatMoney(payment.remaining_after)}</td>
-                      <td>
-                        <button type="button" className="admin-action-button" onClick={() => printReceipt(selectedInvoice, payment)}>
-                          In phiếu
-                        </button>
-                      </td>
                     </tr>
                   ))}
                   {(!selectedInvoice.payments || selectedInvoice.payments.length === 0) && (
-                    <tr><td colSpan="6">Chưa phát sinh lần thanh toán nào.</td></tr>
+                    <tr><td colSpan="5">Chưa phát sinh lần thanh toán nào.</td></tr>
                   )}
                 </tbody>
               </table>

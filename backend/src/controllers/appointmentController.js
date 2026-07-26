@@ -254,9 +254,11 @@ const addAppointment = async (req, res) => {
 
     let finalPatientId = patient_id ? Number(patient_id) : null;
     const normalizedDentistId = dentist_id ? Number(dentist_id) : null;
+    let bookingSource = req.user?.role === "admin" ? "admin" : "website";
 
     // auth scope (khoa theo ho so ca nhan dang nhap)
     if (req.user?.role === "customer") {
+      bookingSource = "customer";
       const patientProfile = await findPatientByUserId(req.user.id);
 
       if (!patientProfile || patientProfile.id !== Number(patient_id)) {
@@ -463,6 +465,7 @@ const addAppointment = async (req, res) => {
             appointment_date,
             appointment_time: normalizedAppointmentTime,
             status: normalizedStatus,
+            booking_source: bookingSource,
             note,
           },
           client,

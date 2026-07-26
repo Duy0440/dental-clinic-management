@@ -14,6 +14,13 @@ const countItemsAfterSeenId = (items = [], storageKey) =>
 const DENTIST_SEEN_APPOINTMENT_KEY = "dentist_seen_confirmed_appointment_id";
 const DENTIST_SEEN_RECORD_KEY = "dentist_seen_record_needed_appointment_id";
 
+const todayDisplay = new Date().toLocaleDateString("vi-VN", {
+  weekday: "long",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+
 function DentistLayoutWithAlerts() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -120,14 +127,13 @@ function DentistLayoutWithAlerts() {
           </div>
         </div>
 
-        <div className="dentist-sidebar-note">
-          <span>Ca làm việc</span>
-          <strong>Theo lịch được phân công</strong>
-          <p>Cập nhật hồ sơ điều trị sau khi hoàn tất thăm khám.</p>
-        </div>
-
         <nav className="dentist-menu">
           <NavLink to="/dentist" end>
+            <span className="dentist-menu-icon">TQ</span>
+            <span className="dentist-menu-label">Tổng quan</span>
+          </NavLink>
+
+          <NavLink to="/dentist/appointments">
             <span className="dentist-menu-icon">LK</span>
             <span className="dentist-menu-label">Lịch khám của tôi</span>
             {renderBadge(sidebarAlerts.appointments)}
@@ -154,8 +160,8 @@ function DentistLayoutWithAlerts() {
       <main className="dentist-main">
         <header className="dentist-header">
           <div>
-            <p>Trang làm việc của nha sĩ</p>
-            <h1>Quản lý lịch khám và điều trị</h1>
+            <p>{todayDisplay}</p>
+            <h1>Trang làm việc của nha sĩ</h1>
           </div>
 
           <span>Xin chào, {doctorName}</span>

@@ -38,6 +38,7 @@ function DentistAppointments() {
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("");
   const [availableReExamTimes, setAvailableReExamTimes] = useState([]);
   const [loadingReExamTimes, setLoadingReExamTimes] = useState(false);
   const [reExamTimeMessage, setReExamTimeMessage] = useState(
@@ -82,7 +83,13 @@ function DentistAppointments() {
   );
   const normalizedSearch = searchText.trim().toLowerCase();
 
-  const filteredAppointments = appointments.filter((appointment) => {
+  const sortedAppointments = [...appointments].sort((a, b) =>
+    `${a.appointment_date} ${a.appointment_time}`.localeCompare(
+      `${b.appointment_date} ${b.appointment_time}`,
+    ),
+  );
+
+  const filteredAppointments = sortedAppointments.filter((appointment) => {
     const matchesSearch =
       !normalizedSearch ||
       [
@@ -104,7 +111,9 @@ function DentistAppointments() {
         appointment.status === "Confirmed" &&
         !appointment.has_medical_record);
 
-    return matchesSearch && matchesStatus;
+    const matchesDate = !dateFilter || appointment.appointment_date === dateFilter;
+
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   const formatDate = (date) => {
@@ -351,6 +360,12 @@ function DentistAppointments() {
             <option value="pending">Chờ lễ tân xác nhận</option>
             <option value="need-record">Cần cập nhật hồ sơ</option>
           </select>
+
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(event) => setDateFilter(event.target.value)}
+          />
         </div>
       )}
 

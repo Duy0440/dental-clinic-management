@@ -29,6 +29,7 @@ import AdminDentistDetail from "./pages/admin/AdminDentistDetail";
 import AdminReviews from "./pages/admin/AdminReviews";
 
 import DentistUnavailableTimes from "./pages/dentist/DentistUnavailableTimes";
+import DentistDashboard from "./pages/dentist/DentistDashboard";
 import DentistAppointments from "./pages/dentist/DentistAppointments";
 import DentistMedicalRecords from "./pages/dentist/DentistMedicalRecords";
 
@@ -130,7 +131,8 @@ function App() {
             </RoleRoute>
           }
         >
-          <Route index element={<DentistAppointments />} />
+          <Route index element={<DentistDashboard />} />
+          <Route path="appointments" element={<DentistAppointments />} />
           <Route path="unavailable-times" element={<DentistUnavailableTimes />} />
           <Route path="medical-records" element={<DentistMedicalRecords />} />
         </Route>

@@ -42,6 +42,10 @@ const getTreatmentSummary = (invoice) =>
 
 const buildInvoiceCode = () => `TT${Date.now()}`;
 
+const hasDebt = (invoice) =>
+  money(invoice?.remaining_amount) > 0 &&
+  ["Unpaid", "PartiallyPaid"].includes(invoice?.payment_status);
+
 const validateDetails = (details = []) => {
   if (!Array.isArray(details) || details.length === 0) {
     return { message: "Hồ sơ thanh toán phải có ít nhất một dòng điều trị." };
@@ -408,7 +412,7 @@ const buildPaymentWorkbook = (invoice) => {
   const rows = [];
   let rowIndex = 1;
 
-  rows.push(rowXml(["BẢNG THEO DÕI THANH TOÁN"], rowIndex, [3]));
+  rows.push(rowXml(["BẢNG THEO DÕI CÔNG NỢ"], rowIndex, [3]));
   rowIndex += 2;
 
   [
@@ -425,7 +429,7 @@ const buildPaymentWorkbook = (invoice) => {
     ["Trạng thái", statusLabels[invoice.payment_status] || invoice.payment_status],
     ["Ngày tạo hồ sơ", new Date(invoice.created_at).toLocaleDateString("vi-VN")],
   ].forEach((item) => {
-    rows.push(rowXml(item, rowIndex, [2, typeof item[1] === "number" ? 1 : 0]));
+    rows.push(rowXml(item, rowIndex, [2, typeof item[1] === "number" ? 1 : 5]));
     rowIndex += 1;
   });
 
@@ -443,7 +447,7 @@ const buildPaymentWorkbook = (invoice) => {
         "Ghi chú",
       ],
       rowIndex,
-      [2, 2, 2, 2, 2, 2, 2, 2],
+      [4, 4, 4, 4, 4, 4, 4, 4],
     ),
   );
   rowIndex += 1;
@@ -462,7 +466,7 @@ const buildPaymentWorkbook = (invoice) => {
           payment.note || "",
         ],
         rowIndex,
-        [0, 0, 1, 0, 1, 1, 0, 0],
+        [5, 5, 1, 5, 1, 1, 5, 5],
       ),
     );
     rowIndex += 1;
@@ -472,15 +476,15 @@ const buildPaymentWorkbook = (invoice) => {
     rowXml(
       ["Tổng", "", money(invoice.paid_amount), "", "", money(invoice.remaining_amount), "", ""],
       rowIndex,
-      [2, 0, 1, 0, 0, 1, 0, 0],
+      [2, 5, 6, 5, 5, 6, 5, 5],
     ),
   );
 
   const sheetXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <cols>
-    <col min="1" max="1" width="18" customWidth="1"/>
-    <col min="2" max="2" width="22" customWidth="1"/>
+    <col min="1" max="1" width="20" customWidth="1"/>
+    <col min="2" max="2" width="34" customWidth="1"/>
     <col min="3" max="3" width="18" customWidth="1"/>
     <col min="4" max="4" width="18" customWidth="1"/>
     <col min="5" max="5" width="18" customWidth="1"/>
@@ -489,20 +493,24 @@ const buildPaymentWorkbook = (invoice) => {
     <col min="8" max="8" width="32" customWidth="1"/>
   </cols>
   <sheetData>${rows.join("")}</sheetData>
+  <mergeCells count="1"><mergeCell ref="A1:H1"/></mergeCells>
 </worksheet>`;
 
   const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0 &quot;VNĐ&quot;"/></numFmts>
-  <fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>
-  <fills count="1"><fill><patternFill patternType="none"/></fill></fills>
+  <fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="16"/><name val="Calibri"/><color rgb="FF0F172A"/></font></fonts>
+  <fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFF3E6"/><bgColor indexed="64"/></patternFill></fill></fills>
   <borders count="2"><border/><border><left style="thin"/><right style="thin"/><top style="thin"/><bottom style="thin"/></border></borders>
   <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-  <cellXfs count="4">
-    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0"/>
+  <cellXfs count="7">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
     <xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1"/>
     <xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1"/>
-    <xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1"/>
+    <xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1"/>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0"/>
+    <xf numFmtId="164" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyNumberFormat="1"/>
   </cellXfs>
 </styleSheet>`;
 
@@ -517,7 +525,7 @@ const buildPaymentWorkbook = (invoice) => {
     },
     {
       name: "xl/workbook.xml",
-      data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Thanh toán" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+      data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Công nợ" sheetId="1" r:id="rId1"/></sheets></workbook>`,
     },
     {
       name: "xl/_rels/workbook.xml.rels",
@@ -541,15 +549,21 @@ const exportInvoice = async (req, res) => {
       }
     }
 
+    if (!hasDebt(invoice)) {
+      return res.status(400).json({
+        message: "Hồ sơ này đã được thanh toán đầy đủ, không có công nợ để xuất.",
+      });
+    }
+
     const workbook = buildPaymentWorkbook(invoice);
-    const filename = `bang-thanh-toan-${sanitizeFileName(invoice.patient_name)}-${invoice.invoice_code || invoice.id}.xlsx`;
+    const filename = `cong-no-${sanitizeFileName(invoice.patient_name)}-${invoice.invoice_code || invoice.id}.xlsx`;
 
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     return res.send(workbook);
   } catch (error) {
     console.error("exportInvoice failed:", error);
-    return res.status(500).json({ message: "Không thể xuất bảng thanh toán." });
+    return res.status(500).json({ message: "Không thể xuất bảng công nợ." });
   }
 };
 

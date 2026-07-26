@@ -14,9 +14,9 @@ const initialPaymentForm = {
 const initialPaymentProfileForm = {
   patient_id: "",
   appointment_id: "",
-  discount_amount: 0,
+  discount_amount: "",
   discount_reason: "",
-  first_payment_amount: 0,
+  first_payment_amount: "",
   first_payment_method: "Tiền mặt",
   first_payment_date: todayText(),
   note: "",
@@ -42,6 +42,46 @@ const statusClasses = {
   PartiallyPaid: "pending",
   Paid: "confirmed",
   Cancelled: "cancelled",
+};
+
+const digitsOnly = (value) => String(value ?? "").replace(/\D/g, "");
+
+const parseMoneyInput = (value) => {
+  const digits = digitsOnly(value);
+  return digits ? Number(digits) : 0;
+};
+
+const formatMoneyInput = (value) => {
+  const digits = digitsOnly(value);
+  return digits ? Number(digits).toLocaleString("vi-VN") : "";
+};
+
+const sanitizeFileName = (value) =>
+  String(value || "khach-hang")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase() || "khach-hang";
+
+const hasDebt = (record) =>
+  Number(record?.remaining_amount || 0) > 0 &&
+  ["Unpaid", "PartiallyPaid"].includes(record?.payment_status);
+
+const getExportErrorMessage = async (error, fallback) => {
+  const data = error.response?.data;
+  if (typeof Blob !== "undefined" && data instanceof Blob) {
+    const text = await data.text();
+    try {
+      return JSON.parse(text).message || fallback;
+    } catch {
+      return text || fallback;
+    }
+  }
+
+  return error.response?.data?.message || fallback;
 };
 
 function AdminInvoices() {
@@ -101,8 +141,8 @@ function AdminInvoices() {
     "Nội dung điều trị";
 
   const calculateDetailSubtotal = (detail) => {
-    const quantity = Number(detail.quantity || 0);
-    const unitPrice = Number(detail.unit_price || 0);
+    const quantity = parseMoneyInput(detail.quantity || 0);
+    const unitPrice = parseMoneyInput(detail.unit_price || 0);
     return Math.max(quantity * unitPrice, 0);
   };
 
@@ -110,9 +150,9 @@ function AdminInvoices() {
     (total, detail) => total + calculateDetailSubtotal(detail),
     0,
   );
-  const discountAmount = Number(formData.discount_amount || 0);
+  const discountAmount = parseMoneyInput(formData.discount_amount);
   const totalAmount = Math.max(subtotal - discountAmount, 0);
-  const firstPaymentAmount = Number(formData.first_payment_amount || 0);
+  const firstPaymentAmount = parseMoneyInput(formData.first_payment_amount);
   const firstRemainingAmount = Math.max(totalAmount - firstPaymentAmount, 0);
   const normalizedInvoiceSearch = filters.search.trim().toLowerCase();
 
@@ -183,7 +223,7 @@ function AdminInvoices() {
 
   const paymentPreview = useMemo(() => {
     if (!paymentInvoice) return null;
-    const amount = Number(paymentForm.amount || 0);
+    const amount = parseMoneyInput(paymentForm.amount);
     return {
       paidAfter: Number(paymentInvoice.paid_amount || 0) + amount,
       remainingAfter: Math.max(
@@ -192,7 +232,7 @@ function AdminInvoices() {
       ),
     };
   }, [paymentForm.amount, paymentInvoice]);
-  const paymentAmount = Number(paymentForm.amount || 0);
+  const paymentAmount = parseMoneyInput(paymentForm.amount);
   const paymentAmountError = paymentInvoice
     ? paymentAmount <= 0
       ? "Số tiền thanh toán phải lớn hơn 0."
@@ -226,17 +266,23 @@ function AdminInvoices() {
 
   const handleDetailChange = (index, event) => {
     const { name, value } = event.target;
+    const normalizedValue =
+      name === "unit_price"
+        ? formatMoneyInput(value)
+        : name === "quantity"
+          ? digitsOnly(value)
+          : value;
 
     setDetails((currentDetails) =>
       currentDetails.map((detail, detailIndex) =>
         detailIndex === index
           ? {
               ...detail,
-              [name]: value,
+              [name]: normalizedValue,
               ...(name === "service_id"
                 ? {
                     treatment_group:
-                      services.find((service) => String(service.id) === value)
+                      services.find((service) => String(service.id) === normalizedValue)
                         ?.service_name || "",
                   }
                 : {}),
@@ -294,8 +340,8 @@ function AdminInvoices() {
           service_id: detail.service_id ? Number(detail.service_id) : null,
           treatment_group: detail.treatment_group,
           custom_description: detail.custom_description,
-          quantity: Number(detail.quantity || 1),
-          unit_price: Number(detail.unit_price || 0),
+          quantity: Number(digitsOnly(detail.quantity) || 1),
+          unit_price: parseMoneyInput(detail.unit_price),
         })),
       });
 
@@ -316,7 +362,7 @@ function AdminInvoices() {
     setPaymentForm({
       ...initialPaymentForm,
       payment_date: todayText(),
-      amount: invoice.remaining_amount || "",
+      amount: formatMoneyInput(invoice.remaining_amount),
     });
   };
 
@@ -381,6 +427,11 @@ function AdminInvoices() {
   };
 
   const exportInvoice = async (invoice) => {
+    if (!hasDebt(invoice)) {
+      setErrorMessage("Hồ sơ này đã được thanh toán đầy đủ, không có công nợ để xuất.");
+      return;
+    }
+
     try {
       setExportingId(invoice.id);
       setErrorMessage("");
@@ -390,15 +441,13 @@ function AdminInvoices() {
       const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = `bang-thanh-toan-${invoice.patient_name || "khach-hang"}-${invoice.invoice_code || invoice.id}.xlsx`;
+      link.download = `cong-no-${sanitizeFileName(invoice.patient_name)}-${invoice.invoice_code || invoice.id}.xlsx`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      setErrorMessage(
-        error.response?.data?.message || "Không thể xuất bảng thanh toán.",
-      );
+      setErrorMessage(await getExportErrorMessage(error, "Không thể xuất bảng công nợ."));
     } finally {
       setExportingId(null);
     }
@@ -601,7 +650,7 @@ function AdminInvoices() {
                       >
                         Xem chi tiết
                       </button>
-                      {["Unpaid", "PartiallyPaid"].includes(invoice.payment_status) && (
+                      {hasDebt(invoice) && (
                         <button
                           type="button"
                           className="admin-action-button"
@@ -610,14 +659,16 @@ function AdminInvoices() {
                           Ghi nhận thanh toán
                         </button>
                       )}
-                      <button
-                        type="button"
-                        className="admin-action-button"
-                        onClick={() => exportInvoice(invoice)}
-                        disabled={exportingId === invoice.id}
-                      >
-                        {exportingId === invoice.id ? "Đang xuất..." : "Xuất Excel"}
-                      </button>
+                      {hasDebt(invoice) && (
+                        <button
+                          type="button"
+                          className="admin-action-button"
+                          onClick={() => exportInvoice(invoice)}
+                          disabled={exportingId === invoice.id}
+                        >
+                          {exportingId === invoice.id ? "Đang xuất..." : "Xuất bảng công nợ"}
+                        </button>
+                      )}
                       {invoice.payment_status !== "Cancelled" && (
                         <button
                           type="button"
@@ -737,8 +788,11 @@ function AdminInvoices() {
                       onChange={(event) => handleDetailChange(index, event)}
                       placeholder="Nội dung chi tiết"
                     />
-                    <input required type="number" min="1" name="quantity" value={detail.quantity} onChange={(event) => handleDetailChange(index, event)} placeholder="SL" />
-                    <input required type="number" min="1" name="unit_price" value={detail.unit_price} onChange={(event) => handleDetailChange(index, event)} placeholder="Đơn giá" />
+                    <input required type="text" inputMode="numeric" name="quantity" value={detail.quantity} onChange={(event) => handleDetailChange(index, event)} placeholder="SL" />
+                    <div className="money-input-wrap">
+                      <input required type="text" inputMode="numeric" name="unit_price" value={detail.unit_price} onChange={(event) => handleDetailChange(index, event)} placeholder="Đơn giá" />
+                      <span>VNĐ</span>
+                    </div>
                     <strong>{formatMoney(calculateDetailSubtotal(detail))}</strong>
                     <button type="button" onClick={() => removeDetailRow(index)} disabled={details.length === 1}>Xóa</button>
                   </div>
@@ -756,14 +810,18 @@ function AdminInvoices() {
               <div className="admin-form-row">
                 <label>
                   Giảm giá (VNĐ)
-                  <input
-                    type="number"
-                    min="0"
+                  <div className="money-input-wrap">
+                    <input
+                    type="text"
+                    inputMode="numeric"
                     value={formData.discount_amount}
                     onChange={(event) =>
-                      setFormData((current) => ({ ...current, discount_amount: event.target.value }))
+                      setFormData((current) => ({ ...current, discount_amount: formatMoneyInput(event.target.value) }))
                     }
+                    placeholder="0"
                   />
+                    <span>VNĐ</span>
+                  </div>
                 </label>
                 <label>
                   Lý do giảm giá
@@ -788,15 +846,18 @@ function AdminInvoices() {
               <div className="admin-form-row">
                 <label>
                   Số tiền thanh toán lần đầu
-                  <input
-                    type="number"
-                    min="0"
-                    max={totalAmount}
+                  <div className="money-input-wrap">
+                    <input
+                    type="text"
+                    inputMode="numeric"
                     value={formData.first_payment_amount}
                     onChange={(event) =>
-                      setFormData((current) => ({ ...current, first_payment_amount: event.target.value }))
+                      setFormData((current) => ({ ...current, first_payment_amount: formatMoneyInput(event.target.value) }))
                     }
+                    placeholder="0"
                   />
+                    <span>VNĐ</span>
+                  </div>
                 </label>
                 <label>
                   Phương thức thanh toán lần đầu
@@ -865,7 +926,7 @@ function AdminInvoices() {
 
       {selectedInvoice && (
         <div className="admin-modal-overlay">
-          <div className="admin-modal admin-modal-wide">
+          <div className="admin-modal admin-modal-wide payment-detail-modal">
             <div className="admin-modal-header">
               <div>
                 <h3>Chi tiết hồ sơ thanh toán</h3>
@@ -874,40 +935,68 @@ function AdminInvoices() {
               <button type="button" onClick={() => setSelectedInvoice(null)}>×</button>
             </div>
 
-            <div className="medical-record-list payment-detail-grid">
-              <article className="medical-record-card">
-                <div><span>Mã khách hàng</span><strong>#{selectedInvoice.patient_id}</strong></div>
-                <div><span>Họ tên</span><strong>{selectedInvoice.patient_name}</strong></div>
-                <div><span>Số điện thoại</span><strong>{selectedInvoice.patient_phone || "Chưa cập nhật"}</strong></div>
-                <div><span>Trạng thái</span>{renderPaymentStatus(selectedInvoice)}</div>
-              </article>
-
-              <article className="medical-record-card">
-                {(selectedInvoice.details || []).map((detail) => (
-                  <div key={detail.id}>
-                    <span>{detail.treatment_group || detail.service_name || "Nội dung điều trị"}</span>
-                    <strong>{getDetailName(detail)}</strong>
-                    <p>{detail.quantity} x {formatMoney(detail.unit_price)} = {formatMoney(detail.subtotal)}</p>
+            <div className="payment-detail-sections">
+              <section className="payment-detail-section">
+                <div className="payment-section-heading compact">
+                  <span>A</span>
+                  <div>
+                    <strong>Thông tin khách hàng</strong>
+                    <small>Thông tin định danh của hồ sơ thanh toán.</small>
                   </div>
-                ))}
-              </article>
+                </div>
+                <article className="medical-record-card payment-info-card">
+                  <div><span>Mã khách hàng</span><strong>#{selectedInvoice.patient_id}</strong></div>
+                  <div><span>Họ tên</span><strong>{selectedInvoice.patient_name}</strong></div>
+                  <div><span>Số điện thoại</span><strong>{selectedInvoice.patient_phone || "Chưa cập nhật"}</strong></div>
+                  <div><span>Trạng thái</span>{renderPaymentStatus(selectedInvoice)}</div>
+                </article>
+              </section>
 
-              <article className="medical-record-card">
-                <div><span>Tạm tính</span><strong>{formatMoney(selectedInvoice.subtotal)}</strong></div>
-                <div><span>Giảm giá</span><strong>{formatMoney(selectedInvoice.discount_amount)}</strong></div>
-                <div><span>Lý do giảm giá</span><strong>{selectedInvoice.discount_reason || "Không có"}</strong></div>
-                <div><span>Thành tiền</span><strong>{formatMoney(selectedInvoice.total_amount)}</strong></div>
-                <div><span>Đã thanh toán</span><strong>{formatMoney(selectedInvoice.paid_amount)}</strong></div>
-                <div><span>Còn lại</span><strong>{formatMoney(selectedInvoice.remaining_amount)}</strong></div>
-              </article>
+              <section className="payment-detail-section">
+                <div className="payment-section-heading compact">
+                  <span>B</span>
+                  <div>
+                    <strong>Nội dung điều trị</strong>
+                    <small>Các dòng chi phí đã ghi nhận trong hồ sơ.</small>
+                  </div>
+                </div>
+                <article className="medical-record-card payment-info-card">
+                  {(selectedInvoice.details || []).map((detail) => (
+                    <div key={detail.id} className="payment-treatment-detail">
+                      <span>{detail.treatment_group || detail.service_name || "Nội dung điều trị"}</span>
+                      <strong>{getDetailName(detail)}</strong>
+                      <p>{detail.quantity} x {formatMoney(detail.unit_price)} = {formatMoney(detail.subtotal)}</p>
+                    </div>
+                  ))}
+                </article>
+              </section>
+
+              <section className="payment-detail-section">
+                <div className="payment-section-heading compact">
+                  <span>C</span>
+                  <div>
+                    <strong>Tổng quan thanh toán</strong>
+                    <small>Đối soát tổng tiền, đã thu và công nợ còn lại.</small>
+                  </div>
+                </div>
+                <article className="medical-record-card payment-info-card payment-overview-card">
+                  <div><span>Tạm tính</span><strong>{formatMoney(selectedInvoice.subtotal)}</strong></div>
+                  <div><span>Giảm giá</span><strong>{formatMoney(selectedInvoice.discount_amount)}</strong></div>
+                  <div><span>Lý do giảm giá</span><strong>{selectedInvoice.discount_reason || "Không có"}</strong></div>
+                  <div><span>Thành tiền</span><strong>{formatMoney(selectedInvoice.total_amount)}</strong></div>
+                  <div><span>Đã thanh toán</span><strong>{formatMoney(selectedInvoice.paid_amount)}</strong></div>
+                  <div><span>Còn lại</span><strong>{formatMoney(selectedInvoice.remaining_amount)}</strong></div>
+                </article>
+              </section>
             </div>
 
             <div className="invoice-detail-box payment-history-box mt-3">
-              <div className="invoice-detail-header">
-                <strong>Lịch sử thanh toán</strong>
-                <button type="button" onClick={() => exportInvoice(selectedInvoice)} disabled={exportingId === selectedInvoice.id}>
-                  {exportingId === selectedInvoice.id ? "Đang xuất..." : "Xuất bảng thanh toán"}
-                </button>
+              <div className="payment-section-heading compact">
+                <span>D</span>
+                <div>
+                  <strong>Lịch sử thanh toán</strong>
+                  <small>Mỗi dòng là một lần khách đã thanh toán.</small>
+                </div>
               </div>
               <div className="admin-table-wrapper">
                 <table className="admin-table">
@@ -951,8 +1040,13 @@ function AdminInvoices() {
             </div>
 
             <div className="admin-modal-actions">
-              {["Unpaid", "PartiallyPaid"].includes(selectedInvoice.payment_status) && (
+              {hasDebt(selectedInvoice) && (
                 <button type="button" onClick={() => openPaymentModal(selectedInvoice)}>Ghi nhận thanh toán</button>
+              )}
+              {hasDebt(selectedInvoice) && (
+                <button type="button" onClick={() => exportInvoice(selectedInvoice)} disabled={exportingId === selectedInvoice.id}>
+                  {exportingId === selectedInvoice.id ? "Đang xuất..." : "Xuất bảng công nợ"}
+                </button>
               )}
               <button type="button" onClick={() => setSelectedInvoice(null)}>Đóng</button>
             </div>
@@ -982,15 +1076,18 @@ function AdminInvoices() {
 
               <label>
                 Số tiền thanh toán lần này
-                <input
-                  required
-                  type="number"
-                  min="1"
-                  max={paymentInvoice.remaining_amount}
-                  className={paymentAmountError ? "is-invalid" : ""}
-                  value={paymentForm.amount}
-                  onChange={(event) => setPaymentForm((current) => ({ ...current, amount: event.target.value }))}
-                />
+                <div className="money-input-wrap">
+                  <input
+                    required
+                    type="text"
+                    inputMode="numeric"
+                    className={paymentAmountError ? "is-invalid" : ""}
+                    value={paymentForm.amount}
+                    onChange={(event) => setPaymentForm((current) => ({ ...current, amount: formatMoneyInput(event.target.value) }))}
+                    placeholder="Nhập số tiền"
+                  />
+                  <span>VNĐ</span>
+                </div>
                 {paymentAmountError && <small className="payment-field-error">{paymentAmountError}</small>}
               </label>
               <label>

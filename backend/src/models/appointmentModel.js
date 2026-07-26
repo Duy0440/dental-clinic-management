@@ -1,5 +1,24 @@
 ﻿const pool = require("../config/db");
 
+let bookingSourceColumnCache = null;
+
+const hasBookingSourceColumn = async (db = pool) => {
+  if (bookingSourceColumnCache !== null) return bookingSourceColumnCache;
+
+  const result = await db.query(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'appointments'
+        AND column_name = 'booking_source'
+    ) AS exists
+  `);
+
+  bookingSourceColumnCache = Boolean(result.rows[0]?.exists);
+  return bookingSourceColumnCache;
+};
+
 // find history (lay lich hen theo benh nhan)
 const getAppointmentHistoryByPatientId = async (patientId) => {
   const query = `
@@ -56,10 +75,37 @@ const createAppointment = async (appointmentData, db = pool) => {
     appointment_date,
     appointment_time,
     status,
+    booking_source,
     note,
   } = appointmentData;
 
-  const query = `
+  const hasSource = await hasBookingSourceColumn(db);
+  const query = hasSource
+    ? `
+    INSERT INTO appointments (
+      patient_id,
+      dentist_id,
+      service_id,
+      appointment_date,
+      appointment_time,
+      status,
+      booking_source,
+      note
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    RETURNING
+      id,
+      patient_id,
+      dentist_id,
+      service_id,
+      TO_CHAR(appointment_date, 'YYYY-MM-DD') AS appointment_date,
+      appointment_time,
+      status,
+      booking_source,
+      note,
+      created_at
+  `
+    : `
     INSERT INTO appointments (
       patient_id,
       dentist_id,
@@ -89,6 +135,7 @@ const createAppointment = async (appointmentData, db = pool) => {
     appointment_date,
     appointment_time,
     status || "Pending",
+    ...(hasSource ? [booking_source || null] : []),
     note || null,
   ];
 

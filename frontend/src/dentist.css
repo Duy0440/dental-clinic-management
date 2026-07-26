@@ -1381,3 +1381,308 @@
     gap: 8px;
   }
 }
+
+/* Dentist workspace refresh: focused clinical workbench, no finance noise. */
+.dentist-layout {
+  grid-template-columns: 248px 1fr;
+  background: #f3f6fa !important;
+}
+
+.dentist-sidebar {
+  padding: 20px 14px;
+  background: #0f2033;
+}
+
+.dentist-brand {
+  padding-bottom: 18px;
+}
+
+.dentist-menu {
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.dentist-menu a {
+  min-height: 42px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  box-shadow: none !important;
+}
+
+.dentist-menu a.active,
+.dentist-menu a:hover {
+  background: #ff8a1f;
+}
+
+.dentist-sidebar-badge {
+  animation: none !important;
+  box-shadow: none !important;
+}
+
+.dentist-main {
+  padding: 18px 22px;
+}
+
+.dentist-header,
+.dentist-page,
+.dentist-table-card,
+.dentist-form-card,
+.dentist-list-card,
+.dentist-record-card,
+.dentist-workbench-header,
+.dentist-work-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.dentist-header {
+  padding: 18px 20px;
+}
+
+.dentist-header h1 {
+  font-size: 1.32rem;
+}
+
+.dentist-header span {
+  border: 1px solid #fed7aa;
+  padding: 10px 14px;
+}
+
+.dentist-page {
+  padding: 20px;
+}
+
+.dentist-eyebrow {
+  padding: 5px 9px;
+  border-radius: 8px;
+}
+
+.dentist-page-header h2 {
+  font-size: 1.45rem;
+}
+
+.dentist-stat-grid {
+  gap: 12px;
+}
+
+.dentist-stat-card {
+  min-height: 116px;
+  padding: 15px;
+  border-radius: 14px;
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+.dentist-stat-card::after {
+  display: none;
+}
+
+.dentist-stat-card.highlight {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #0f172a;
+}
+
+.dentist-stat-card span,
+.dentist-stat-card.highlight span {
+  color: #c45b00;
+}
+
+.dentist-stat-card.highlight p {
+  color: #64748b;
+}
+
+.dentist-stat-card strong {
+  font-size: 1.85rem;
+}
+
+.dentist-stat-grid.compact .dentist-stat-card strong {
+  font-size: 1.75rem;
+}
+
+.dentist-filter-bar {
+  grid-template-columns: minmax(240px, 1fr) 220px 180px;
+}
+
+.dentist-workbench {
+  display: grid;
+  gap: 18px;
+}
+
+.dentist-workbench-header,
+.dentist-work-panel {
+  background: #ffffff;
+}
+
+.dentist-workbench-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+}
+
+.dentist-workbench-header h2,
+.dentist-work-panel h3 {
+  margin: 4px 0 6px;
+  color: #0f172a;
+}
+
+.dentist-workbench-header p,
+.dentist-work-panel p {
+  margin: 0;
+  color: #64748b;
+}
+
+.dentist-work-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+  gap: 18px;
+}
+
+.dentist-work-panel {
+  min-width: 0;
+  padding: 16px;
+}
+
+.dentist-work-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.dentist-work-panel-header a {
+  color: #c45b00;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.dentist-timeline,
+.dentist-task-list,
+.dentist-reexam-list {
+  display: grid;
+  gap: 10px;
+}
+
+.dentist-timeline-item {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  background: #fbfdff;
+}
+
+.dentist-timeline-item time {
+  display: grid;
+  gap: 3px;
+  padding-right: 12px;
+  border-right: 1px solid #e2e8f0;
+}
+
+.dentist-timeline-item time strong,
+.dentist-timeline-item > div > strong,
+.dentist-task-list strong,
+.dentist-reexam-list strong {
+  color: #0f172a;
+}
+
+.dentist-timeline-item time span,
+.dentist-timeline-item > div span,
+.dentist-task-list span,
+.dentist-reexam-list span,
+.dentist-reexam-list small {
+  display: block;
+  color: #64748b;
+}
+
+.dentist-timeline-item > div p {
+  margin: 4px 0;
+  color: #334155;
+  font-weight: 900;
+}
+
+.dentist-timeline-item > div small {
+  color: #64748b;
+}
+
+.dentist-task-list a,
+.dentist-reexam-list article {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  background: #fbfdff;
+  color: inherit;
+  text-decoration: none;
+}
+
+.dentist-task-list small {
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.dentist-reexam-list {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dentist-reexam-list p {
+  margin: 4px 0;
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.dentist-table th {
+  background: #f8fafc;
+}
+
+.dentist-table td {
+  vertical-align: middle;
+}
+
+@media (max-width: 1180px) {
+  .dentist-work-grid,
+  .dentist-reexam-list {
+    grid-template-columns: 1fr;
+  }
+
+  .dentist-timeline-item {
+    grid-template-columns: 100px minmax(0, 1fr);
+  }
+
+  .dentist-timeline-item .dentist-status,
+  .dentist-timeline-item .dentist-small-button {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 900px) {
+  .dentist-filter-bar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dentist-workbench-header,
+  .dentist-work-panel-header {
+    flex-direction: column;
+  }
+
+  .dentist-timeline-item {
+    grid-template-columns: 1fr;
+  }
+
+  .dentist-timeline-item time {
+    padding-right: 0;
+    padding-bottom: 8px;
+    border-right: 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+}

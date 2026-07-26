@@ -1,8 +1,7 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 
-// status label (doi trang thai sang tieng viet)
 const STATUS_LABELS = {
   Pending: "Chờ xác nhận",
   Confirmed: "Đã xác nhận",
@@ -10,17 +9,70 @@ const STATUS_LABELS = {
   Cancelled: "Đã hủy",
 };
 
-// admin dashboard page (tong quan he thong)
+const SOURCE_LABELS = {
+  website: "Website",
+  customer: "Khách đăng nhập",
+  admin: "Admin",
+};
+
+const toDateText = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const todayText = () => toDateText(new Date());
+
+const startOfMonthText = () => {
+  const today = new Date();
+  return toDateText(new Date(today.getFullYear(), today.getMonth(), 1));
+};
+
+const formatDisplayDate = (value) => {
+  if (!value) return "";
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
+};
+
+const sanitizeFileName = (value) =>
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+
 function Dashboard() {
   const [dashboard, setDashboard] = useState(null);
+  const [period, setPeriod] = useState("month");
+  const [customRange, setCustomRange] = useState({
+    from: startOfMonthText(),
+    to: todayText(),
+  });
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const activeRange = dashboard?.range || customRange;
+
+  const queryString = useMemo(() => {
+    const params = new URLSearchParams({ period });
+    if (period === "custom") {
+      params.append("from", customRange.from);
+      params.append("to", customRange.to);
+    }
+    return params.toString();
+  }, [customRange.from, customRange.to, period]);
+
   useEffect(() => {
-    // fetch dashboard summary (lay so lieu tong quan)
     const fetchDashboard = async () => {
       try {
-        const dashboardResponse = await axiosClient.get("/dashboard/summary");
+        setLoading(true);
+        setErrorMessage("");
+        const dashboardResponse = await axiosClient.get(`/dashboard/summary?${queryString}`);
         setDashboard(dashboardResponse.data.data);
       } catch (error) {
         setErrorMessage(
@@ -32,283 +84,330 @@ function Dashboard() {
     };
 
     fetchDashboard();
-  }, []);
+  }, [queryString]);
 
-  const formatMoney = (value) => {
-    return `${Number(value || 0).toLocaleString("vi-VN")} VNĐ`;
+  const formatMoney = (value) =>
+    typeof value === "number" ? `${value.toLocaleString("vi-VN")} VNĐ` : "Chưa có dữ liệu";
+
+  const overview = dashboard?.overview || {};
+  const metadata = dashboard?.metadata || {};
+  const revenueSeries = dashboard?.revenue_series || [];
+  const serviceStats = dashboard?.service_stats || [];
+  const appointmentStatus = dashboard?.appointment_status || [];
+  const recentAppointments = dashboard?.recent_appointments || [];
+  const upcomingReExams = dashboard?.upcoming_re_examinations || [];
+  const maxRevenue = Math.max(...revenueSeries.map((item) => Number(item.revenue || 0)), 1);
+  const serviceTotalValue = serviceStats.reduce(
+    (total, item) => total + Number(item.service_value || 0),
+    0,
+  );
+  const maxAppointmentStatus = Math.max(...appointmentStatus.map((item) => item.total), 1);
+
+  const exportReport = async () => {
+    try {
+      setExporting(true);
+      const response = await axiosClient.get(`/dashboard/export?${queryString}`, {
+        responseType: "blob",
+      });
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `${sanitizeFileName(
+        `bao-cao-phong-kham-${formatDisplayDate(activeRange.from)}-den-${formatDisplayDate(activeRange.to)}`,
+      )}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message || "Không thể xuất báo cáo tổng hợp.");
+    } finally {
+      setExporting(false);
+    }
   };
+
+  const kpiCards = [
+    {
+      icon: "₫",
+      label: "Tiền thực thu",
+      value: formatMoney(overview.collected_amount),
+      hint: metadata.payment_tracking_available
+        ? "Tính từ payments.amount trong kỳ"
+        : "Cần chạy migration thanh toán để có bảng payments",
+    },
+    {
+      icon: "CN",
+      label: "Công nợ còn lại",
+      value: formatMoney(overview.debt_amount || 0),
+      hint: `${overview.open_invoice_count || 0} hồ sơ còn phải thu`,
+    },
+    {
+      icon: "LH",
+      label: "Lịch hẹn trong kỳ",
+      value: overview.appointment_count || 0,
+      hint: `${overview.today_appointment_count || 0} lịch trong hôm nay`,
+    },
+    {
+      icon: "KH",
+      label: "Khách hàng mới",
+      value: overview.new_customer_count || 0,
+      hint: `${overview.customer_count || 0} tổng hồ sơ khách hàng`,
+    },
+  ];
+
+  const actionItems = [
+    {
+      label: "Lịch chờ xác nhận",
+      value: overview.pending_appointment_count || 0,
+      hint: "Cần gọi hoặc nhắn khách để xác nhận",
+      to: "/admin/appointments",
+    },
+    {
+      label: "Bệnh án chờ nha sĩ xác nhận",
+      value: overview.pending_record_count || 0,
+      hint: "Theo dõi trước khi gửi kết quả cho khách",
+      to: "/admin/customers",
+    },
+    {
+      label: "Hồ sơ còn công nợ",
+      value: overview.open_invoice_count || 0,
+      hint: "Theo dõi thanh toán còn lại",
+      to: "/admin/invoices",
+    },
+    {
+      label: "Lịch tái khám sắp tới",
+      value: overview.upcoming_reexam_count || 0,
+      hint: "Trong 14 ngày gần nhất",
+      to: "/admin/appointments",
+    },
+  ];
 
   if (loading) {
     return (
-      <div className="admin-page">
-        <p>Đang tải dữ liệu tổng quan...</p>
+      <div className="ops-dashboard">
+        <div className="ops-loading-card">Đang tải dữ liệu tổng quan...</div>
       </div>
     );
   }
 
-  if (errorMessage) {
+  if (errorMessage && !dashboard) {
     return (
-      <div className="admin-page">
+      <div className="ops-dashboard">
         <p className="admin-error-message">{errorMessage}</p>
       </div>
     );
   }
 
-  const overview = dashboard?.overview || {};
-  const serviceStats = dashboard?.service_stats || [];
-  const revenueDays = dashboard?.revenue_last_7_days || [];
-  const monthlyStats = dashboard?.monthly_stats || [];
-  const appointmentStatus = dashboard?.appointment_status || [];
-  const recentAppointments = dashboard?.recent_appointments || [];
-
-  const maxServiceTotal = Math.max(...serviceStats.map((item) => item.total), 1);
-  const maxRevenue = Math.max(...revenueDays.map((item) => item.revenue), 1);
-  const maxMonthlyRevenue = Math.max(...monthlyStats.map((item) => item.revenue), 1);
-  const maxStatusTotal = Math.max(...appointmentStatus.map((item) => item.total), 1);
-
-  const attentionItems = [
-    {
-      label: "Lịch chờ xác nhận",
-      value: overview.pending_appointment_count,
-      hint: "Cần gọi hoặc nhắn khách sớm",
-      to: "/admin/appointments",
-      tone: "urgent",
-    },
-    {
-      label: "Lịch khám hôm nay",
-      value: overview.today_appointment_count,
-      hint: "Theo dõi khách đến và phân ghế khám",
-      to: "/admin/appointments",
-      tone: "today",
-    },
-    {
-      label: "Hóa đơn còn theo dõi",
-      value: overview.open_invoice_count,
-      hint: "Gồm chưa thanh toán và thanh toán một phần",
-      to: "/admin/invoices",
-      tone: "money",
-    },
-    {
-      label: "Hồ sơ điều trị hôm nay",
-      value: overview.today_record_count,
-      hint: "Kết quả được nha sĩ hoặc lễ tân cập nhật",
-      to: "/admin/customers",
-      tone: "record",
-    },
-  ];
-
-  const summaryCards = [
-    {
-      label: "Khách hàng",
-      value: overview.customer_count,
-      hint: "Tổng hồ sơ đang quản lý",
-      tone: "blue",
-    },
-    {
-      label: "Nha sĩ hoạt động",
-      value: overview.dentist_count,
-      hint: "Có thể phân công lịch khám",
-      tone: "green",
-    },
-    {
-      label: "Dịch vụ đang mở",
-      value: overview.active_service_count,
-      hint: "Hiển thị cho khách đặt lịch",
-      tone: "orange",
-    },
-    {
-      label: "Lượt truy cập tháng này",
-      value: overview.month_visit_count,
-      hint: `${overview.today_visit_count || 0} lượt trong hôm nay`,
-      tone: "yellow",
-    },
-  ];
-
   return (
-    <div className="dashboard-page dashboard-page-v2">
-      <section className="dashboard-hero dashboard-hero-v2">
+    <div className="ops-dashboard">
+      <section className="ops-page-heading">
         <div>
-          <p className="dashboard-kicker">Nha khoa V</p>
-          <h2>Chăm sóc rõ ràng, phục vụ tận tâm</h2>
+          <span className="ops-eyebrow">Dashboard Admin</span>
+          <h2>Tổng quan phòng khám</h2>
           <p>
-            Theo dõi lịch hẹn, khách hàng, doanh thu và lượt truy cập để lễ tân xử lý đúng việc trước, chủ phòng khám xem được tình hình theo ngày và theo tháng.
+            Đang xem dữ liệu từ {formatDisplayDate(activeRange.from)} đến{" "}
+            {formatDisplayDate(activeRange.to)}.
           </p>
         </div>
 
-        <div className="dashboard-hero-actions">
-          <Link to="/admin/appointments">Xử lý lịch hẹn</Link>
-          <Link to="/admin/invoices">Lập hóa đơn</Link>
+        <div className="ops-heading-actions">
+          <select value={period} onChange={(event) => setPeriod(event.target.value)}>
+            <option value="today">Hôm nay</option>
+            <option value="week">Tuần này</option>
+            <option value="month">Tháng này</option>
+            <option value="custom">Khoảng ngày tùy chọn</option>
+          </select>
+          {period === "custom" && (
+            <>
+              <input
+                type="date"
+                value={customRange.from}
+                onChange={(event) =>
+                  setCustomRange((current) => ({ ...current, from: event.target.value }))
+                }
+              />
+              <input
+                type="date"
+                value={customRange.to}
+                onChange={(event) =>
+                  setCustomRange((current) => ({ ...current, to: event.target.value }))
+                }
+              />
+            </>
+          )}
+          <button type="button" onClick={exportReport} disabled={exporting}>
+            {exporting ? "Đang xuất..." : "Xuất báo cáo"}
+          </button>
         </div>
       </section>
 
-      <section className="dashboard-command-center">
-        <div className="dashboard-command-left">
-          <span className="dashboard-section-label">Cần chú ý hôm nay</span>
-          <h3>Việc nên xử lý trước</h3>
-          <p>Những chỉ số này giúp nhân viên không bỏ sót lịch hẹn, hóa đơn hoặc hồ sơ điều trị mới.</p>
-        </div>
+      {errorMessage && <p className="admin-error-message">{errorMessage}</p>}
 
-        <div className="dashboard-attention-grid">
-          {attentionItems.map((item) => (
-            <Link className={`dashboard-attention-card ${item.tone}`} to={item.to} key={item.label}>
-              <span>{item.label}</span>
-              <strong>{item.value || 0}</strong>
-              <small>{item.hint}</small>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="dashboard-card-grid">
-        {summaryCards.map((card) => (
-          <div className={`dashboard-stat-card ${card.tone}`} key={card.label}>
-            <span>{card.label}</span>
-            <strong>{card.value || 0}</strong>
-            <small>{card.hint}</small>
-          </div>
+      <section className="ops-kpi-grid">
+        {kpiCards.map((card) => (
+          <article className="ops-kpi-card" key={card.label}>
+            <span className="ops-kpi-icon">{card.icon}</span>
+            <div>
+              <p>{card.label}</p>
+              <strong>{card.value}</strong>
+              <small>{card.hint}</small>
+            </div>
+          </article>
         ))}
       </section>
 
-      <section className="dashboard-money-grid">
-        <div className="dashboard-money-card dashboard-money-card-main">
-          <span>Doanh thu đã thu hôm nay</span>
-          <strong>{formatMoney(overview.today_revenue)}</strong>
-          <small>Dựa trên số tiền lễ tân đã ghi nhận trong hóa đơn.</small>
-        </div>
-
-        <div className="dashboard-money-card">
-          <span>Doanh thu đã thu trong tháng</span>
-          <strong>{formatMoney(overview.month_revenue)}</strong>
-          <small>Tổng kết dòng tiền thực thu của tháng hiện tại.</small>
-        </div>
-
-        <div className="dashboard-money-card">
-          <span>Tổng hóa đơn</span>
-          <strong>{overview.invoice_count || 0}</strong>
-          <small>Bao gồm hóa đơn đã thanh toán và thanh toán một phần.</small>
-        </div>
-      </section>
-
-      <section className="dashboard-grid-two">
-        <div className="dashboard-panel">
-          <div className="dashboard-panel-title">
-            <h3>Dịch vụ được đặt trong 30 ngày</h3>
-            <span>Theo số lịch hẹn</span>
+      <section className="ops-work-grid">
+        <div className="ops-panel">
+          <div className="ops-panel-header">
+            <div>
+              <h3>Cần xử lý</h3>
+              <p>Các việc vận hành cần ưu tiên trong kỳ.</p>
+            </div>
           </div>
-
-          <div className="dashboard-bar-list">
-            {serviceStats.map((item) => (
-              <div className="dashboard-bar-item" key={item.service_name}>
+          <div className="ops-action-list">
+            {actionItems.map((item) => (
+              <Link className="ops-action-row" to={item.to} key={item.label}>
+                <strong>{item.value}</strong>
                 <div>
-                  <span>{item.service_name}</span>
-                  <strong>{item.total}</strong>
+                  <span>{item.label}</span>
+                  <small>{item.hint}</small>
                 </div>
-                <div className="dashboard-bar-track">
-                  <div
-                    className="dashboard-bar-fill"
-                    style={{ width: `${(item.total / maxServiceTotal) * 100}%` }}
-                  />
+                <em>Đi tới</em>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="ops-panel">
+          <div className="ops-panel-header">
+            <div>
+              <h3>Hoạt động website</h3>
+              <p>Lấy từ bảng tracking thực tế.</p>
+            </div>
+          </div>
+          <div className="ops-web-grid">
+            <div>
+              <span>Lượt truy cập trong kỳ</span>
+              <strong>{overview.visit_count || 0}</strong>
+            </div>
+            <div>
+              <span>Lượt truy cập hôm nay</span>
+              <strong>{overview.today_visit_count || 0}</strong>
+            </div>
+            <div>
+              <span>Lịch đặt qua website</span>
+              <strong>
+                {metadata.booking_source_available
+                  ? overview.web_booking_count || 0
+                  : "Chưa phân loại"}
+              </strong>
+            </div>
+            <div>
+              <span>Tỷ lệ đặt lịch</span>
+              <strong>
+                {typeof overview.web_booking_conversion_rate === "number"
+                  ? `${overview.web_booking_conversion_rate}%`
+                  : "Chưa đủ dữ liệu"}
+              </strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="ops-grid-two">
+        <div className="ops-panel">
+          <div className="ops-panel-header">
+            <div>
+              <h3>Tiền thực thu theo thời gian</h3>
+              <p>Chỉ tính các lần thanh toán đã ghi nhận trong bảng payments.</p>
+            </div>
+          </div>
+
+          <div className="ops-revenue-chart">
+            {revenueSeries.map((item) => (
+              <div className="ops-revenue-bar" key={item.label} title={formatMoney(item.revenue)}>
+                <div>
+                  <span style={{ height: `${Math.max((item.revenue / maxRevenue) * 100, 4)}%` }} />
                 </div>
+                <small>{item.label}</small>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="dashboard-panel dashboard-panel-dark">
-          <div className="dashboard-panel-title">
-            <h3>Doanh thu 7 ngày gần nhất</h3>
-            <span>Số tiền thực thu</span>
+        <div className="ops-panel">
+          <div className="ops-panel-header">
+            <div>
+              <h3>Hiệu quả dịch vụ</h3>
+              <p>Số lượt sử dụng và tổng giá trị dòng dịch vụ, tách riêng với tiền thực thu.</p>
+            </div>
           </div>
 
-          <div className="dashboard-revenue-chart">
-            {revenueDays.map((item) => (
-              <div className="dashboard-revenue-day" key={item.label}>
-                <strong>{formatMoney(item.revenue)}</strong>
-                <div className="dashboard-revenue-column-wrap">
-                  <div
-                    className="dashboard-revenue-column"
-                    style={{ height: `${Math.max((item.revenue / maxRevenue) * 100, 4)}%` }}
-                  />
+          <div className="ops-service-list">
+            {serviceStats.length === 0 && (
+              <p className="ops-muted">Chưa có dòng dịch vụ trong kỳ.</p>
+            )}
+            {serviceStats.map((item) => (
+              <div className="ops-service-row" key={item.service_name}>
+                <div>
+                  <strong>{item.service_name}</strong>
+                  <span>{item.usage_count} lượt • {formatMoney(item.service_value)}</span>
                 </div>
-                <span>{item.label}</span>
+                <small>{item.share}%</small>
+                <div className="ops-progress">
+                  <span style={{ width: `${serviceTotalValue ? item.share : 0}%` }} />
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="dashboard-grid-two">
-        <div className="dashboard-panel">
-          <div className="dashboard-panel-title">
-            <h3>Tổng kết 6 tháng gần nhất</h3>
-            <span>Doanh thu và lượt truy cập</span>
+      <section className="ops-grid-two">
+        <div className="ops-panel">
+          <div className="ops-panel-header">
+            <div>
+              <h3>Tình trạng lịch hẹn</h3>
+              <p>Phân bổ trạng thái trong khoảng đang xem.</p>
+            </div>
           </div>
-
-          <div className="dashboard-month-list">
-            {monthlyStats.map((item) => (
-              <div className="dashboard-month-row" key={item.label}>
-                <span>{item.label}</span>
-                <div className="dashboard-month-track">
-                  <div
-                    className="dashboard-month-fill"
-                    style={{ width: `${Math.max((item.revenue / maxMonthlyRevenue) * 100, 4)}%` }}
-                  />
-                </div>
-                <div className="dashboard-month-value">
-                  <strong>{formatMoney(item.revenue)}</strong>
-                  <small>{item.visits} lượt truy cập</small>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="dashboard-panel">
-          <div className="dashboard-panel-title">
-            <h3>Tình trạng lịch hẹn</h3>
-            <span>Toàn hệ thống</span>
-          </div>
-
-          <div className="dashboard-bar-list">
+          <div className="ops-status-list">
             {appointmentStatus.map((item) => (
-              <div className="dashboard-bar-item" key={item.status}>
+              <div className="ops-status-row" key={item.status}>
                 <div>
                   <span>{STATUS_LABELS[item.status] || item.status}</span>
                   <strong>{item.total}</strong>
                 </div>
-                <div className="dashboard-bar-track muted">
-                  <div
-                    className="dashboard-bar-fill secondary"
-                    style={{ width: `${(item.total / maxStatusTotal) * 100}%` }}
-                  />
+                <div className="ops-progress">
+                  <span style={{ width: `${(item.total / maxAppointmentStatus) * 100}%` }} />
                 </div>
               </div>
             ))}
           </div>
         </div>
-      </section>
 
-      <section className="dashboard-panel">
-        <div className="dashboard-panel-title">
-          <h3>Lịch hẹn mới nhất</h3>
-          <span>Lễ tân cần theo dõi</span>
-        </div>
-
-        <div className="dashboard-recent-list">
-          {recentAppointments.map((appointment) => (
-            <div className="dashboard-recent-item" key={appointment.id}>
-              <div>
-                <strong>{appointment.patient_name}</strong>
-                <span>
-                  {appointment.service_name} - {appointment.dentist_name || "Chưa phân công"}
-                </span>
-              </div>
-              <div>
-                <strong>{appointment.appointment_date_display}</strong>
-                <span>{String(appointment.appointment_time).slice(0, 5)}</span>
-              </div>
-              <span
-                className={`appointment-status ${
+        <div className="ops-panel">
+          <div className="ops-panel-header">
+            <div>
+              <h3>Lịch hẹn mới nhất</h3>
+              <p>Hiển thị tối đa 7 lịch trong kỳ.</p>
+            </div>
+            <Link to="/admin/appointments">Xem tất cả</Link>
+          </div>
+          <div className="ops-appointment-list">
+            {recentAppointments.map((appointment) => (
+              <article key={appointment.id} className="ops-appointment-row">
+                <div>
+                  <strong>{appointment.patient_name}</strong>
+                  <span>{appointment.service_name}</span>
+                  <small>{appointment.dentist_name || "Chưa phân công"}</small>
+                </div>
+                <div>
+                  <strong>{appointment.appointment_date_display}</strong>
+                  <span>{appointment.appointment_time}</span>
+                  <small>{SOURCE_LABELS[appointment.booking_source] || "Chưa phân loại nguồn"}</small>
+                </div>
+                <span className={`appointment-status ${
                   appointment.status === "Confirmed"
                     ? "confirmed"
                     : appointment.status === "Completed"
@@ -316,15 +415,36 @@ function Dashboard() {
                       : appointment.status === "Cancelled"
                         ? "cancelled"
                         : "pending"
-                }`}
-              >
-                {STATUS_LABELS[appointment.status] || appointment.status}
-              </span>
-            </div>
-          ))}
+                }`}>
+                  {STATUS_LABELS[appointment.status] || appointment.status}
+                </span>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
+      <section className="ops-panel">
+        <div className="ops-panel-header">
+          <div>
+            <h3>Lịch tái khám gần nhất</h3>
+            <p>Các bệnh nhân cần được nhắc lịch trong 14 ngày tới.</p>
+          </div>
+        </div>
+        <div className="ops-reexam-grid">
+          {upcomingReExams.length === 0 && (
+            <p className="ops-muted">Chưa có lịch tái khám sắp tới.</p>
+          )}
+          {upcomingReExams.map((item) => (
+            <article key={item.id}>
+              <strong>{item.patient_name}</strong>
+              <span>{item.patient_phone}</span>
+              <p>{item.re_examination_date_display} lúc {item.re_examination_time}</p>
+              <small>{item.treatment_plan || item.note || "Chưa có nội dung tái khám"}</small>
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
