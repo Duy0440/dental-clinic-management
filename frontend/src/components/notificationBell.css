@@ -1,0 +1,229 @@
+.notification-bell {
+  position: relative;
+  flex: 0 0 auto;
+  font-family: inherit;
+}
+
+.notification-bell-trigger {
+  position: relative;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #dce3ec;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #142a43;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.notification-bell-trigger:hover,
+.notification-bell-trigger:focus-visible {
+  border-color: #f59a3d;
+  box-shadow: 0 8px 20px rgba(35, 54, 77, 0.12);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.notification-bell-trigger svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.notification-bell-dark .notification-bell-trigger {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.notification-unread-badge {
+  position: absolute;
+  top: -6px;
+  right: -7px;
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  place-items: center;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: #e84646;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 80;
+  width: min(390px, calc(100vw - 28px));
+  overflow: hidden;
+  border: 1px solid #e0e7ef;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 22px 55px rgba(25, 42, 63, 0.2);
+  color: #142238;
+  text-align: left;
+}
+
+.notification-dropdown-header {
+  display: flex;
+  min-height: 70px;
+  padding: 16px 18px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #e8edf3;
+  background: #fbfcfe;
+}
+
+.notification-dropdown-header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.notification-dropdown-header strong {
+  color: #12243b;
+  font-size: 16px;
+}
+
+.notification-dropdown-header span {
+  color: #738197;
+  font-size: 12px;
+}
+
+.notification-dropdown-header button,
+.notification-dropdown-state button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #c55d12;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.notification-dropdown-body {
+  max-height: 430px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: flex;
+  width: 100%;
+  padding: 15px 18px;
+  align-items: flex-start;
+  gap: 11px;
+  border: 0;
+  border-bottom: 1px solid #edf1f5;
+  background: #ffffff;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.notification-item:last-child {
+  border-bottom: 0;
+}
+
+.notification-item:hover,
+.notification-item:focus-visible {
+  background: #fff8f0;
+  outline: none;
+}
+
+.notification-item-unread {
+  background: #fffaf4;
+}
+
+.notification-item-dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.notification-item-unread .notification-item-dot {
+  background: #f27d25;
+  box-shadow: 0 0 0 4px rgba(242, 125, 37, 0.12);
+}
+
+.notification-item-content {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.notification-item-content strong {
+  color: #16263b;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.notification-item-content > span {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #5d6b7e;
+  font-size: 12px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.notification-item-content time {
+  color: #8a96a8;
+  font-size: 11px;
+}
+
+.notification-dropdown-state {
+  min-height: 130px;
+  margin: 0;
+  padding: 30px 20px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  color: #69788d;
+  font-size: 13px;
+  text-align: center;
+}
+
+.notification-dropdown-state p {
+  margin: 0;
+}
+
+@media (max-width: 575px) {
+  .notification-bell-trigger {
+    width: 39px;
+    height: 39px;
+    border-radius: 12px;
+  }
+
+  .notification-dropdown {
+    position: fixed;
+    top: 74px;
+    right: 14px;
+    left: 14px;
+    width: auto;
+    max-height: calc(100vh - 90px);
+  }
+
+  .notification-dropdown-body {
+    max-height: calc(100vh - 170px);
+  }
+}

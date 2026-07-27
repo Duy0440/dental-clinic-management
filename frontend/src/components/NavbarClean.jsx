@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { serviceCategories } from "../data/serviceInfo";
 import BrandLogo from "./BrandLogo";
+import NotificationBell from "./NotificationBell";
 
 // navbar ui (menu, search, login va mobile menu)
 function NavbarClean() {
@@ -81,6 +82,8 @@ function NavbarClean() {
             <a href="tel:19006899" className="header-hotline-button">
               Gọi ngay
             </a>
+
+            {canViewCustomerMenu && <NotificationBell />}
 
             {user ? (
               <button type="button" className="btn custom-login-btn" onClick={handleLogout}>

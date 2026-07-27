@@ -8,11 +8,17 @@
   getBookedAppointmentSlotsByDate,
   getUnavailableBlocksByDate,
   cancelAppointmentById,
-  findAppointmentById,
+  getAppointmentDetailsById,
   checkAppointmentConflictForUpdate,
   updateAppointmentByAdmin,
   getAppointmentsByDentistId,
 } = require("../models/appointmentModel");
+
+const {
+  notifyAppointmentCreated,
+  notifyAppointmentCancelled,
+  notifyAppointmentTransition,
+} = require("../services/appointmentNotificationService");
 
 const {
   findDentistById,
@@ -45,6 +51,30 @@ const VALID_APPOINTMENT_STATUSES = [
   "Completed",
   "Cancelled",
 ];
+
+const runAppointmentNotification = async (callback, eventName) => {
+  try {
+    await callback();
+  } catch (error) {
+    console.error(`[appointment-notification] ${eventName} failed`, {
+      name: error.name,
+      code: error.code || null,
+      ...(process.env.NODE_ENV !== "production"
+        ? { message: error.message }
+        : {}),
+    });
+  }
+};
+
+const toAppointmentResponse = (appointment) => {
+  if (!appointment) return appointment;
+
+  const publicAppointment = { ...appointment };
+  delete publicAppointment.patient_user_id;
+  delete publicAppointment.dentist_user_id;
+
+  return publicAppointment;
+};
 
 // custom error (loi rieng cho dat lịch)
 const createAppointmentError = (message, statusCode = 409, extra = {}) => {
@@ -299,7 +329,8 @@ const addAppointment = async (req, res) => {
       }
     }
 
-    const normalizedStatus = status || "Pending";
+    const normalizedStatus =
+      req.user?.role === "admin" ? status || "Pending" : "Pending";
     const normalizedAppointmentTime = normalizeTime(appointment_time);
 
     if (!VALID_APPOINTMENT_STATUSES.includes(normalizedStatus)) {
@@ -473,9 +504,22 @@ const addAppointment = async (req, res) => {
       },
     );
 
+    const appointmentDetails =
+      (await getAppointmentDetailsById(newAppointment.id)) || newAppointment;
+
+    if (req.user?.role !== "admin") {
+      await runAppointmentNotification(
+        () =>
+          notifyAppointmentCreated(appointmentDetails, {
+            notifyCustomer: req.user?.role === "customer",
+          }),
+        "created",
+      );
+    }
+
     res.status(201).json({
       message: "Appointment created successfully",
-      data: newAppointment,
+      data: toAppointmentResponse(appointmentDetails),
     });
   } catch (error) {
     const statusCode = error.statusCode || 500;
@@ -517,9 +561,18 @@ const cancelAppointment = async (req, res) => {
       });
     }
 
+    const appointmentDetails =
+      (await getAppointmentDetailsById(cancelledAppointment.id)) ||
+      cancelledAppointment;
+
+    await runAppointmentNotification(
+      () => notifyAppointmentCancelled(appointmentDetails),
+      "customer-cancelled",
+    );
+
     res.status(200).json({
       message: "Appointment cancelled successfully",
-      data: cancelledAppointment,
+      data: toAppointmentResponse(appointmentDetails),
     });
   } catch (error) {
     res.status(500).json({
@@ -562,7 +615,7 @@ const manageAppointment = async (req, res) => {
       });
     }
 
-    const appointment = await findAppointmentById(appointmentId);
+    const appointment = await getAppointmentDetailsById(appointmentId);
 
     if (!appointment) {
       return res.status(404).json({
@@ -636,16 +689,23 @@ const manageAppointment = async (req, res) => {
       });
     }
 
-    const updatedAppointment = await updateAppointmentByAdmin(
+    await updateAppointmentByAdmin(
       appointmentId,
       normalizedDentistId,
       status,
       clinic_note,
     );
 
+    const updatedAppointment = await getAppointmentDetailsById(appointmentId);
+
+    await runAppointmentNotification(
+      () => notifyAppointmentTransition(appointment, updatedAppointment),
+      "updated",
+    );
+
     res.status(200).json({
       message: "Appointment updated successfully",
-      data: updatedAppointment,
+      data: toAppointmentResponse(updatedAppointment),
       warning:
         hasConflict || isDentistUnavailable
           ? "Appointment assigned with admin override"

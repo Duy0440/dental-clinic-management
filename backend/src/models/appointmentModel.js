@@ -302,12 +302,45 @@ const findAppointmentById = async (appointmentId) => {
     SELECT
       id,
       patient_id,
+      dentist_id,
       service_id,
       appointment_date,
       appointment_time,
       status
     FROM appointments
     WHERE id = $1
+  `;
+
+  const result = await pool.query(query, [appointmentId]);
+  return result.rows[0];
+};
+
+// appointment context (du lieu hien thi va gui thong bao)
+const getAppointmentDetailsById = async (appointmentId) => {
+  const query = `
+    SELECT
+      a.id,
+      a.patient_id,
+      p.user_id AS patient_user_id,
+      p.full_name AS patient_name,
+      p.phone AS patient_phone,
+      a.dentist_id,
+      du.id AS dentist_user_id,
+      d.full_name AS dentist_name,
+      a.service_id,
+      s.service_name,
+      TO_CHAR(a.appointment_date, 'YYYY-MM-DD') AS appointment_date,
+      TO_CHAR(a.appointment_time, 'HH24:MI') AS appointment_time,
+      a.status,
+      a.note,
+      a.clinic_note,
+      a.created_at
+    FROM appointments a
+    JOIN patients p ON p.id = a.patient_id
+    LEFT JOIN dentists d ON d.id = a.dentist_id
+    LEFT JOIN users du ON du.id = d.user_id
+    JOIN services s ON s.id = a.service_id
+    WHERE a.id = $1
   `;
 
   const result = await pool.query(query, [appointmentId]);
@@ -429,6 +462,7 @@ module.exports = {
   cancelAppointmentById,
   getAllAppointments,
   findAppointmentById,
+  getAppointmentDetailsById,
   checkAppointmentConflictForUpdate,
   updateAppointmentByAdmin,
   getAppointmentsByDentistId,

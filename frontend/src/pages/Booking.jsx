@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 
 const BOOKING_CACHE_KEY = "nhakhoav_booking_options";
@@ -45,8 +45,100 @@ const setBookingCache = (dentists, services) => {
   );
 };
 
+const formatBookingDate = (value) => {
+  const [year, month, day] = String(value || "").slice(0, 10).split("-");
+  return year && month && day ? `${day}/${month}/${year}` : "";
+};
+
+function BookingSuccessModal({ appointment, isAuthenticated, onClose }) {
+  const navigate = useNavigate();
+
+  const moveTo = (path) => {
+    onClose();
+    navigate(path);
+  };
+
+  const details = [
+    ["Họ tên khách hàng", appointment.patient_name],
+    ["Số điện thoại", appointment.patient_phone],
+    ["Dịch vụ", appointment.service_name],
+    ["Nha sĩ", appointment.dentist_name || "Phòng khám sẽ sắp xếp"],
+    ["Ngày khám", formatBookingDate(appointment.appointment_date)],
+    ["Giờ khám", String(appointment.appointment_time || "").slice(0, 5)],
+    ["Mã lịch hẹn", `#${appointment.id}`],
+  ];
+
+  return (
+    <div
+      className="booking-success-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="booking-success-title"
+    >
+      <button
+        type="button"
+        className="booking-success-backdrop"
+        aria-label="Đóng"
+        onClick={onClose}
+      />
+      <section className="booking-success-panel">
+        <div className="booking-success-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="m7 12 3 3 7-7" />
+          </svg>
+        </div>
+
+        <div className="booking-success-heading">
+          <span>Yêu cầu đã được tiếp nhận</span>
+          <h2 id="booking-success-title">Đặt lịch thành công</h2>
+          <p>
+            Phòng khám đã tiếp nhận yêu cầu đặt lịch của bạn. Lịch đang chờ
+            xác nhận. Nhân viên lễ tân có thể liên hệ qua số điện thoại khi cần
+            xác nhận hoặc điều chỉnh.
+          </p>
+        </div>
+
+        <div className="booking-success-details">
+          {details.map(([label, value]) => (
+            <div key={label}>
+              <span>{label}</span>
+              <strong>{value || "Chưa có thông tin"}</strong>
+            </div>
+          ))}
+          <div>
+            <span>Trạng thái</span>
+            <strong className="booking-success-status">Chờ xác nhận</strong>
+          </div>
+        </div>
+
+        <div className="booking-success-actions">
+          <button type="button" className="booking-success-close" onClick={onClose}>
+            Đóng
+          </button>
+          {isAuthenticated && (
+            <button
+              type="button"
+              className="booking-success-secondary"
+              onClick={() => moveTo("/my-appointments")}
+            >
+              Xem lịch đã đặt
+            </button>
+          )}
+          <button
+            type="button"
+            className="booking-success-primary"
+            onClick={() => moveTo("/")}
+          >
+            Về trang chủ
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 // booking page (khach dat lich kham online)
-function Booking() {
+function Booking({ onRequestClose }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   const [dentists, setDentists] = useState([]);
@@ -66,6 +158,8 @@ function Booking() {
   const [availableTimes, setAvailableTimes] = useState([]);
   const [loadingTimes, setLoadingTimes] = useState(false);
   const [timeMessage, setTimeMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [createdAppointment, setCreatedAppointment] = useState(null);
   const todayText = getTodayText();
 
   useEffect(() => {
@@ -188,6 +282,7 @@ function Booking() {
     event.preventDefault();
     setMessage("");
     setIsSuccess(false);
+    setSubmitting(true);
 
     try {
       if (!availableTimes.includes(formData.appointment_time)) {
@@ -196,6 +291,7 @@ function Booking() {
             ? "Khung giờ này không còn trống. Bạn vui lòng chọn một giờ còn trống bên dưới."
             : "Ngày này đã hết giờ phù hợp. Bạn vui lòng chọn ngày khác.",
         );
+        setSubmitting(false);
         return;
       }
 
@@ -217,10 +313,10 @@ function Booking() {
         payload.guest_phone = formData.guest_phone;
       }
 
-      await axiosClient.post("/appointments", payload);
+      const response = await axiosClient.post("/appointments", payload);
 
       setIsSuccess(true);
-      setMessage("Cuộc hẹn đã được tạo thành công");
+      setCreatedAppointment(response.data.data);
 
       setFormData({
         guest_full_name: "",
@@ -238,7 +334,14 @@ function Booking() {
       if (Array.isArray(error.response?.data?.available_times)) {
         setAvailableTimes(error.response.data.available_times);
       }
+    } finally {
+      setSubmitting(false);
     }
+  };
+
+  const closeSuccessModal = () => {
+    setCreatedAppointment(null);
+    onRequestClose?.();
   };
 
   return (
@@ -441,8 +544,12 @@ function Booking() {
                     />
                   </div>
 
-                  <button type="submit" className="btn btn-primary w-100">
-                    Xác nhận đặt lịch
+                  <button
+                    type="submit"
+                    className="btn btn-primary w-100"
+                    disabled={submitting}
+                  >
+                    {submitting ? "Đang gửi yêu cầu..." : "Xác nhận đặt lịch"}
                   </button>
                 </form>
               )}
@@ -477,6 +584,14 @@ function Booking() {
           </div>
         </div>
       </div>
+
+      {createdAppointment && (
+        <BookingSuccessModal
+          appointment={createdAppointment}
+          isAuthenticated={Boolean(user?.patient_id)}
+          onClose={closeSuccessModal}
+        />
+      )}
     </div>
   );
 }

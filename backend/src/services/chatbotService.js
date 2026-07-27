@@ -5,6 +5,10 @@ const SHORT_SAFETY_MESSAGE =
   "Lưu ý: Nội dung này chỉ để tham khảo, không thay thế chẩn đoán trực tiếp của nha sĩ.";
 
 const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 5000);
+const pool = require("../config/db");
+
+const CLINIC_HOURS_ANSWER =
+  "Nha khoa V nghỉ Thứ 2. Từ Thứ 3 đến Thứ 6, phòng khám làm việc 08:00-12:00 và 13:30-20:00. Thứ 7 và Chủ nhật làm việc 08:00-12:00 và 13:30-18:00. Bạn nên đặt lịch trước để phòng khám sắp xếp khung giờ phù hợp.";
 
 // quick replies (goi y cau hoi mac dinh)
 const defaultSuggestions = [
@@ -453,10 +457,64 @@ const createAnswer = (mainAnswer) => {
   return `${mainAnswer}\n\n${SHORT_SAFETY_MESSAGE}`;
 };
 
-const createResult = (answer, suggestions = defaultSuggestions) => ({
+const createResult = (answer, suggestions = defaultSuggestions, matched = true) => ({
   answer: createAnswer(answer),
   suggestions,
+  matched,
 });
+
+const getDatabaseServicePriceReply = async (message) => {
+  const text = normalizeText(message);
+  if (!isPriceQuestion(text)) return null;
+
+  try {
+    const result = await pool.query(`
+      SELECT id, service_name, price
+      FROM services
+      WHERE is_active = TRUE
+      ORDER BY service_name ASC
+    `);
+
+    const queryTokens = text
+      .split(" ")
+      .filter((token) => token.length > 1)
+      .filter((token) => !["gia", "bao", "nhieu", "tien", "chi", "phi"].includes(token));
+
+    const rankedServices = result.rows
+      .map((service) => {
+        const normalizedName = normalizeText(service.service_name);
+        const nameTokens = normalizedName.split(" ");
+        const score = queryTokens.filter((token) =>
+          nameTokens.some((nameToken) =>
+            nameToken === token ||
+            nameToken.includes(token) ||
+            token.includes(nameToken),
+          ),
+        ).length;
+
+        return { ...service, score };
+      })
+      .filter((service) => service.score > 0)
+      .sort((left, right) => right.score - left.score);
+
+    const service = rankedServices[0];
+    if (!service) return null;
+
+    const price = Number(service.price);
+    const answer =
+      Number.isFinite(price) && price > 0
+        ? `Giá đang được ghi nhận trong hệ thống cho dịch vụ ${service.service_name} là ${new Intl.NumberFormat("vi-VN").format(price)} VNĐ. Đây là mức giá tham khảo; chi phí cuối cùng còn phụ thuộc tình trạng thực tế và kế hoạch điều trị sau khi khám.`
+        : `Dịch vụ ${service.service_name} đang có trong hệ thống nhưng chưa có mức giá công khai hợp lệ. Mình không tự tạo giá; bạn nên liên hệ phòng khám hoặc đặt lịch tư vấn để nhận báo giá theo tình trạng thực tế.`;
+
+    return {
+      answer: createAnswer(answer),
+      source: "database",
+      suggestions: suggestionGroups.price,
+    };
+  } catch (error) {
+    return null;
+  }
+};
 
 // internal knowledge base (bo tri thuc noi bo cho chatbot)
 const DENTAL_KNOWLEDGE_CONTEXT = `
@@ -561,6 +619,8 @@ const getTopicFromText = (text) => {
       "scan",
       "shining",
       "shinning",
+      "may quet",
+      "quet trong mieng",
       "lay dau ky thuat so",
       "lay dau so",
       "noi hap",
@@ -1112,6 +1172,34 @@ const findRuleBasedReply = (message, history = []) => {
     );
   }
 
+  if (hasAny(text, ["khang sinh", "lieu uong", "lieu dung", "ke don", "uong thuoc gi", "cho toi thuoc"])) {
+    return createResult(
+      "Mình không thể kê thuốc kháng sinh, chỉ định tên thuốc hoặc liều uống cá nhân qua chatbot. Thuốc nha khoa cần được nha sĩ hoặc bác sĩ cân nhắc sau khi kiểm tra tình trạng, tiền sử bệnh, dị ứng và các thuốc bạn đang sử dụng.\n\nNếu bạn đang đau nhiều, sưng, sốt, có mủ hoặc khó há miệng, nên đi khám sớm thay vì tự mua kháng sinh. Trong lúc chờ khám, giữ vùng răng miệng sạch nhẹ nhàng và tránh tự dùng lại đơn thuốc cũ.",
+      suggestionGroups.pain,
+    );
+  }
+
+  if (hasAny(text, ["gio lam viec", "lam viec may gio", "may gio mo cua", "may gio dong cua", "mo cua luc may gio"])) {
+    return createResult(
+      CLINIC_HOURS_ANSWER,
+      suggestionGroups.booking,
+    );
+  }
+
+  if (hasAny(text, ["dau nuou", "dau loi", "nhuc nuou", "nhuc loi"])) {
+    return createResult(
+      "Đau nướu có thể liên quan nhiều nguyên nhân như thức ăn mắc kẽ, mảng bám và vôi răng, viêm nướu, chải răng quá mạnh, vết loét, răng đang mọc hoặc nhiễm trùng quanh răng. Chỉ dựa vào mô tả trực tuyến thì chưa thể khẳng định nguyên nhân cụ thể.\n\nBạn có thể tạm thời chải răng nhẹ bằng bàn chải mềm, làm sạch kẽ răng cẩn thận, súc miệng bằng nước sạch hoặc nước muối sinh lý và tránh chọc, nặn vùng đau. Nếu đau tăng, sưng nhiều, chảy máu kéo dài, có mủ, sốt, hôi miệng rõ hoặc khó há miệng thì nên đi khám sớm.\n\nBạn cho mình biết thêm đau ở vị trí nào, kéo dài bao lâu, có sưng hoặc chảy máu khi đánh răng không nhé?",
+      suggestionGroups.periodontal,
+    );
+  }
+
+  if (hasAny(text, ["cao voi", "lay cao rang"])) {
+    return createResult(
+      "Cạo vôi răng là thủ thuật làm sạch mảng bám và vôi răng đã cứng hóa trên bề mặt răng hoặc dưới viền nướu. Việc này hỗ trợ kiểm soát viêm nướu, hôi miệng và tình trạng nướu dễ chảy máu; cạo vôi không phải là mài nhỏ răng.\n\nTần suất thực hiện phụ thuộc lượng vôi răng, tình trạng nướu và khả năng vệ sinh của từng người. Nếu nướu đang sưng đau, chảy máu nhiều hoặc răng lung lay, nha sĩ cần kiểm tra trước để xác định có cần điều trị nha chu sâu hơn không.",
+      suggestionGroups.generalCare,
+    );
+  }
+
   if (topic === "conditionOverview") {
     return createResult(
       "Nhóm bạn hỏi gồm nhiều bệnh lý răng miệng khác nhau, nên mình tách ngắn gọn để dễ hiểu:\n\nSâu răng thường bắt đầu từ lỗ sâu hoặc ê buốt khi ăn lạnh/ngọt; nhẹ thì trám, nặng vào tủy có thể cần chữa tủy. Viêm nướu là nướu đỏ, sưng, dễ chảy máu; thường liên quan mảng bám/vôi răng. Nha chu là giai đoạn nặng hơn, có thể tụt nướu, tiêu xương, hôi miệng và răng lung lay. Viêm tủy hay gây đau tự phát, đau về đêm, đau kéo dài sau lạnh/nóng. Ê buốt có thể do mòn men, tụt nướu, sâu răng hoặc nứt răng. Hôi miệng thường gặp do vôi răng, viêm nướu, lưỡi bẩn, sâu răng hoặc khô miệng.\n\nNếu chỉ muốn phòng ngừa: chải răng đúng cách, làm sạch kẽ răng, cạo vôi định kỳ và khám khoảng 6 tháng/lần. Nếu đã đau nhiều, sưng, có mủ, sốt, răng lung lay hoặc chảy máu nướu kéo dài thì nên đặt lịch khám sớm.",
@@ -1240,7 +1328,7 @@ const findRuleBasedReply = (message, history = []) => {
 
   if (topic === "porcelainCompare") {
     return createResult(
-      "Sứ kim loại và toàn sứ khác nhau chủ yếu ở phần khung bên trong. Răng sứ kim loại có khung kim loại bên trong, chi phí thường dễ tiếp cận hơn nhưng lâu dài có thể bị ánh màu hoặc đen viền nướu tùy vị trí và cơ địa. Răng toàn sứ như zirconia/cercon không có khung kim loại, thẩm mỹ tốt hơn ở vùng răng cửa và thường ít bị ánh kim loại hơn, nhưng chi phí cao hơn.\n\nKhông phải ai cũng cần chọn loại đắt nhất. Nếu là răng hàm cần ăn nhai, răng cửa cần thẩm mỹ, răng đã chữa tủy hay răng còn khỏe thì chỉ định sẽ khác nhau. Bạn nên yêu cầu nha sĩ giải thích vì sao chọn loại sứ đó, cần mài bao nhiêu mô răng và có phương án ít xâm lấn hơn như trám, inlay/onlay hoặc veneer không.",
+      "Sứ kim loại và toàn sứ khác nhau trước hết ở vật liệu phần khung. Răng sứ kim loại có khung hợp kim bên trong và lớp sứ phủ ngoài, thường có lợi thế về chi phí và có thể phù hợp với một số vị trí cần chịu lực. Răng toàn sứ như zirconia hoặc cercon không có khung kim loại nên thường có lợi thế thẩm mỹ hơn, nhất là khi cần độ trong và màu gần răng thật.\n\nKhông nên xếp hạng một loại vật liệu là tốt hơn trong mọi trường hợp hoặc gán tuổi thọ cố định cho sứ kim loại. Việc lựa chọn còn phụ thuộc vị trí răng, lực cắn, lượng mô răng còn lại, tình trạng nướu, yêu cầu thẩm mỹ, loại vật liệu, kỹ thuật thực hiện và cách chăm sóc.\n\nBạn nên yêu cầu nha sĩ giải thích vì sao chọn loại sứ đó, cần mài bao nhiêu mô răng và liệu có phương án ít xâm lấn hơn như trám, inlay/onlay hoặc veneer hay không.",
       suggestionGroups.porcelainCompare,
     );
   }
@@ -1267,7 +1355,7 @@ const findRuleBasedReply = (message, history = []) => {
       );
     }
 
-    if (hasAny(text, ["scan", "shining", "shinning", "lay dau ky thuat so", "lay dau so"])) {
+    if (hasAny(text, ["scan", "shining", "shinning", "may quet", "quet trong mieng", "lay dau ky thuat so", "lay dau so"])) {
       return createResult(
         "Máy scan Shinning 3D dùng để lấy dấu răng kỹ thuật số bằng camera trong miệng, thay cho cách lấy dấu cao su truyền thống trong nhiều trường hợp. Dữ liệu scan giúp bác sĩ và khách hàng xem hình dạng răng trực quan hơn, hỗ trợ tư vấn răng sứ, veneer, chỉnh nha, implant và phục hình.\n\nĐiểm lợi cho khách là giảm cảm giác khó chịu khi lấy dấu, dễ theo dõi hình ảnh trên màn hình và thuận tiện khi trao đổi phương án điều trị. Tuy nhiên, scan vẫn cần đi cùng khám lâm sàng và chỉ định của nha sĩ.",
         suggestionGroups.equipment,
@@ -1507,6 +1595,8 @@ const findRuleBasedReply = (message, history = []) => {
 
   return createResult(
     "Mình chưa nắm hết ý bạn. Bạn nói rõ hơn một chút được không: bạn đang hỏi về triệu chứng đau/ê, dịch vụ điều trị, chi phí hay muốn so sánh phương án nào?\n\nNếu đang khó chịu ở răng, bạn mô tả giúp mình vị trí răng, đau bao lâu và có sưng/chảy máu/sốt không nhé. Mình sẽ giải thích hướng xử lý cơ bản trước khi bạn đặt lịch khám.",
+    defaultSuggestions,
+    false,
   );
 };
 
@@ -1622,7 +1712,20 @@ const generateDentalReply = async (message, history = []) => {
   if (!normalizedMessage || isGreetingMessage(normalizedMessage)) {
     return {
       answer: fallbackResult.answer,
-      source: "rule_based",
+      source: "internal",
+      suggestions: fallbackResult.suggestions,
+    };
+  }
+
+  const databaseReply = await getDatabaseServicePriceReply(message);
+  if (databaseReply) {
+    return databaseReply;
+  }
+
+  if (fallbackResult.matched) {
+    return {
+      answer: fallbackResult.answer,
+      source: "internal",
       suggestions: fallbackResult.suggestions,
     };
   }
@@ -1646,7 +1749,7 @@ const generateDentalReply = async (message, history = []) => {
 
   return {
     answer: fallbackResult.answer,
-    source: "rule_based",
+    source: "fallback",
     suggestions: fallbackResult.suggestions,
   };
 };

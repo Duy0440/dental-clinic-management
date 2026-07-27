@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 import BrandLogo from "../components/BrandLogo";
+import NotificationBell from "../components/NotificationBell";
 import "../dentist.css";
 
 // alert helpers (dem thong bao moi cho nha si)
@@ -164,7 +165,10 @@ function DentistLayoutWithAlerts() {
             <h1>Trang làm việc của nha sĩ</h1>
           </div>
 
-          <span>Xin chào, {doctorName}</span>
+          <div className="dentist-header-actions">
+            <NotificationBell />
+            <span>Xin chào, {doctorName}</span>
+          </div>
         </header>
 
         <section className="dentist-content">

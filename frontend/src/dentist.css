@@ -107,7 +107,7 @@
     line-height: 1.55;
   }
 
-  .dentist-header span {
+  .dentist-header-actions > span {
     align-self: flex-start;
     white-space: normal;
   }
@@ -388,6 +388,17 @@
   border: 1px solid rgba(226, 232, 240, 0.9);
 }
 
+.dentist-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.dentist-header .dentist-header-actions > span {
+  display: inline-flex;
+}
+
 .dentist-header p {
   margin: 0 0 6px;
   color: #64748b;
@@ -400,7 +411,7 @@
   font-size: clamp(1.4rem, 2.2vw, 2rem);
 }
 
-.dentist-header span {
+.dentist-header-actions > span {
   flex-shrink: 0;
   padding: 12px 16px;
   border-radius: 999px;
@@ -1444,7 +1455,7 @@
   font-size: 1.32rem;
 }
 
-.dentist-header span {
+.dentist-header-actions > span {
   border: 1px solid #fed7aa;
   padding: 10px 14px;
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 import BrandLogo from "../components/BrandLogo";
+import NotificationBell from "../components/NotificationBell";
 import "../admin.css";
 
 // admin menu alerts (sidebar co badge thong bao)
@@ -208,9 +209,12 @@ function AdminLayoutWithAlerts() {
             <p>{currentInfo.description}</p>
           </div>
 
-          <div className="admin-topbar-status admin-topbar-slogan">
-            <span>Hệ thống</span>
-            <strong>Đang vận hành</strong>
+          <div className="admin-topbar-actions">
+            <NotificationBell />
+            <div className="admin-topbar-status admin-topbar-slogan">
+              <span>Hệ thống</span>
+              <strong>Đang vận hành</strong>
+            </div>
           </div>
         </header>
 

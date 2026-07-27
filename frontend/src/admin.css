@@ -1322,6 +1322,13 @@
   background: #fff7ed;
 }
 
+.admin-topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 .admin-topbar-status span,
 .admin-topbar-status strong {
   display: block;

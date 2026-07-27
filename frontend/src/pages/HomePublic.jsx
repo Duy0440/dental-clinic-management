@@ -938,7 +938,7 @@ function HomePublic() {
             <button className="clinic-modal-v2-close" type="button" onClick={closeBooking} aria-label="Đóng">
               ×
             </button>
-            <Booking />
+            <Booking onRequestClose={closeBooking} />
           </div>
         </div>
       )}
