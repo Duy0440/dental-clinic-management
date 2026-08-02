@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 process.env.NODE_ENV = "test";
 process.env.GEMINI_API_KEY = "your_gemini_api_key";
+require("dotenv").config();
 
 const pool = require("../src/config/db");
 const { generateDentalReply } = require("../src/services/chatbotService");

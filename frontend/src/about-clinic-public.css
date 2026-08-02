@@ -299,7 +299,7 @@
   padding: 80px 0;
   background:
     linear-gradient(90deg, rgba(32, 41, 56, 0.94), rgba(32, 41, 56, 0.82)),
-    url("/images/clinic-hero-care.png") center / cover;
+    url("/images/clinic-hero-care.webp") center / cover;
 }
 
 .about-public-services .about-public-kicker,

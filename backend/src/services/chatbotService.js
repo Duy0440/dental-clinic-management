@@ -226,6 +226,12 @@ const suggestionGroups = {
     "Có thể chọn bác sĩ không?",
     "Tôi muốn đặt lịch tư vấn",
   ],
+  clinicTrust: [
+    "Nha khoa uy tín cần có gì?",
+    "Làm sao kiểm tra bác sĩ nha khoa?",
+    "Công nghệ nha khoa quan trọng thế nào?",
+    "Tôi muốn đặt lịch tư vấn",
+  ],
   serviceOverview: [
     "Implant phù hợp với ai?",
     "Niềng răng mất bao lâu?",
@@ -446,6 +452,24 @@ const isPriceQuestion = (text) =>
 const hasDentistQuestionIntent = (text) =>
   hasAny(text, ["bac si", "bsi", "nha si", "bs "]) &&
   hasAny(text, ["chuyen mon", "phu trach", "la ai", "ten gi", "gioi thieu", "thong tin", "kham"]);
+
+const hasClinicTrustIntent = (text) =>
+  hasAny(text, [
+    "nha tac",
+    "nha khoa gia",
+    "bac si gia",
+    "bac si that",
+    "nha si that",
+    "phan biet nha khoa",
+    "phan biet bac si",
+    "nha khoa uy tin",
+    "co uy tin khong",
+    "dang tin khong",
+    "tin tuong",
+    "lua dao",
+  ]) ||
+  (hasAny(text, ["phan biet", "lam sao biet", "kiem tra"]) &&
+    hasAny(text, ["nha khoa", "bac si", "nha si", "phong kham"]));
 
 const getConversationText = (history = []) =>
   normalizeText(
@@ -672,6 +696,10 @@ const hasConditionOverviewIntent = (text) => {
 
 // detect topic (phan loai cau hoi nha khoa)
 const getTopicFromText = (text) => {
+  if (hasClinicTrustIntent(text)) {
+    return "clinicTrust";
+  }
+
   if (
     hasAny(text, [
       "thiet bi",
@@ -1272,6 +1300,13 @@ const findRuleBasedReply = (message, history = []) => {
     );
   }
 
+  if (topic === "clinicTrust" || hasClinicTrustIntent(text)) {
+    return createResult(
+      "Để phân biệt một nha khoa đáng tin với nơi làm ẩu, bạn nên nhìn vào cả giấy tờ, con người và cách vận hành chứ không chỉ nhìn quảng cáo.\n\nNhững điểm nên kiểm tra trước khi khám: phòng khám có giấy phép hoạt động rõ ràng; bác sĩ có giấy phép/chứng chỉ hành nghề phù hợp; tư vấn có khám, chụp phim hoặc kiểm tra lâm sàng trước khi chốt điều trị; chi phí được giải thích minh bạch; có hồ sơ điều trị, hình ảnh, phiếu hẹn, hóa đơn và lịch sử thanh toán để khách xem lại.\n\nVề công nghệ, các thiết bị như CBCT, scan trong miệng, phần mềm quản lý lịch hẹn, hồ sơ điều trị điện tử và thông báo lịch không tự động làm một phòng khám “giỏi hơn”, nhưng cho thấy quy trình có dữ liệu để kiểm tra, theo dõi và hạn chế làm cảm tính. Với implant, niềng răng, răng sứ hoặc điều trị tủy, một nơi đáng tin sẽ giải thích vì sao cần làm, có lựa chọn nào ít xâm lấn hơn không, rủi ro là gì và không cam kết kiểu chắc chắn 100%.\n\nDấu hiệu nên cẩn thận là ép chốt nhanh, báo giá mập mờ, không cho biết ai trực tiếp điều trị, không lưu hồ sơ, né câu hỏi về vô trùng/giấy phép, quảng cáo quá đà hoặc hứa kết quả tuyệt đối.",
+      suggestionGroups.clinicTrust,
+    );
+  }
+
   if (isPriceQuestion(text)) {
     return createResult(
       "Mình chưa lấy được mức giá cụ thể từ dữ liệu hệ thống cho câu hỏi này, nên mình không tự tạo hoặc đoán giá. Bạn có thể hỏi rõ tên dịch vụ hơn, xem bảng giá công khai trên website hoặc đặt lịch tư vấn để phòng khám báo chi phí theo tình trạng thực tế.",
@@ -1563,11 +1598,11 @@ const findRuleBasedReply = (message, history = []) => {
           : "dòng implant";
 
     const compareIntro = mentionsDio && mentionsSic
-      ? "DIO và SIC đều là hệ thống implant, nhưng điểm nhấn không giống nhau. DIO/DIOnavi nổi bật ở hướng cấy ghép kỹ thuật số: kết hợp CT, scan trong miệng, mô phỏng 3D và máng hướng dẫn để lập kế hoạch đặt trụ. SIC invent là hệ thống implant của SIC invent AG, có các giải pháp implant, phục hình và phẫu thuật có hướng dẫn, thường được chọn theo hệ trụ - abutment - phục hình mà bác sĩ đang dùng cho ca đó."
-      : `${brandName} có thể là lựa chọn tốt nếu phù hợp với tình trạng xương hàm và kế hoạch phục hình của bạn. Nhưng implant không nên chọn chỉ vì tên hãng; cần xem hệ thống trụ, phục hình phía trên và kinh nghiệm bác sĩ với dòng đó.`;
+      ? "DIO là thương hiệu implant của Hàn Quốc, nổi bật với hệ DIOnavi theo hướng cấy ghép kỹ thuật số: kết hợp dữ liệu CT, scan trong miệng, mô phỏng 3D và máng hướng dẫn để lập kế hoạch đặt trụ. SIC invent là hệ thống implant của SIC invent AG, trụ sở tại Basel, Thụy Sĩ; hãng tập trung vào hệ implant, phục hình, linh kiện kết nối và cũng có giải pháp phẫu thuật có hướng dẫn."
+      : `${brandName} có thể là lựa chọn tốt nếu phù hợp với tình trạng xương hàm và kế hoạch phục hình của bạn. Nhưng implant không nên chọn chỉ vì tên hãng; cần xem xuất xứ, hệ thống trụ, phục hình phía trên và kinh nghiệm bác sĩ với dòng đó.`;
 
     return createResult(
-      `${compareIntro}\n\nTóm lại dễ hiểu: DIO mạnh ở quy trình số hóa và định vị bằng dữ liệu chụp/scan; SIC mạnh ở hệ sinh thái implant - phục hình và lựa chọn kết nối/linh kiện phục hình. Không thể kết luận “hãng nào tốt hơn cho mọi người”, vì độ bền còn phụ thuộc mật độ xương, vị trí mất răng, nướu, bệnh nền, khớp cắn, mão sứ phía trên, tay nghề bác sĩ và cách vệ sinh sau khi làm.\n\nTrường hợp mất răng lâu, tiêu xương, viêm nướu hoặc có bệnh nền cần khám và chụp CBCT trước. Sau đó bác sĩ mới tư vấn nên dùng DIO, SIC hay dòng khác theo ca cụ thể, thay vì chọn chỉ theo tên hãng hoặc quảng cáo.`,
+      `${compareIntro}\n\nSo sánh dễ hiểu: DIO thiên về lợi thế quy trình số hóa và định vị bằng dữ liệu chụp/scan; SIC thiên về hệ sinh thái implant - phục hình và lựa chọn linh kiện phục hình theo kế hoạch của bác sĩ. Không thể kết luận “hãng nào tốt hơn cho mọi người”, vì độ bền còn phụ thuộc mật độ xương, vị trí mất răng, nướu, bệnh nền, khớp cắn, mão sứ phía trên, tay nghề bác sĩ và cách vệ sinh sau khi làm.\n\nCách chọn đáng tin là khám và chụp CBCT trước, sau đó bác sĩ giải thích vì sao chọn DIO, SIC hay dòng khác cho đúng ca. Nếu một nơi chỉ nói “hãng này tốt nhất” nhưng không xem phim, không phân tích xương/nướu và không nói rõ kế hoạch phục hình thì khách nên hỏi lại kỹ trước khi quyết định.`,
       suggestionGroups.implant,
     );
   }

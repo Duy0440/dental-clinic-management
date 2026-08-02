@@ -43,7 +43,7 @@ const getDoctorInitials = (name = "") =>
 // doctor profile content (noi dung popup bac si)
 const doctorShowcaseAssets = [
   {
-    image: "/images/home-doctor-01.png",
+    image: "/images/home-doctor-01.webp",
     badge: "Chuyên sâu Implant",
     experience: "12 năm kinh nghiệm",
     metric: "1.200+ ca tư vấn",
@@ -57,7 +57,7 @@ const doctorShowcaseAssets = [
     philosophy: "Ưu tiên giải thích rõ tình trạng xương hàm, chi phí và lộ trình để khách hàng quyết định an tâm.",
   },
   {
-    image: "/images/home-doctor-02.png",
+    image: "/images/home-doctor-02.webp",
     badge: "Chỉnh nha thẩm mỹ",
     experience: "9 năm kinh nghiệm",
     metric: "Theo dõi khớp cắn",
@@ -71,7 +71,7 @@ const doctorShowcaseAssets = [
     philosophy: "Mỗi ca chỉnh nha cần được theo dõi đều, minh bạch từng giai đoạn để khách không bị mơ hồ.",
   },
   {
-    image: "/images/home-doctor-03.png",
+    image: "/images/home-doctor-03.webp",
     badge: "Nha khoa tổng quát",
     experience: "8 năm kinh nghiệm",
     metric: "Điều trị nhẹ nhàng",
@@ -85,7 +85,7 @@ const doctorShowcaseAssets = [
     philosophy: "Khám kỹ từ triệu chứng nhỏ để phát hiện sớm vấn đề, tránh để khách chỉ đến khi đau nặng.",
   },
   {
-    image: "/images/home-doctor-04.png",
+    image: "/images/home-doctor-04.webp",
     badge: "Nha khoa trẻ em",
     experience: "7 năm kinh nghiệm",
     metric: "Tâm lý trẻ nhỏ",
@@ -99,7 +99,7 @@ const doctorShowcaseAssets = [
     philosophy: "Trẻ cần cảm giác an toàn trước, rồi mới điều trị. Một buổi khám tốt là buổi trẻ không còn sợ nha khoa.",
   },
   {
-    image: "/images/home-doctor-05.png",
+    image: "/images/home-doctor-05.webp",
     badge: "Phục hình thẩm mỹ",
     experience: "10 năm kinh nghiệm",
     metric: "Nụ cười tự nhiên",
@@ -212,28 +212,28 @@ const facilitySlides = [
     label: "Phòng điều trị",
     title: "Ghế nha khoa RunTour",
     text: "Ghế điều trị tích hợp đèn, khay dụng cụ và hệ thống tay khoan, giúp bác sĩ thao tác ổn định hơn trong quá trình khám và điều trị.",
-    image: "/images/equipment-runyess-chair-real.png",
+    image: "/images/equipment-runyess-chair-real.webp",
     specs: ["Đèn và khay dụng cụ", "Thao tác điều trị ổn định", "Không gian khám gọn gàng"],
   },
   {
     label: "Chẩn đoán hình ảnh",
     title: "CBCT 3 in 1 Hyperion X5",
     text: "Thiết bị đến từ Italy, hỗ trợ khảo sát răng, xương hàm, xoang hàm và lập kế hoạch implant hoặc chỉnh nha rõ hơn.",
-    image: "/images/equipment-hyperion-x5-real.png",
+    image: "/images/equipment-hyperion-x5-real.webp",
     specs: ["Hình ảnh 3D/2D/Ceph", "Khảo sát xương hàm", "Hỗ trợ kế hoạch implant"],
   },
   {
     label: "Lấy dấu kỹ thuật số",
     title: "Máy Scan Shinning 3D",
     text: "Ghi nhận dấu răng kỹ thuật số, hỗ trợ tư vấn phục hình, chỉnh nha và giảm khó chịu so với lấy dấu truyền thống.",
-    image: "/images/equipment-shining-3d-real.png",
+    image: "/images/equipment-shining-3d-real.webp",
     specs: ["Lấy dấu nhanh", "Dễ quan sát trên màn hình", "Hỗ trợ phục hình thẩm mỹ"],
   },
   {
     label: "Khu vô trùng",
     title: "Vacuclave MELAG 323",
     text: "Nồi hấp MELAG của Đức, chuẩn Class B theo EN13060, hỗ trợ tiệt trùng dụng cụ trước khi sử dụng cho khách hàng.",
-    image: "/images/equipment-melag-vacuclave-real.png",
+    image: "/images/equipment-melag-vacuclave-real.webp",
     specs: ["Chuẩn Class B", "Đạt EN13060", "Kiểm soát dụng cụ theo lượt"],
   },
 ];
@@ -415,7 +415,7 @@ function HomePublic() {
     label: "Nha khoa hiện đại tại Cần Thơ",
     title: "Phòng khám nha khoa V",
     text: "Thăm khám kỹ, tư vấn dễ hiểu và điều trị theo kế hoạch rõ ràng. Nha khoa V đồng hành cùng khách hàng trong chăm sóc răng miệng, phục hình, chỉnh nha và điều trị tổng quát.",
-    image: "/images/clinic-hero-care.png",
+    image: "/images/clinic-hero-care.webp",
   };
 
   return (

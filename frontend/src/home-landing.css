@@ -599,7 +599,7 @@
   overflow: hidden;
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.92) 42%, rgba(255, 250, 239, 0.78) 100%),
-    url("/images/clinic-hero-technology.png") center/cover;
+    url("/images/clinic-hero-technology.webp") center/cover;
   border-bottom: 1px dashed rgba(151, 100, 34, 0.45);
 }
 
@@ -711,7 +711,7 @@
   padding: 86px 0 64px;
   background:
     linear-gradient(90deg, rgba(255, 250, 239, 0.96), rgba(255, 250, 239, 0.9)),
-    url("/images/clinic-hero-technology.png") center/cover;
+    url("/images/clinic-hero-technology.webp") center/cover;
   border-bottom: 1px solid #ead8bc;
 }
 

@@ -52,19 +52,19 @@ const doctors = [
   {
     name: "BS. Trần Văn A",
     specialty: "Nha khoa tổng quát",
-    image: "/images/home-doctor-01.png",
+    image: "/images/home-doctor-01.webp",
     text: "Thăm khám ban đầu, đọc phim và tư vấn hướng điều trị cho các bệnh lý răng miệng thường gặp.",
   },
   {
     name: "BsCKI. Huỳnh Văn A",
     specialty: "Implant - phục hình",
-    image: "/images/home-doctor-02.png",
+    image: "/images/home-doctor-02.webp",
     text: "Đánh giá mất răng, xương hàm, phục hình trên implant và lựa chọn vật liệu phù hợp từng trường hợp.",
   },
   {
     name: "BsiCKII. Nguyễn Thị A",
     specialty: "Chỉnh nha thẩm mỹ",
-    image: "/images/home-doctor-04.png",
+    image: "/images/home-doctor-04.webp",
     text: "Tư vấn sai lệch khớp cắn, răng chen chúc, niềng răng mắc cài và khay trong theo từng giai đoạn.",
   },
 ];
@@ -74,28 +74,28 @@ const equipment = [
     title: "CBCT 3 in 1 Hyperion X5",
     label: "Chẩn đoán 3D",
     text: "Thiết bị chụp phim đến từ Italy, hỗ trợ bác sĩ quan sát răng, xương hàm, xoang hàm và vùng cần điều trị trước khi tư vấn.",
-    image: "/images/equipment-hyperion-x5-real.png",
+    image: "/images/equipment-hyperion-x5-real.webp",
     details: ["Hỗ trợ lập kế hoạch implant", "Đánh giá răng khôn, xương hàm", "Tư vấn rõ hơn bằng hình ảnh"],
   },
   {
     title: "Máy Scan Shinning 3D",
     label: "Lấy dấu kỹ thuật số",
     text: "Máy scan trong miệng ghi nhận hình dạng răng bằng dữ liệu số, giúp khách dễ xem tình trạng răng và hỗ trợ phục hình thẩm mỹ.",
-    image: "/images/equipment-shining-3d-real.png",
+    image: "/images/equipment-shining-3d-real.webp",
     details: ["Giảm khó chịu khi lấy dấu", "Hỗ trợ răng sứ, veneer, chỉnh nha", "Dễ trao đổi phương án với khách"],
   },
   {
     title: "Vacuclave MELAG 323",
     label: "Khu vô trùng",
     text: "Nồi hấp MELAG của Đức, chuẩn Class B theo EN13060, hỗ trợ quy trình tiệt trùng dụng cụ nha khoa trước khi sử dụng.",
-    image: "/images/equipment-melag-vacuclave-real.png",
+    image: "/images/equipment-melag-vacuclave-real.webp",
     details: ["Tiệt trùng dụng cụ sau mỗi lượt", "Đóng gói và lưu trữ riêng", "Tăng kiểm soát an toàn điều trị"],
   },
   {
     title: "Ghế nha khoa RunTour",
     label: "Không gian điều trị",
     text: "Ghế điều trị tích hợp đèn, khay dụng cụ, tay khoan và hệ thống hỗ trợ thao tác, giúp bác sĩ làm việc ổn định hơn trong từng ca khám.",
-    image: "/images/equipment-runyess-chair-real.png",
+    image: "/images/equipment-runyess-chair-real.webp",
     details: ["Đèn điều trị và khay dụng cụ", "Hỗ trợ thao tác ổn định", "Không gian điều trị gọn gàng"],
   },
 ];
@@ -148,7 +148,7 @@ function AboutClinicPublic() {
           </div>
 
           <div className="about-public-hero-card">
-            <img src="/images/clinic-story-equipment.png" alt="Không gian điều trị tại Nha khoa V" />
+            <img src="/images/clinic-story-equipment.webp" alt="Không gian điều trị tại Nha khoa V" />
             <div>
               <strong>Phòng khám nha khoa V</strong>
               <span>Chăm sóc rõ ràng trong từng lần hẹn</span>

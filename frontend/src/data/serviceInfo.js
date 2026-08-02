@@ -6,7 +6,7 @@ export const serviceCategories = [
     eyebrow: "Phục hồi răng mất",
     summary:
       "Giải pháp phục hồi răng mất bằng trụ Implant, giúp cải thiện ăn nhai, thẩm mỹ và hạn chế tiêu xương hàm.",
-    image: "/images/service-implant-consultation.png",
+    image: "/images/service-implant-consultation.webp",
     accent: "gold",
     highlights: ["Implant DIO, Implant SIC", "Tư vấn phim chụp trước điều trị", "Theo dõi tái khám"],
     suitableFor: [
@@ -28,7 +28,7 @@ export const serviceCategories = [
     eyebrow: "Chỉnh nha thẩm mỹ",
     summary:
       "Điều chỉnh răng hô, móm, lệch lạc hoặc sai khớp cắn bằng mắc cài hoặc khay trong theo kế hoạch cá nhân hóa.",
-    image: "/images/service-orthodontic-consultation.png",
+    image: "/images/service-orthodontic-consultation.webp",
     accent: "blue",
     highlights: ["Mắc cài kim loại/sứ", "Khay trong", "Theo dõi tiến độ định kỳ"],
     suitableFor: [
@@ -50,7 +50,7 @@ export const serviceCategories = [
     eyebrow: "Chăm sóc định kỳ",
     summary:
       "Khám, cạo vôi, trám răng, chữa tủy, nhổ răng và xử lý các vấn đề răng miệng thường gặp.",
-    image: "/images/service-general-dentistry.png",
+    image: "/images/service-general-dentistry.webp",
     accent: "green",
     highlights: ["Cạo vôi răng", "Trám răng", "Chữa tủy và nhổ răng"],
     suitableFor: [
@@ -72,7 +72,7 @@ export const serviceCategories = [
     eyebrow: "Nụ cười tự tin",
     summary:
       "Tẩy trắng răng, răng sứ, veneer và phục hình thẩm mỹ giúp cải thiện màu sắc, hình dáng và độ hài hòa nụ cười.",
-    image: "/images/service-cosmetic-dentistry.png",
+    image: "/images/service-cosmetic-dentistry.webp",
     accent: "rose",
     highlights: ["Tẩy trắng răng", "Răng sứ", "Dán sứ Veneer"],
     suitableFor: [
@@ -94,7 +94,7 @@ export const serviceCategories = [
     eyebrow: "Chăm sóc răng sữa",
     summary:
       "Theo dõi răng sữa, phòng ngừa sâu răng, vệ sinh răng và xử lý các vấn đề răng miệng cho trẻ.",
-    image: "/images/service-pediatric-dentistry.png",
+    image: "/images/service-pediatric-dentistry.webp",
     accent: "mint",
     highlights: ["Bôi Fluor", "Trám răng sữa", "Theo dõi mọc răng"],
     suitableFor: [

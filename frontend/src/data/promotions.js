@@ -7,7 +7,7 @@ export const promotions = [
     campaign: "Ưu đãi mùa hè",
     shortDescription:
       "Hỗ trợ phục hồi răng mất bằng Implant với gói tư vấn, chụp phim và kế hoạch điều trị rõ ràng.",
-    image: "/images/promo-implant-summer.png",
+    image: "/images/promo-implant-summer.webp",
     badge: "Giảm đến 20%",
     highlight: "Tặng gói chụp phim và tư vấn Implant",
     priceNote: "Áp dụng cho khách đặt lịch trong mùa hè",
@@ -32,7 +32,7 @@ export const promotions = [
     campaign: "Ưu đãi chỉnh nha",
     shortDescription:
       "Gói ưu đãi dành cho khách hàng muốn bắt đầu chỉnh nha trong mùa hè với mắc cài hoặc khay trong.",
-    image: "/images/promo-orthodontic-summer.png",
+    image: "/images/promo-orthodontic-summer.webp",
     badge: "Trả góp 0%",
     highlight: "Tặng tư vấn chỉnh nha và kế hoạch điều trị",
     priceNote: "Áp dụng cho học sinh, sinh viên và khách hàng mới",
@@ -57,7 +57,7 @@ export const promotions = [
     campaign: "Chăm sóc răng miệng",
     shortDescription:
       "Combo chăm sóc răng miệng cơ bản gồm khám, vệ sinh răng và tư vấn điều trị tổng quát.",
-    image: "/images/promo-general-summer.png",
+    image: "/images/promo-general-summer.webp",
     badge: "Từ 100.000đ",
     highlight: "Ưu đãi cạo vôi, trám răng và khám tổng quát",
     priceNote: "Phù hợp cho khách kiểm tra răng định kỳ",
