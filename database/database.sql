@@ -1,7 +1,14 @@
+-- Dental Clinic Management - PostgreSQL clean reset
+-- Copy the whole file into pgAdmin4 Query Tool and run it once.
+-- This script recreates the final database schema from scratch.
+--
 -- Admin login:
 --   username: admin01
 --   password: 123456
 
+BEGIN;
+
+DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS medical_record_audit_logs CASCADE;
 DROP TABLE IF EXISTS dental_chart_entries CASCADE;
 DROP TABLE IF EXISTS medical_record_attachments CASCADE;
@@ -99,7 +106,7 @@ CREATE TABLE medical_records (
   entered_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   status VARCHAR(30) NOT NULL DEFAULT 'PendingConfirmation'
     CONSTRAINT chk_medical_record_status
-    CHECK (status IN ('Draft', 'PendingConfirmation', 'Confirmed')),
+    CHECK (status IN ('PendingConfirmation', 'Confirmed')),
   confirmed_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   confirmed_at TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -165,8 +172,10 @@ CREATE TABLE medical_record_audit_logs (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT chk_medical_record_audit_action CHECK (
     action IN (
-      'CREATED', 'UPDATED', 'SUBMITTED_FOR_CONFIRMATION',
-      'CONFIRMED', 'ATTACHMENT_UPLOADED'
+      'CREATED',
+      'UPDATED',
+      'CONFIRMED',
+      'ATTACHMENT_UPLOADED'
     )
   )
 );
@@ -230,12 +239,6 @@ CREATE TABLE payments (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_payments_invoice
-  ON payments (invoice_id, payment_date, id);
-
-CREATE INDEX idx_invoices_patient_status
-  ON invoices (patient_id, payment_status);
-
 CREATE TABLE reviews (
   id SERIAL PRIMARY KEY,
   patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
@@ -262,11 +265,7 @@ CREATE TABLE dentist_unavailable_times (
   reason TEXT,
   created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CHECK (
-    start_time IS NULL
-    OR end_time IS NULL
-    OR start_time < end_time
-  )
+  CHECK (start_time IS NULL OR end_time IS NULL OR start_time < end_time)
 );
 
 CREATE TABLE page_visits (
@@ -275,6 +274,38 @@ CREATE TABLE page_visits (
   user_agent TEXT,
   ip_address VARCHAR(80),
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE notifications (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type VARCHAR(50) NOT NULL,
+  title VARCHAR(180) NOT NULL,
+  message TEXT NOT NULL,
+  related_entity_type VARCHAR(50),
+  related_entity_id INTEGER,
+  action_url TEXT,
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
+  read_at TIMESTAMP,
+  dedupe_key VARCHAR(255) NOT NULL UNIQUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT chk_notification_type CHECK (
+    type IN (
+      'APPOINTMENT_REQUEST_SUBMITTED',
+      'APPOINTMENT_REQUEST_CREATED',
+      'APPOINTMENT_CONFIRMED',
+      'APPOINTMENT_UPDATED',
+      'APPOINTMENT_CANCELLED',
+      'DENTIST_APPOINTMENT_ASSIGNED',
+      'MEDICAL_RECORD_PENDING',
+      'MEDICAL_RECORD_CONFIRMED',
+      'MEDICAL_RECORD_MISSING',
+      'APPOINTMENT_REMINDER',
+      'REEXAM_UPCOMING',
+      'REEXAM_DUE',
+      'REEXAM_OVERDUE'
+    )
+  )
 );
 
 CREATE INDEX idx_users_role ON users(role);
@@ -286,10 +317,15 @@ CREATE INDEX idx_appointments_status ON appointments(status);
 CREATE INDEX idx_appointments_patient ON appointments(patient_id);
 CREATE INDEX idx_appointments_dentist ON appointments(dentist_id);
 CREATE INDEX idx_appointments_booking_source ON appointments(booking_source, appointment_date);
-CREATE INDEX idx_medical_records_patient ON medical_records(patient_id);
+CREATE INDEX idx_payments_invoice ON payments(invoice_id, payment_date, id);
 CREATE INDEX idx_invoices_patient ON invoices(patient_id);
+CREATE INDEX idx_invoices_patient_status ON invoices(patient_id, payment_status);
 CREATE INDEX idx_chatbot_logs_user ON chatbot_logs(user_id);
 CREATE INDEX idx_page_visits_created_at ON page_visits(created_at);
+CREATE INDEX idx_notifications_user_read_created
+  ON notifications (user_id, is_read, created_at DESC);
+CREATE INDEX idx_notifications_created_at
+  ON notifications (created_at DESC);
 
 INSERT INTO users (username, password, role, phone, email, is_active)
 VALUES (
@@ -301,6 +337,8 @@ VALUES (
   TRUE
 );
 
+COMMIT;
+
 -- Verification: admin_count should be 1 and business tables should be empty.
 SELECT
   (SELECT COUNT(*) FROM users WHERE role = 'admin') AS admin_count,
@@ -308,6 +346,8 @@ SELECT
   (SELECT COUNT(*) FROM dentists) AS dentist_count,
   (SELECT COUNT(*) FROM services) AS service_count,
   (SELECT COUNT(*) FROM appointments) AS appointment_count,
+  (SELECT COUNT(*) FROM medical_records) AS medical_record_count,
   (SELECT COUNT(*) FROM invoices) AS invoice_count,
+  (SELECT COUNT(*) FROM notifications) AS notification_count,
   (SELECT COUNT(*) FROM reviews) AS review_count,
   (SELECT COUNT(*) FROM chatbot_logs) AS chatbot_log_count;

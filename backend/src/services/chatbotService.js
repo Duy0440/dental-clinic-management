@@ -443,8 +443,17 @@ const isPriceQuestion = (text) =>
   hasAny(text, ["gia", "chi phi", "bao nhieu tien", "het bao nhieu", "ton bao nhieu", "bang gia", "khuyen mai", "uu dai"]) ||
   (text.includes("bao nhieu") && hasAny(text, ["tien", "vnd", "dong", "gia", "chi phi"]));
 
+const hasDentistQuestionIntent = (text) =>
+  hasAny(text, ["bac si", "bsi", "nha si", "bs "]) &&
+  hasAny(text, ["chuyen mon", "phu trach", "la ai", "ten gi", "gioi thieu", "thong tin", "kham"]);
+
 const getConversationText = (history = []) =>
-  normalizeText(history.map((item) => item.text).join(" "));
+  normalizeText(
+    history
+      .filter((item) => item.role !== "bot")
+      .map((item) => item.text)
+      .join(" "),
+  );
 
 const isGreetingMessage = (text) =>
   /(^|\s)(xin chao|chao|hello|hi|alo|ban oi)(\s|$)/.test(text);
@@ -512,6 +521,66 @@ const getDatabaseServicePriceReply = async (message) => {
       answer: createAnswer(answer),
       source: "database",
       suggestions: suggestionGroups.price,
+    };
+  } catch (error) {
+    return null;
+  }
+};
+
+// tim thong tin nha si trong database
+const getDatabaseDentistReply = async (message) => {
+  const text = normalizeText(message);
+  if (!hasDentistQuestionIntent(text)) return null;
+
+  try {
+    const result = await pool.query(`
+      SELECT d.id, d.full_name, d.specialty
+      FROM dentists d
+      LEFT JOIN users u ON d.user_id = u.id
+      WHERE COALESCE(d.is_active, TRUE) = TRUE
+        AND COALESCE(u.is_active, TRUE) = TRUE
+      ORDER BY d.full_name ASC
+    `);
+
+    const queryTokens = text
+      .split(" ")
+      .filter((token) => token.length > 1)
+      .filter((token) => !["bac", "bsi", "nha", "si", "chuyen", "mon", "phu", "trach", "thong", "tin", "kham"].includes(token));
+
+    const rankedDentists = result.rows
+      .map((dentist) => {
+        const normalizedName = normalizeText(dentist.full_name);
+        const nameTokens = normalizedName.split(" ");
+        const exactNameScore = normalizedName && text.includes(normalizedName) ? 100 : 0;
+        const tokenScore = queryTokens.filter((token) =>
+          nameTokens.some((nameToken) => nameToken === token || nameToken.includes(token)),
+        ).length;
+
+        return { ...dentist, score: exactNameScore + tokenScore };
+      })
+      .filter((dentist) => dentist.score > 0)
+      .sort((left, right) => right.score - left.score);
+
+    const dentist = rankedDentists[0];
+
+    if (!dentist) {
+      return {
+        answer: createAnswer(
+          "Mình chưa tìm thấy nha sĩ phù hợp với tên bạn hỏi trong dữ liệu hiện tại. Bạn kiểm tra lại tên bác sĩ hoặc xem danh sách nha sĩ trên trang đặt lịch nhé.",
+        ),
+        source: "database",
+        suggestions: suggestionGroups.booking,
+      };
+    }
+
+    const specialty = dentist.specialty?.trim()
+      ? `Chuyên môn được ghi nhận: ${dentist.specialty.trim()}.`
+      : "Chuyên môn của nha sĩ này chưa được cập nhật trong dữ liệu công khai.";
+
+    return {
+      answer: createAnswer(`${dentist.full_name}: ${specialty}`),
+      source: "database",
+      suggestions: suggestionGroups.booking,
     };
   } catch (error) {
     return null;
@@ -1109,7 +1178,19 @@ const getTopicFromText = (text) => {
     return "generalCare";
   }
 
-  if (hasAny(text, ["dat lich", "hen lich", "kham lan dau", "khach vang lai"])) {
+  if (
+    hasAny(text, [
+      "dat lich",
+      "hen lich",
+      "kham lan dau",
+      "lan dau di kham",
+      "di kham lan dau",
+      "chuan bi di kham",
+      "chuan bi khi di kham",
+      "can chuan bi gi",
+      "khach vang lai",
+    ])
+  ) {
     return "booking";
   }
 
@@ -1132,7 +1213,10 @@ const getTopic = (text, history = []) => {
     "bao lau",
     "mau nao",
     "loai nao",
+    "cai nao",
     "nen chon",
+    "tot hon",
+    "cai nao tot hon",
     "co hai khong",
     "co ben khong",
     "bao nhieu",
@@ -1170,7 +1254,7 @@ const findRuleBasedReply = (message, history = []) => {
 
   if (isGreetingMessage(text)) {
     return createResult(
-      "Chào bạn, mình là trợ lý tư vấn nha khoa của Nha khoa V. Bạn cứ hỏi thoải mái như đang nhắn cho phòng khám nhé. Nếu bạn đang đau răng hoặc phân vân dịch vụ nào phù hợp, mình có thể giải thích trước để bạn dễ quyết định có nên đặt lịch không.",
+      "Chào bạn, mình là trợ lý tư vấn nha khoa của Nha khoa V. Bạn cứ nhắn câu hỏi về triệu chứng, dịch vụ, chi phí tham khảo hoặc cách đặt lịch; mình sẽ trả lời đúng nội dung bạn hỏi và nhắc khi cần nha sĩ kiểm tra trực tiếp.",
     );
   }
 
@@ -1184,6 +1268,30 @@ const findRuleBasedReply = (message, history = []) => {
   if (hasAny(text, ["gio lam viec", "lam viec may gio", "may gio mo cua", "may gio dong cua", "mo cua luc may gio"])) {
     return createResult(
       CLINIC_HOURS_ANSWER,
+      suggestionGroups.booking,
+    );
+  }
+
+  if (isPriceQuestion(text)) {
+    return createResult(
+      "Mình chưa lấy được mức giá cụ thể từ dữ liệu hệ thống cho câu hỏi này, nên mình không tự tạo hoặc đoán giá. Bạn có thể hỏi rõ tên dịch vụ hơn, xem bảng giá công khai trên website hoặc đặt lịch tư vấn để phòng khám báo chi phí theo tình trạng thực tế.",
+      suggestionGroups.price,
+    );
+  }
+
+  if (
+    hasAny(text, [
+      "lan dau di kham",
+      "di kham lan dau",
+      "kham lan dau",
+      "chuan bi di kham",
+      "chuan bi khi di kham",
+      "can chuan bi gi",
+    ]) &&
+    hasAny(text, ["kham", "nha khoa", "rang", "lan dau", "chuan bi"])
+  ) {
+    return createResult(
+      "Lần đầu đi khám nha khoa, bạn chỉ cần chuẩn bị vài thông tin cơ bản để bác sĩ tư vấn nhanh và đúng hơn: họ tên, số điện thoại, triệu chứng đang gặp, vị trí răng khó chịu nếu có, thời điểm bắt đầu đau/ê/sưng/chảy máu và các thuốc đang dùng hoặc dị ứng thuốc nếu có.\n\nNếu bạn đã từng chụp phim, có toa thuốc cũ, bệnh nền như tiểu đường, tim mạch, huyết áp, đang mang thai hoặc đang dùng thuốc chống đông thì nên báo trước cho phòng khám. Trước khi đi khám, bạn vẫn ăn uống và vệ sinh răng miệng bình thường, nhưng tránh tự uống kháng sinh hoặc thuốc giảm đau liều cao khi chưa được hướng dẫn vì có thể làm che triệu chứng.\n\nKhi đặt lịch trên website, bạn có thể ghi ngắn gọn lý do khám, ví dụ “đau răng hàm dưới 2 ngày” hoặc “muốn tư vấn implant”. Nếu chưa biết chọn dịch vụ nào thì chọn khám/tư vấn ban đầu để phòng khám kiểm tra rồi hướng dẫn tiếp.",
       suggestionGroups.booking,
     );
   }
@@ -1442,7 +1550,7 @@ const findRuleBasedReply = (message, history = []) => {
 
   if (
     hasAny(text, ["dio", "sic", "hang nao", "loai nao", "tru nao", "dong nao"]) ||
-    (topic === "implant" && hasAny(text, ["tot khong", "co tot khong", "co ben khong", "nen chon"]))
+    (topic === "implant" && hasAny(text, ["tot khong", "co tot khong", "co ben khong", "nen chon", "tot hon", "cai nao tot hon"]))
   ) {
     const mentionsDio = hasAny(combinedText, ["dio"]);
     const mentionsSic = hasAny(combinedText, ["sic"]);
@@ -1455,11 +1563,11 @@ const findRuleBasedReply = (message, history = []) => {
           : "dòng implant";
 
     const compareIntro = mentionsDio && mentionsSic
-      ? "DIO và SIC đều là các dòng trụ implant có thể được cân nhắc tùy tình trạng xương hàm, vị trí mất răng, kế hoạch phục hình và ngân sách. Khác biệt thực tế không nên chỉ nhìn ở tên hãng, mà cần xem hệ thống trụ có phù hợp ca đó không, mão sứ phía trên ra sao và bác sĩ kiểm soát phẫu thuật - phục hình thế nào."
-      : `${brandName} có thể là lựa chọn tốt nếu phù hợp với tình trạng xương hàm và kế hoạch phục hình của bạn. Nhưng implant không nên chọn chỉ vì tên hãng.`;
+      ? "DIO và SIC đều là hệ thống implant, nhưng điểm nhấn không giống nhau. DIO/DIOnavi nổi bật ở hướng cấy ghép kỹ thuật số: kết hợp CT, scan trong miệng, mô phỏng 3D và máng hướng dẫn để lập kế hoạch đặt trụ. SIC invent là hệ thống implant của SIC invent AG, có các giải pháp implant, phục hình và phẫu thuật có hướng dẫn, thường được chọn theo hệ trụ - abutment - phục hình mà bác sĩ đang dùng cho ca đó."
+      : `${brandName} có thể là lựa chọn tốt nếu phù hợp với tình trạng xương hàm và kế hoạch phục hình của bạn. Nhưng implant không nên chọn chỉ vì tên hãng; cần xem hệ thống trụ, phục hình phía trên và kinh nghiệm bác sĩ với dòng đó.`;
 
     return createResult(
-      `${compareIntro} Một ca implant bền hay không còn phụ thuộc vào mật độ xương, vị trí mất răng, nướu, bệnh nền, tay nghề bác sĩ, mão sứ phía trên và cách vệ sinh sau khi làm.\n\nNếu bạn hỏi theo hướng “nên chọn DIO hay SIC”, câu trả lời đúng là: nên khám và chụp phim CBCT trước rồi mới chọn trụ. Với người mất răng lâu, tiêu xương, viêm nướu hoặc có bệnh nền, bác sĩ có thể cần tư vấn thêm về ghép xương/nâng xoang hoặc xử lý nền trước khi quyết định loại implant.`,
+      `${compareIntro}\n\nTóm lại dễ hiểu: DIO mạnh ở quy trình số hóa và định vị bằng dữ liệu chụp/scan; SIC mạnh ở hệ sinh thái implant - phục hình và lựa chọn kết nối/linh kiện phục hình. Không thể kết luận “hãng nào tốt hơn cho mọi người”, vì độ bền còn phụ thuộc mật độ xương, vị trí mất răng, nướu, bệnh nền, khớp cắn, mão sứ phía trên, tay nghề bác sĩ và cách vệ sinh sau khi làm.\n\nTrường hợp mất răng lâu, tiêu xương, viêm nướu hoặc có bệnh nền cần khám và chụp CBCT trước. Sau đó bác sĩ mới tư vấn nên dùng DIO, SIC hay dòng khác theo ca cụ thể, thay vì chọn chỉ theo tên hãng hoặc quảng cáo.`,
       suggestionGroups.implant,
     );
   }
@@ -1582,7 +1690,7 @@ const findRuleBasedReply = (message, history = []) => {
     );
   }
 
-  if (topic === "booking" || hasAny(text, ["dat lich", "hen lich", "kham lan dau"])) {
+  if (topic === "booking" || hasAny(text, ["dat lich", "hen lich", "kham lan dau", "lan dau di kham"])) {
     return createResult(
       "Bạn có thể đặt lịch trực tiếp trên website bằng cách nhập họ tên, số điện thoại, chọn dịch vụ, ngày giờ khám và ghi chú triệu chứng. Khách vãng lai vẫn đặt lịch được, không bắt buộc phải có tài khoản.\n\nNếu bạn tạo tài khoản, sau này có thể xem lại lịch đã đặt, kết quả điều trị, hình ảnh/file đính kèm và đánh giá dịch vụ sau khi hoàn thành. Nếu chưa biết chọn nha sĩ, bạn có thể để phòng khám sắp xếp nha sĩ phù hợp.",
       suggestionGroups.booking,
@@ -1596,7 +1704,7 @@ const findRuleBasedReply = (message, history = []) => {
   }
 
   return createResult(
-    "Mình chưa nắm hết ý bạn. Bạn nói rõ hơn một chút được không: bạn đang hỏi về triệu chứng đau/ê, dịch vụ điều trị, chi phí hay muốn so sánh phương án nào?\n\nNếu đang khó chịu ở răng, bạn mô tả giúp mình vị trí răng, đau bao lâu và có sưng/chảy máu/sốt không nhé. Mình sẽ giải thích hướng xử lý cơ bản trước khi bạn đặt lịch khám.",
+    "Mình chưa nắm rõ câu hỏi này. Bạn nhắn lại cụ thể hơn một chút nhé, ví dụ bạn muốn hỏi về dịch vụ, chi phí, lịch khám, bác sĩ hay một triệu chứng răng miệng cụ thể.",
     defaultSuggestions,
     false,
   );
@@ -1636,10 +1744,13 @@ Vai trò của bạn:
 
 Nguyên tắc trả lời:
 - Luôn trả lời bằng tiếng Việt có dấu.
-- Nếu khách hỏi nối tiếp như “tốt không”, “có đau không”, “bao lâu”, hãy dùng ngữ cảnh hội thoại trước đó.
+- Chỉ trả lời đúng câu hỏi mới của khách; không tự đặt thêm câu hỏi giả định rồi tự trả lời.
+- Không viết kiểu “nếu bạn đang hỏi về...” hoặc “nếu bạn muốn biết...” để chuyển sang chủ đề khác khi khách không hỏi.
+- Nếu câu hỏi mơ hồ, hỏi lại tối đa 1-2 câu ngắn thay vì tự suy diễn triệu chứng, dịch vụ, giá hoặc hãng.
+- Chỉ dùng ngữ cảnh hội thoại trước đó khi câu mới thật sự là câu nối tiếp ngắn như “có đau không”, “bao lâu”, “loại nào tốt hơn”.
+- Nếu câu mới đã rõ chủ đề, ưu tiên câu mới và không kéo nội dung từ câu trước sang.
 - Nếu khách hỏi về giá, giải thích chi phí phụ thuộc tình trạng thực tế, vật liệu, ưu đãi và sẽ được tư vấn trước khi lập hóa đơn.
 - Nếu khách hỏi về hãng implant, tư vấn trung lập, không khẳng định tuyệt đối hãng nào tốt nhất.
-- Nếu khách hỏi chưa rõ, hỏi lại tối đa 2 câu ngắn.
 - Trả lời khoảng 2 đến 5 đoạn, không lan man.
 - Khách có thể gõ không dấu, sai chính tả, viết tắt. Hãy hiểu theo ý nha khoa gần nhất.
 - Ưu tiên trả lời đúng trọng tâm câu hỏi mới, không tự chuyển sang chủ đề khác.
@@ -1724,6 +1835,11 @@ const generateDentalReply = async (message, history = []) => {
   const databaseReply = await getDatabaseServicePriceReply(message);
   if (databaseReply) {
     return databaseReply;
+  }
+
+  const dentistReply = await getDatabaseDentistReply(message);
+  if (dentistReply) {
+    return dentistReply;
   }
 
   if (fallbackResult.matched) {
