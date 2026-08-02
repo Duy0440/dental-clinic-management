@@ -1,3 +1,4 @@
+// admin xem ho so khach va benh an
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";

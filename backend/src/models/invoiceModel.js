@@ -1,3 +1,4 @@
+// truy van ho so thanh toan
 const pool = require("../config/db");
 
 const PAYMENT_STATUSES = ["Unpaid", "PartiallyPaid", "Paid", "Cancelled"];
@@ -121,6 +122,7 @@ const buildInvoiceFilters = (filters = {}) => {
   return { values, where };
 };
 
+// lay danh sach ho so thanh toan
 const getInvoices = async (filters = {}) => {
   const { values, where } = buildInvoiceFilters(filters);
   const result = await pool.query(
@@ -134,6 +136,7 @@ const getInvoices = async (filters = {}) => {
   return result.rows;
 };
 
+// lay chi tiet ho so thanh toan
 const getInvoiceById = async (invoiceId, db = pool) => {
   const result = await db.query(`${invoiceSelect} WHERE i.id = $1`, [invoiceId]);
   return result.rows[0] || null;
@@ -184,6 +187,7 @@ const normalizeDetails = (details = []) => {
   });
 };
 
+// them dich vu vao ho so
 const insertInvoiceDetail = async (invoiceId, detail, db) => {
   const result = await db.query(
     `
@@ -214,6 +218,7 @@ const insertInvoiceDetail = async (invoiceId, detail, db) => {
   return result.rows[0];
 };
 
+// ghi nhan mot lan thanh toan
 const insertPayment = async (paymentData, db) => {
   const result = await db.query(
     `
@@ -242,6 +247,7 @@ const insertPayment = async (paymentData, db) => {
   return result.rows[0];
 };
 
+// tinh tong da tra va con no
 const updateInvoiceTotals = async (invoiceId, db) => {
   const paymentResult = await db.query(
     "SELECT COALESCE(SUM(amount), 0) AS paid_amount FROM payments WHERE invoice_id = $1",
@@ -277,6 +283,7 @@ const updateInvoiceTotals = async (invoiceId, db) => {
   return getInvoiceById(invoiceId, db);
 };
 
+// tao ho so thanh toan kem chi tiet
 const createInvoiceWithDetails = async (invoiceData) => {
   const client = await pool.connect();
 
@@ -355,6 +362,7 @@ const createInvoiceWithDetails = async (invoiceData) => {
   }
 };
 
+// them thanh toan vao ho so
 const addPaymentToInvoice = async (invoiceId, paymentData) => {
   const client = await pool.connect();
 
@@ -404,6 +412,7 @@ const addPaymentToInvoice = async (invoiceId, paymentData) => {
   }
 };
 
+// huy ho so thanh toan
 const cancelInvoiceById = async (invoiceId, userId) => {
   const result = await pool.query(
     `

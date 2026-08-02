@@ -1,3 +1,4 @@
+// chan route theo vai tro
 import { Navigate } from "react-router-dom";
 
 // role route (chan trang theo vai tro)

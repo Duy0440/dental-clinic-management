@@ -1,4 +1,6 @@
+// nha si xem va xac nhan benh an
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import { getAssetUrl } from "../../api/urlHelpers";
 import DentalChart from "../../components/DentalChart";
@@ -16,6 +18,7 @@ const isImageFile = (fileType) => {
 };
 
 function DentistMedicalRecords() {
+  const [searchParams] = useSearchParams();
   const [records, setRecords] = useState([]);
   const [tabCounts, setTabCounts] = useState({
     PendingConfirmation: 0,
@@ -29,6 +32,7 @@ function DentistMedicalRecords() {
   const [errorMessage, setErrorMessage] = useState("");
   const [message, setMessage] = useState("");
   const [confirmingId, setConfirmingId] = useState(null);
+  const [handledRecordId, setHandledRecordId] = useState(null);
 
   const fetchRecords = async () => {
     try {
@@ -56,6 +60,21 @@ function DentistMedicalRecords() {
   useEffect(() => {
     fetchRecords();
   }, []);
+
+  useEffect(() => {
+    const recordId = Number(searchParams.get("record_id"));
+    if (!recordId || loading || handledRecordId === recordId) return;
+
+    const targetRecord = records.find(
+      (record) => Number(record.id) === recordId,
+    );
+
+    if (targetRecord) {
+      setActiveStatus(targetRecord.status);
+      setViewingRecord(targetRecord);
+      setHandledRecordId(recordId);
+    }
+  }, [handledRecordId, loading, records, searchParams]);
 
   const filteredRecords = useMemo(
     () => records.filter((record) => record.status === activeStatus),

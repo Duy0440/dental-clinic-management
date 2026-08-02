@@ -122,6 +122,7 @@ test("same update creates nothing and dentist change uses a stable dedupe key", 
     [
       ["APPOINTMENT_UPDATED", 20],
       ["DENTIST_APPOINTMENT_ASSIGNED", 31],
+      ["APPOINTMENT_UPDATED", 30],
     ],
   );
 
@@ -132,10 +133,36 @@ test("same update creates nothing and dentist change uses a stable dedupe key", 
     appointment_time: "11:30",
   });
 
-  assert.equal(capturedNotifications.length, 1);
-  assert.equal(capturedNotifications[0].type, "APPOINTMENT_UPDATED");
-  assert.match(capturedNotifications[0].message, /01\/08\/2026/);
-  assert.match(capturedNotifications[0].message, /11:30/);
+  assert.equal(capturedNotifications.length, 2);
+  assert.deepEqual(
+    capturedNotifications.map((item) => [item.type, item.user_id]),
+    [
+      ["APPOINTMENT_UPDATED", 20],
+      ["APPOINTMENT_UPDATED", 30],
+    ],
+  );
+  assert.ok(
+    capturedNotifications.every(
+      (item) => /01\/08\/2026/.test(item.message) && /11:30/.test(item.message),
+    ),
+  );
+});
+
+test("guest reschedule updates the assigned dentist without notifying a customer", async () => {
+  await notifyAppointmentTransition(
+    { ...appointment, patient_user_id: null },
+    {
+      ...appointment,
+      patient_user_id: null,
+      appointment_date: "2026-08-02",
+      appointment_time: "14:00",
+    },
+  );
+
+  assert.deepEqual(
+    capturedNotifications.map((item) => [item.type, item.user_id]),
+    [["APPOINTMENT_UPDATED", 30]],
+  );
 });
 
 test("cancellation notifies customer and currently assigned dentist", async () => {

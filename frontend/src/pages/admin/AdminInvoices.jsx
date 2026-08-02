@@ -1,3 +1,4 @@
+// admin quan ly thanh toan va cong no
 import { useEffect, useMemo, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 import PaymentDetailModal from "../../components/admin/PaymentDetailModal";
@@ -133,6 +134,7 @@ function AdminInvoices() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  // tai du lieu thanh toan
   const fetchData = async () => {
     try {
       const [invoiceResponse, customerResponse, serviceResponse, appointmentResponse] =
@@ -340,6 +342,7 @@ function AdminInvoices() {
     return "";
   };
 
+  // tao ho so thanh toan
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -395,6 +398,7 @@ function AdminInvoices() {
     });
   };
 
+  // ghi nhan lan thanh toan
   const submitPayment = async (event) => {
     event.preventDefault();
     if (!paymentInvoice) return;
@@ -455,6 +459,7 @@ function AdminInvoices() {
     }
   };
 
+  // xuat file excel cong no
   const exportInvoice = async (invoice) => {
     if (!hasDebt(invoice)) {
       setErrorMessage("Hồ sơ này đã được thanh toán đầy đủ, không có công nợ để xuất.");
@@ -482,6 +487,7 @@ function AdminInvoices() {
     }
   };
 
+  // in phieu thanh toan
   const printPaymentReceipt = (invoice, payment) => {
     const details = (invoice.details || []).map(getDetailName).join("; ");
     const printWindow = window.open("", "_blank", "width=520,height=760");

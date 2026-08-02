@@ -1,12 +1,31 @@
+// xu ly thong bao trong he thong
 const {
   getNotificationsByUserId,
   getUnreadNotificationCount,
   markNotificationRead,
   markAllNotificationsRead,
 } = require("../models/notificationModel");
+const {
+  refreshNotificationsForUser,
+} = require("../services/notificationReminderService");
 
+const refreshRemindersSafely = async (user) => {
+  try {
+    await refreshNotificationsForUser(user);
+  } catch (error) {
+    console.error("[notification-reminder] refresh failed", {
+      message: error.message,
+      userId: user?.id,
+      role: user?.role,
+    });
+  }
+};
+
+// lay danh sach thong bao cua user
 const getNotifications = async (req, res) => {
   try {
+    await refreshRemindersSafely(req.user);
+
     const requestedLimit = Number(req.query.limit || 6);
     const limit = Number.isFinite(requestedLimit)
       ? Math.min(Math.max(Math.trunc(requestedLimit), 1), 50)
@@ -24,8 +43,11 @@ const getNotifications = async (req, res) => {
   }
 };
 
+// dem thong bao chua doc
 const getUnreadCount = async (req, res) => {
   try {
+    await refreshRemindersSafely(req.user);
+
     const unreadCount = await getUnreadNotificationCount(req.user.id);
 
     return res.status(200).json({
@@ -41,6 +63,7 @@ const getUnreadCount = async (req, res) => {
   }
 };
 
+// danh dau mot thong bao da doc
 const readNotification = async (req, res) => {
   try {
     const notificationId = Number(req.params.id);
@@ -72,6 +95,7 @@ const readNotification = async (req, res) => {
   }
 };
 
+// danh dau tat ca da doc
 const readAllNotifications = async (req, res) => {
   try {
     const updatedCount = await markAllNotificationsRead(req.user.id);
@@ -89,9 +113,30 @@ const readAllNotifications = async (req, res) => {
   }
 };
 
+// refresh thong bao nhac lich
+const refreshNotifications = async (req, res) => {
+  try {
+    await refreshRemindersSafely(req.user);
+
+    const unreadCount = await getUnreadNotificationCount(req.user.id);
+
+    return res.status(200).json({
+      message: "Notifications refreshed successfully",
+      data: {
+        unread_count: unreadCount,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Unable to refresh notifications",
+    });
+  }
+};
+
 module.exports = {
   getNotifications,
   getUnreadCount,
   readNotification,
   readAllNotifications,
+  refreshNotifications,
 };

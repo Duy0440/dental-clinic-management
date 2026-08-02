@@ -35,11 +35,23 @@ const getCurrentTimeText = () => {
 const parseDateText = (dateText) => {
   if (!dateText) return null;
 
-  const [year, month, day] = String(dateText).slice(0, 10).split("-").map(Number);
+  const normalizedDate = String(dateText).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) return null;
+
+  const [year, month, day] = normalizedDate.split("-").map(Number);
 
   if (!year || !month || !day) return null;
 
-  return new Date(Date.UTC(year, month - 1, day));
+  const parsedDate = new Date(Date.UTC(year, month - 1, day));
+  if (
+    parsedDate.getUTCFullYear() !== year ||
+    parsedDate.getUTCMonth() !== month - 1 ||
+    parsedDate.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return parsedDate;
 };
 
 const isPastClinicDate = (dateText) => {

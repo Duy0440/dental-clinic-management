@@ -1,3 +1,4 @@
+// truy van du lieu thong bao
 const pool = require("../config/db");
 
 const createNotification = async (notification, db = pool) => {

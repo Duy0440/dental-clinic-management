@@ -1,5 +1,6 @@
 ﻿const SAFETY_MESSAGE =
   "Lưu ý: Thông tin này chỉ mang tính tham khảo, không thay thế chẩn đoán của nha sĩ. Nếu bạn đau nhiều, sưng, chảy máu, sốt hoặc có chấn thương vùng miệng, nên đặt lịch khám sớm.";
+// tra loi tu van bang du lieu noi bo va Gemini
 
 const SHORT_SAFETY_MESSAGE =
   "Lưu ý: Nội dung này chỉ để tham khảo, không thay thế chẩn đoán trực tiếp của nha sĩ.";
@@ -463,6 +464,7 @@ const createResult = (answer, suggestions = defaultSuggestions, matched = true) 
   matched,
 });
 
+// tim gia dich vu trong database
 const getDatabaseServicePriceReply = async (message) => {
   const text = normalizeText(message);
   if (!isPriceQuestion(text)) return null;
@@ -1660,6 +1662,7 @@ ${message}
 };
 
 // call gemini (neu co api key thi dung ai de viet tu nhien hon)
+// goi Gemini khi can
 const getGeminiReply = async (message, history = [], context = {}) => {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
 
@@ -1704,6 +1707,7 @@ const getGeminiReply = async (message, history = [], context = {}) => {
 };
 
 // public service (controller goi ham nay de lay cau tra loi)
+// tra cau tra loi ve chatbot
 const generateDentalReply = async (message, history = []) => {
   const normalizedMessage = normalizeText(message);
   const detectedTopic = getTopic(normalizedMessage, history);

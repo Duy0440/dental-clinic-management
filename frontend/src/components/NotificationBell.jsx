@@ -1,3 +1,4 @@
+// hien thi chuong thong bao
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
@@ -25,6 +26,7 @@ function NotificationBell({ tone = "light" }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [status, setStatus] = useState("idle");
 
+  // dem thong bao chua doc
   const fetchUnreadCount = async () => {
     try {
       const response = await axiosClient.get("/notifications/unread-count");
@@ -34,6 +36,7 @@ function NotificationBell({ tone = "light" }) {
     }
   };
 
+  // lay danh sach thong bao
   const fetchNotifications = async () => {
     setStatus("loading");
 
@@ -73,6 +76,7 @@ function NotificationBell({ tone = "light" }) {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [isOpen]);
 
+  // click thong bao va dieu huong
   const handleNotificationClick = async (notification) => {
     if (!notification.is_read) {
       try {
@@ -94,6 +98,7 @@ function NotificationBell({ tone = "light" }) {
     }
   };
 
+  // danh dau tat ca da doc
   const handleReadAll = async () => {
     try {
       await axiosClient.patch("/notifications/read-all");

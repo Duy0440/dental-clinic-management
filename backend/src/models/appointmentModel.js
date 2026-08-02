@@ -1,4 +1,5 @@
-﻿const pool = require("../config/db");
+﻿// truy van du lieu lich hen
+const pool = require("../config/db");
 
 let bookingSourceColumnCache = null;
 
@@ -316,7 +317,11 @@ const findAppointmentById = async (appointmentId) => {
 };
 
 // appointment context (du lieu hien thi va gui thong bao)
-const getAppointmentDetailsById = async (appointmentId) => {
+const getAppointmentDetailsById = async (
+  appointmentId,
+  db = pool,
+  { forUpdate = false } = {},
+) => {
   const query = `
     SELECT
       a.id,
@@ -341,9 +346,10 @@ const getAppointmentDetailsById = async (appointmentId) => {
     LEFT JOIN users du ON du.id = d.user_id
     JOIN services s ON s.id = a.service_id
     WHERE a.id = $1
+    ${forUpdate ? "FOR UPDATE OF a" : ""}
   `;
 
-  const result = await pool.query(query, [appointmentId]);
+  const result = await db.query(query, [appointmentId]);
   return result.rows[0];
 };
 
@@ -353,6 +359,7 @@ const checkAppointmentConflictForUpdate = async (
   appointmentDate,
   appointmentTime,
   appointmentId,
+  db = pool,
 ) => {
   if (!dentistId) {
     return false;
@@ -368,7 +375,7 @@ const checkAppointmentConflictForUpdate = async (
       AND status IN ('Pending', 'Confirmed')
   `;
 
-  const result = await pool.query(query, [
+  const result = await db.query(query, [
     dentistId,
     appointmentDate,
     appointmentTime,
@@ -378,25 +385,32 @@ const checkAppointmentConflictForUpdate = async (
   return result.rows.length > 0;
 };
 
-// admin update (cap nhat trang thai va nha si)
+// admin update (cap nhat ngay gio, nha si, trang thai va ghi chu)
 const updateAppointmentByAdmin = async (
   appointmentId,
+  appointmentDate,
+  appointmentTime,
   dentistId,
   status,
   clinicNote,
+  db = pool,
 ) => {
   const query = `
     UPDATE appointments
     SET
-      dentist_id = $2,
-      status = $3,
-      clinic_note = $4
+      appointment_date = $2,
+      appointment_time = $3,
+      dentist_id = $4,
+      status = $5,
+      clinic_note = $6
     WHERE id = $1
     RETURNING *
   `;
 
-  const result = await pool.query(query, [
+  const result = await db.query(query, [
     appointmentId,
+    appointmentDate,
+    appointmentTime,
     dentistId,
     status,
     clinicNote || null,

@@ -14,6 +14,7 @@
   getAppointmentsByDentistId,
 } = require("../models/appointmentModel");
 
+// xu ly nghiep vu lich hen
 const {
   notifyAppointmentCreated,
   notifyAppointmentCancelled,
@@ -605,7 +606,14 @@ const getAppointmentsForAdmin = async (req, res) => {
 const manageAppointment = async (req, res) => {
   try {
     const { appointmentId } = req.params;
-    const { dentist_id, status, clinic_note, force_assign } = req.body;
+    const {
+      appointment_date,
+      appointment_time,
+      dentist_id,
+      status,
+      clinic_note,
+      force_assign,
+    } = req.body;
 
     const allowedStatuses = ["Pending", "Confirmed", "Cancelled"];
 
@@ -620,6 +628,65 @@ const manageAppointment = async (req, res) => {
     if (!appointment) {
       return res.status(404).json({
         message: "Appointment not found",
+      });
+    }
+
+    if (["Completed", "Cancelled"].includes(appointment.status)) {
+      return res.status(409).json({
+        code: "APPOINTMENT_LOCKED",
+        message: "Lịch đã hoàn thành hoặc đã hủy nên không thể thay đổi ngày giờ.",
+      });
+    }
+
+    const nextAppointmentDate = appointment_date ?? appointment.appointment_date;
+    const rawAppointmentTime = appointment_time ?? appointment.appointment_time;
+    const normalizedAppointmentTime = normalizeTime(rawAppointmentTime);
+    const dayInfo = getClinicDayInfo(nextAppointmentDate);
+    const hasValidDateFormat = /^\d{4}-\d{2}-\d{2}$/.test(
+      String(nextAppointmentDate || ""),
+    );
+    const hasValidTimeFormat = /^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(
+      String(rawAppointmentTime || ""),
+    );
+
+    if (!hasValidDateFormat || !dayInfo.isValid) {
+      return res.status(400).json({
+        message: "Ngày khám không hợp lệ.",
+      });
+    }
+
+    if (!hasValidTimeFormat) {
+      return res.status(400).json({
+        message: "Giờ khám không đúng định dạng.",
+      });
+    }
+
+    const scheduleChanged =
+      String(appointment.appointment_date) !== String(nextAppointmentDate) ||
+      normalizeTime(appointment.appointment_time) !== normalizedAppointmentTime;
+
+    if (scheduleChanged && dayInfo.isClosed) {
+      return res.status(400).json({
+        message: dayInfo.message,
+      });
+    }
+
+    if (
+      scheduleChanged &&
+      isPastClinicDateTime(nextAppointmentDate, normalizedAppointmentTime)
+    ) {
+      return res.status(400).json({
+        message: "Không thể chuyển lịch sang ngày hoặc giờ đã qua.",
+      });
+    }
+
+    if (
+      scheduleChanged &&
+      !isClinicBookingTime(nextAppointmentDate, normalizedAppointmentTime)
+    ) {
+      return res.status(400).json({
+        message:
+          "Giờ khám phải nằm trong thời gian làm việc 08:00-12:00 hoặc 13:30-18:00 và đúng khung 30 phút.",
       });
     }
 
@@ -654,67 +721,104 @@ const manageAppointment = async (req, res) => {
       }
     }
 
-    // conflict check (báo trùng khi phân công)
-    const hasConflict =
-      status !== "Cancelled" &&
-      (await checkAppointmentConflictForUpdate(
-        normalizedDentistId,
-        appointment.appointment_date,
-        appointment.appointment_time,
-        appointmentId,
-      ));
+    const updateResult = await withAppointmentSlotLock(
+      nextAppointmentDate,
+      normalizedAppointmentTime,
+      async (client) => {
+        const currentAppointment = await getAppointmentDetailsById(
+          appointmentId,
+          client,
+          { forUpdate: true },
+        );
 
-    if (hasConflict && !force_assign) {
-      return res.status(409).json({
-        code: "DENTIST_HAS_APPOINTMENT",
-        message:
-          "Dentist already has an appointment at this time. Do you still want to assign?",
-      });
-    }
+        if (!currentAppointment) {
+          throw createAppointmentError("Không tìm thấy lịch hẹn.", 404);
+        }
 
-    // unavailable check (báo nha sĩ đang bận)
-    const isDentistUnavailable =
-      status !== "Cancelled" &&
-      (await checkDentistUnavailableConflict(
-        normalizedDentistId,
-        appointment.appointment_date,
-        appointment.appointment_time,
-      ));
+        if (["Completed", "Cancelled"].includes(currentAppointment.status)) {
+          throw createAppointmentError(
+            "Lịch đã hoàn thành hoặc đã hủy nên không thể thay đổi ngày giờ.",
+            409,
+            { code: "APPOINTMENT_LOCKED" },
+          );
+        }
 
-    if (isDentistUnavailable && !force_assign) {
-      return res.status(409).json({
-        code: "DENTIST_UNAVAILABLE",
-        message:
-          "Dentist is marked unavailable at this time. Do you still want to assign?",
-      });
-    }
+        const hasConflict =
+          status !== "Cancelled" &&
+          (await checkAppointmentConflictForUpdate(
+            normalizedDentistId,
+            nextAppointmentDate,
+            normalizedAppointmentTime,
+            appointmentId,
+            client,
+          ));
 
-    await updateAppointmentByAdmin(
-      appointmentId,
-      normalizedDentistId,
-      status,
-      clinic_note,
+        if (hasConflict) {
+          throw createAppointmentError(
+            "Nha sĩ đã có lịch hẹn vào thời gian này. Vui lòng chọn giờ khác hoặc phân công nha sĩ khác.",
+            409,
+            { code: "DENTIST_HAS_APPOINTMENT" },
+          );
+        }
+
+        const isDentistUnavailable =
+          status !== "Cancelled" &&
+          (await checkDentistUnavailableConflict(
+            normalizedDentistId,
+            nextAppointmentDate,
+            normalizedAppointmentTime,
+            client,
+          ));
+
+        if (isDentistUnavailable && !force_assign) {
+          throw createAppointmentError(
+            "Nha sĩ đã báo bận vào thời gian này. Vui lòng chọn giờ khác hoặc phân công nha sĩ khác.",
+            409,
+            { code: "DENTIST_UNAVAILABLE" },
+          );
+        }
+
+        await updateAppointmentByAdmin(
+          appointmentId,
+          nextAppointmentDate,
+          normalizedAppointmentTime,
+          normalizedDentistId,
+          status,
+          clinic_note,
+          client,
+        );
+
+        return {
+          previousAppointment: currentAppointment,
+          usedUnavailableOverride: isDentistUnavailable && force_assign,
+        };
+      },
     );
 
     const updatedAppointment = await getAppointmentDetailsById(appointmentId);
 
     await runAppointmentNotification(
-      () => notifyAppointmentTransition(appointment, updatedAppointment),
+      () =>
+        notifyAppointmentTransition(
+          updateResult.previousAppointment,
+          updatedAppointment,
+        ),
       "updated",
     );
 
     res.status(200).json({
       message: "Appointment updated successfully",
       data: toAppointmentResponse(updatedAppointment),
-      warning:
-        hasConflict || isDentistUnavailable
-          ? "Appointment assigned with admin override"
-          : null,
+      warning: updateResult.usedUnavailableOverride
+        ? "Appointment assigned with admin override"
+        : null,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Server error",
-      error: error.message,
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({
+      code: error.code,
+      message: statusCode === 500 ? "Server error" : error.message,
+      error: statusCode === 500 ? error.message : undefined,
     });
   }
 };

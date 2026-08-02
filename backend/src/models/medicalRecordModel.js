@@ -1,3 +1,4 @@
+// truy van du lieu benh an
 const pool = require("../config/db");
 
 const RECORD_STATUSES = ["PendingConfirmation", "Confirmed"];

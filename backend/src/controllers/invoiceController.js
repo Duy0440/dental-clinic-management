@@ -1,3 +1,4 @@
+// xu ly thanh toan va cong no
 const {
   PAYMENT_METHODS,
   getInvoices,
@@ -120,6 +121,7 @@ const parseInvoicePayload = (body = {}) => {
 };
 
 // list payment records (admin xem tat ca)
+// admin xem danh sach thanh toan
 const listInvoices = async (req, res) => {
   try {
     const invoices = await getInvoices({
@@ -140,6 +142,7 @@ const listInvoices = async (req, res) => {
 };
 
 // customer payment records (khach chi xem ho so cua minh)
+// khach xem thanh toan cua minh
 const listMyInvoices = async (req, res) => {
   try {
     const patient = await findPatientByUserId(req.user.id);
@@ -157,6 +160,7 @@ const listMyInvoices = async (req, res) => {
 };
 
 // get payment record detail
+// xem chi tiet ho so thanh toan
 const getInvoiceDetail = async (req, res) => {
   try {
     const invoice = await getInvoiceById(Number(req.params.invoiceId));
@@ -177,6 +181,7 @@ const getInvoiceDetail = async (req, res) => {
 };
 
 // create payment profile (tao ho so thanh toan)
+// admin tao ho so thanh toan
 const addInvoice = async (req, res) => {
   try {
     const {
@@ -231,6 +236,7 @@ const addInvoice = async (req, res) => {
 };
 
 // add payment (ghi nhan thanh toan moi)
+// ghi nhan lan thanh toan
 const addInvoicePayment = async (req, res) => {
   try {
     const invoiceId = Number(req.params.invoiceId);
@@ -276,6 +282,7 @@ const addInvoicePayment = async (req, res) => {
 };
 
 // cancel payment record (huy mem ho so)
+// huy ho so thanh toan
 const cancelInvoice = async (req, res) => {
   try {
     const cancelled = await cancelInvoiceById(Number(req.params.invoiceId), req.user.id);
@@ -537,6 +544,7 @@ const buildPaymentWorkbook = (invoice) => {
 };
 
 // export one payment record to xlsx
+// xuat excel cong no
 const exportInvoice = async (req, res) => {
   try {
     const invoice = await getInvoiceById(Number(req.params.invoiceId));

@@ -1,3 +1,4 @@
+// xu ly du lieu dashboard
 const {
   recordPageVisit,
   getDashboardSummary,
@@ -60,6 +61,7 @@ const sanitizeFileName = (value) =>
     .replace(/^-+|-+$/g, "")
     .toLowerCase();
 
+// luu luot truy cap website
 const savePageVisit = async (req, res) => {
   try {
     await recordPageVisit({
@@ -79,6 +81,7 @@ const savePageVisit = async (req, res) => {
   }
 };
 
+// lay so lieu tong quan
 const getSummary = async (req, res) => {
   try {
     const range = getDateRange(req.query);
@@ -138,6 +141,7 @@ const buildSimpleSheetRows = (title, headers, rows, mapper, moneyColumns = []) =
   return xmlRows;
 };
 
+// xuat bao cao dashboard excel
 const exportSummary = async (req, res) => {
   try {
     const range = getDateRange(req.query);

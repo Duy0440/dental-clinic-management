@@ -1,3 +1,4 @@
+// truy van chi tiet thanh toan
 const pool = require("../config/db");
 
 // invoice detail list (lay chi tiet hoa don)

@@ -1,4 +1,5 @@
-﻿const jwt = require("jsonwebtoken");
+﻿// kiem tra dang nhap va phan quyen
+const jwt = require("jsonwebtoken");
 
 // auth check (kiem tra token bat buoc)
 const verifyToken = (req, res, next) => {

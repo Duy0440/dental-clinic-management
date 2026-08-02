@@ -1,11 +1,15 @@
+// khach xem ket qua kham
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 import { getAssetUrl } from "../api/urlHelpers";
 import DentalChart from "../components/DentalChart";
 import { extractMedicalRecordTeeth } from "../utils/dentalChart";
 
 function MedicalResults() {
+  const [searchParams] = useSearchParams();
   const user = JSON.parse(localStorage.getItem("user") || "null");
+  const focusedRecordId = Number(searchParams.get("record_id")) || null;
 
   const [records, setRecords] = useState([]);
   const [patientId, setPatientId] = useState(user?.patient_id || null);
@@ -44,7 +48,16 @@ function MedicalResults() {
           `/medical-records/patient/${activePatientId}`,
         );
 
-        setRecords(response.data.data || []);
+        const fetchedRecords = response.data.data || [];
+        setRecords(
+          focusedRecordId
+            ? [...fetchedRecords].sort((first, second) => {
+                if (Number(first.id) === focusedRecordId) return -1;
+                if (Number(second.id) === focusedRecordId) return 1;
+                return 0;
+              })
+            : fetchedRecords,
+        );
       } catch (error) {
         setMessage(
           error.response?.data?.message || "Không thể tải kết quả điều trị.",
@@ -56,7 +69,7 @@ function MedicalResults() {
 
     fetchMedicalResults();
 
-  }, [patientId, user?.id]);
+  }, [focusedRecordId, patientId, user?.id]);
 
   const formatTime = (time) => {
     return time ? String(time).slice(0, 5) : "";
@@ -96,7 +109,13 @@ function MedicalResults() {
         <div className="row g-4">
           {records.map((record) => (
             <div className="col-12" key={record.id}>
-              <article className="medical-result-card card border-0 shadow-sm rounded-4">
+              <article
+                className={`medical-result-card card border-0 shadow-sm rounded-4 ${
+                  Number(record.id) === focusedRecordId
+                    ? "medical-result-card-focused"
+                    : ""
+                }`}
+              >
                 <div className="medical-result-card-body card-body p-4">
                   <div className="medical-result-header d-flex justify-content-between gap-3 mb-4 flex-wrap">
                     <div>

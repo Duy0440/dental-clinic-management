@@ -97,6 +97,7 @@ const checkDentistUnavailableConflict = async (
   dentistId,
   appointmentDate,
   appointmentTime,
+  db = pool,
 ) => {
   if (!dentistId) {
     return false;
@@ -115,7 +116,7 @@ const checkDentistUnavailableConflict = async (
     LIMIT 1
   `;
 
-  const result = await pool.query(query, [
+  const result = await db.query(query, [
     dentistId,
     appointmentDate,
     appointmentTime,

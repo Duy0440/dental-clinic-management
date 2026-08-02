@@ -1,3 +1,4 @@
+// admin va nha si nhap benh an
 import { useEffect, useMemo, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 import { extractMedicalRecordTeeth } from "../../utils/dentalChart";

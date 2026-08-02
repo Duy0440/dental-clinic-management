@@ -3,8 +3,10 @@
   checkChatbotUserExists,
 } = require("../models/chatbotLogModel");
 const { generateDentalReply } = require("../services/chatbotService");
+// xu ly chatbot Gemini
 
 // chatbot reply (trả lời câu hỏi và lưu lịch sử)
+// nhan cau hoi tu khach
 const getChatbotReply = async (req, res) => {
   try {
     const { message, user_id, history = [] } = req.body;

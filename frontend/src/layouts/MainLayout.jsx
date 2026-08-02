@@ -1,4 +1,5 @@
-﻿import { useEffect } from "react";
+﻿// layout dieu huong khu vuc khach
+import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 import Navbar from "../components/NavbarClean";

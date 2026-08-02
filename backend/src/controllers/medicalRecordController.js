@@ -1,3 +1,4 @@
+// xu ly benh an dien tu
 const {
   withMedicalRecordTransaction,
   RECORD_STATUSES,
@@ -29,6 +30,10 @@ const { findDentistByUserId } = require("../models/dentistModel");
 const { checkDentistAppointmentConflict } = require("../models/appointmentModel");
 const { checkDentistUnavailableConflict } = require("../models/dentistUnavailableModel");
 const {
+  notifyMedicalRecordPending,
+  notifyMedicalRecordConfirmed,
+} = require("../services/medicalRecordNotificationService");
+const {
   getClinicDayInfo,
   isClinicBookingTime,
   isPastClinicDate,
@@ -38,6 +43,16 @@ const {
 
 const EDITABLE_STATUSES = new Set(["PendingConfirmation"]);
 const ALLOWED_LIST_STATUSES = new Set(RECORD_STATUSES);
+
+const runMedicalRecordNotification = async (callback, eventName) => {
+  try {
+    await callback();
+  } catch (error) {
+    console.error(`[medical-record-notification] ${eventName} failed`, {
+      message: error.message,
+    });
+  }
+};
 
 // input number (doi id sang so de tranh loi query)
 const parseId = (value) => {
@@ -274,6 +289,10 @@ const addMedicalRecord = async (req, res) => {
       }, db);
       return getMedicalRecordById(record.id, db);
     });
+    await runMedicalRecordNotification(
+      () => notifyMedicalRecordPending(result),
+      "pending",
+    );
     return res.status(201).json({ message: "Medical record created", data: result });
   } catch (error) {
     if (error.message === "DUPLICATE_APPOINTMENT_RECORD" || error.code === "23505") {
@@ -322,6 +341,10 @@ const editMedicalRecord = async (req, res) => {
       }, db);
       return getMedicalRecordById(recordId, db);
     });
+    await runMedicalRecordNotification(
+      () => notifyMedicalRecordPending(updated),
+      "pending-updated",
+    );
     return res.json({ message: "Medical record updated", data: updated });
   } catch (error) {
     return res.status(500).json({ message: "Cannot update medical record" });
@@ -343,6 +366,10 @@ const confirmMedicalRecord = async (req, res) => {
       await createMedicalRecordAuditLog({ medicalRecordId: record.id, action: "CONFIRMED", changedByUserId: req.user.id, oldData: { status: record.status }, newData: { status: "Confirmed" } }, db);
       return getMedicalRecordById(record.id, db);
     });
+    await runMedicalRecordNotification(
+      () => notifyMedicalRecordConfirmed(data),
+      "confirmed",
+    );
     return res.json({ message: "Medical record confirmed", data });
   } catch (error) {
     console.error("confirmMedicalRecord failed:", error);

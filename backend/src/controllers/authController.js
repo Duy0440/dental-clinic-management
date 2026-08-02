@@ -1,5 +1,6 @@
 ﻿const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+// xu ly dang ky dang nhap
 const {
   findUserByUsername,
   createUser,
@@ -12,6 +13,7 @@ const {
 const { findDentistByUserId } = require("../models/dentistModel");
 
 // auth register (dky tai khoan khach)
+// dang ky tai khoan
 const register = async (req, res) => {
   try {
     const {
@@ -87,6 +89,7 @@ const register = async (req, res) => {
 };
 
 // auth login (đăng nhập và cấp token JWT)
+// dang nhap tai khoan
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -158,6 +161,7 @@ const login = async (req, res) => {
 const normalizePhone = (phone) => String(phone || "").replace(/\D/g, "");
 
 // reset password (đổi mật khẩu bằng sdt)
+// doi mat khau khi quen mat khau
 const forgotPassword = async (req, res) => {
   try {
     const { username, phone, new_password } = req.body;

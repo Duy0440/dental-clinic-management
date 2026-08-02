@@ -1,5 +1,7 @@
+// tong hop so lieu dashboard
 const pool = require("../config/db");
 
+// luu luot xem trang
 const recordPageVisit = async ({ path, userAgent, ip }) => {
   const query = `
     INSERT INTO page_visits (page_path, user_agent, ip_address)
@@ -56,6 +58,7 @@ const queryOne = async (query, values) => {
 
 const toNumber = (value) => Number(value || 0);
 
+// tinh so lieu tong quan dashboard
 const getDashboardSummary = async ({ from, to } = {}) => {
   const values = [from, to];
   const [hasPaymentsTable, hasBookingSource, hasTreatmentGroup] = await Promise.all([
